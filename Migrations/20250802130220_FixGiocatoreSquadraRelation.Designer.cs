@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace AstaLegheFC.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250801223041_InizializzazioneDb")]
-    partial class InizializzazioneDb
+    [Migration("20250802130220_FixGiocatoreSquadraRelation")]
+    partial class FixGiocatoreSquadraRelation
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -32,21 +32,42 @@ namespace AstaLegheFC.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Codice")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int?>("Diff")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DiffM")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("FVM")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("FVMM")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IdListone")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Nome")
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("Quotazione")
+                    b.Property<int?>("QtA")
                         .HasColumnType("integer");
 
-                    b.Property<int>("QuotazioneIniziale")
+                    b.Property<int?>("QtAM")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QtI")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("QtIM")
                         .HasColumnType("integer");
 
                     b.Property<string>("Ruolo")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RuoloMantra")
                         .IsRequired()
                         .HasColumnType("text");
 
@@ -70,7 +91,7 @@ namespace AstaLegheFC.Migrations
                     b.Property<int?>("CreditiSpesi")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("IdListone")
+                    b.Property<int>("IdListone")
                         .HasColumnType("integer");
 
                     b.Property<string>("Nome")
@@ -84,6 +105,9 @@ namespace AstaLegheFC.Migrations
                     b.Property<int?>("SquadraId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SquadraId1")
+                        .HasColumnType("integer");
+
                     b.Property<string>("SquadraReale")
                         .IsRequired()
                         .HasColumnType("text");
@@ -91,6 +115,8 @@ namespace AstaLegheFC.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("SquadraId");
+
+                    b.HasIndex("SquadraId1");
 
                     b.ToTable("Giocatori");
                 });
@@ -102,6 +128,13 @@ namespace AstaLegheFC.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Alias")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreditiIniziali")
+                        .HasColumnType("integer");
 
                     b.Property<string>("Nome")
                         .IsRequired()
@@ -139,6 +172,10 @@ namespace AstaLegheFC.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("Portieri")
                         .HasColumnType("integer");
 
@@ -152,8 +189,13 @@ namespace AstaLegheFC.Migrations
             modelBuilder.Entity("AstaLegheFC.Models.Giocatore", b =>
                 {
                     b.HasOne("AstaLegheFC.Models.Squadra", "Squadra")
+                        .WithMany("Giocatori")
+                        .HasForeignKey("SquadraId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("AstaLegheFC.Models.Squadra", null)
                         .WithMany("Giocatoris")
-                        .HasForeignKey("SquadraId");
+                        .HasForeignKey("SquadraId1");
 
                     b.Navigation("Squadra");
                 });
@@ -176,6 +218,8 @@ namespace AstaLegheFC.Migrations
 
             modelBuilder.Entity("AstaLegheFC.Models.Squadra", b =>
                 {
+                    b.Navigation("Giocatori");
+
                     b.Navigation("Giocatoris");
                 });
 #pragma warning restore 612, 618

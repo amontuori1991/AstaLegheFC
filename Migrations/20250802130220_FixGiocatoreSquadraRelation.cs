@@ -5,7 +5,7 @@
 namespace AstaLegheFC.Migrations
 {
     /// <inheritdoc />
-    public partial class AggiungiAliasAllaLega : Migration
+    public partial class FixGiocatoreSquadraRelation : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

@@ -34,7 +34,7 @@ namespace AstaLegheFC.Controllers
             ViewBag.LegaAlias = legaAlias;
             ViewBag.LegaNome = lega.Nome;
             ViewBag.LegaId = lega.Id;
-
+            ViewBag.BaseUrl = $"{Request.Scheme}://{Request.Host}";
             return View(squadre);
         }
 

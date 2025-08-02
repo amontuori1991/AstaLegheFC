@@ -88,7 +88,7 @@ namespace AstaLegheFC.Migrations
                     b.Property<int?>("CreditiSpesi")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("IdListone")
+                    b.Property<int>("IdListone")
                         .HasColumnType("integer");
 
                     b.Property<string>("Nome")
@@ -164,6 +164,10 @@ namespace AstaLegheFC.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("Portieri")
                         .HasColumnType("integer");
 
@@ -177,8 +181,9 @@ namespace AstaLegheFC.Migrations
             modelBuilder.Entity("AstaLegheFC.Models.Giocatore", b =>
                 {
                     b.HasOne("AstaLegheFC.Models.Squadra", "Squadra")
-                        .WithMany("Giocatoris")
-                        .HasForeignKey("SquadraId");
+                        .WithMany("Giocatori")
+                        .HasForeignKey("SquadraId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Squadra");
                 });
@@ -201,7 +206,7 @@ namespace AstaLegheFC.Migrations
 
             modelBuilder.Entity("AstaLegheFC.Models.Squadra", b =>
                 {
-                    b.Navigation("Giocatoris");
+                    b.Navigation("Giocatori");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,4 +1,6 @@
 using AstaLegheFC.Data;
+using AstaLegheFC.Hubs;
+using AstaLegheFC.Services;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml; // deve essere già in cima
 
@@ -10,6 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<BazzerService>();
+builder.Services.AddScoped<LegaService>();
+
 
 
 var app = builder.Build();
@@ -26,6 +32,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.MapControllerRoute(
+    name: "utente",
+    pattern: "utente",
+    defaults: new { controller = "Utente", action = "Index" });
+
+app.MapHub<BazzerHub>("/bazzerHub");
 
 app.UseAuthorization();
 

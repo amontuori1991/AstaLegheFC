@@ -1,0 +1,222 @@
+﻿@using AstaLegheFC.Models
+@model AstaLegheFC.Models.UtenteViewModel
+@{
+    ViewData["Title"] = "Asta - Utente";
+}
+
+<h2>Benvenuto @Model.Nickname</h2>
+<p>Crediti a disposizione: <strong id="crediti">@Model.CreditiDisponibili</strong></p>
+<p>Puntata massima: <strong id="puntata">@Model.PuntataMassima</strong></p>
+<p>
+    Calciatore in asta: <strong id="giocatore">
+        @if (Model.CalciatoreInAsta != null && !string.IsNullOrEmpty(Model.CalciatoreInAsta.Nome))
+        {
+            @($"{Model.CalciatoreInAsta.Nome} ({Model.CalciatoreInAsta.Ruolo} - {Model.CalciatoreInAsta.Squadra})")
+        }
+        else
+        {
+            <text>Nessun giocatore</text>
+        }
+    </strong>
+</p>
+<p>Timer: <strong id="timer">-</strong> secondi</p>
+<p>Attuale offerente: <strong id="offerente">@Model.OfferenteAttuale</strong></p>
+<p>Attuale offerta: <strong id="offerta">@Model.OffertaAttuale</strong> crediti</p>
+
+<div id="avviso-ruolo-completo" class="alert alert-danger mt-3" style="display: none;"></div>
+
+<div class="mt-3">
+    @foreach (var incremento in new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30 })
+    {
+        <button class="bazzer btn btn-primary m-1" data-incremento="@incremento" disabled>+@incremento</button>
+    }
+</div>
+
+<div class="mt-3 row align-items-center">
+    <div class="col-md-4">
+        <div class="input-group">
+            <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Offerta personalizzata" min="1" disabled>
+            <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <script>
+        // --- VARIABILI DI STATO E REGOLE ---
+        const nickname = "@Model.Nickname";
+        const legaAlias = new URLSearchParams(window.location.search).get('lega');
+        let offertaAttuale = parseInt("@Model.OffertaAttuale") || 0;
+        let idListoneAttuale = parseInt("@(Model.CalciatoreInAsta?.IdListone ?? 0)");
+        let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
+        let timerSecondi = @Model.TimerAsta;
+        let timer = null;
+
+        const maxPortieri = @RegoleLega.MaxPortieri;
+        const maxDifensori = @RegoleLega.MaxDifensori;
+        const maxCentrocampisti = @RegoleLega.MaxCentrocampisti;
+        const maxAttaccanti = @RegoleLega.MaxAttaccanti;
+
+        let portieriAttuali = @Model.PortieriAcquistati;
+        let difensoriAttuali = @Model.DifensoriAcquistati;
+        let centrocampistiAttuali = @Model.CentrocampistiAcquistati;
+        let attaccantiAttuali = @Model.AttaccantiAcquistati;
+
+        const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+
+        // --- FUNZIONI DI UTILITY ---
+        function aggiornaStatoPulsantiBazzer() {
+            const avvisoDiv = document.getElementById('avviso-ruolo-completo');
+            let abilitato = idListoneAttuale > 0;
+            let messaggio = "";
+
+            if (abilitato) {
+                if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) {
+                    abilitato = false;
+                    messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di portieri (${maxPortieri}).`;
+                } else if (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) {
+                    abilitato = false;
+                    messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di difensori (${maxDifensori}).`;
+                } else if (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) {
+                    abilitato = false;
+                    messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di centrocampisti (${maxCentrocampisti}).`;
+                } else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti) {
+                    abilitato = false;
+                    messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`;
+                }
+            }
+
+            document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata").forEach(el => el.disabled = !abilitato);
+
+            if (!abilitato && messaggio) {
+                avvisoDiv.innerText = messaggio;
+                avvisoDiv.style.display = 'block';
+            } else {
+                avvisoDiv.style.display = 'none';
+            }
+        }
+
+        function resettaTimer() {
+            const offertaCorrente = parseInt(document.getElementById("offerta").textContent) || 0;
+            if (idListoneAttuale === 0 || offertaCorrente <= 0) {
+                document.getElementById("timer").textContent = "-";
+                clearInterval(timer);
+                return;
+            }
+            clearInterval(timer);
+            let count = timerSecondi;
+            document.getElementById("timer").textContent = count;
+            timer = setInterval(() => {
+                count--;
+                document.getElementById("timer").textContent = count;
+                if (count <= 0) {
+                    clearInterval(timer);
+                    const vincitoreAttuale = document.getElementById("offerente").textContent;
+                    if (nickname === vincitoreAttuale) {
+                        connection.invoke("TerminaAsta", legaAlias).catch(err => console.error(err.toString()));
+                    }
+                }
+            }, 1000);
+        }
+
+        async function aggiornaCrediti() {
+            try {
+                const response = await fetch(`/utente/crediti?nick=${nickname}&lega=${legaAlias}`);
+                if (!response.ok) return;
+                const data = await response.json();
+                document.getElementById("crediti").textContent = data.creditiDisponibili;
+                document.getElementById("puntata").textContent = data.puntataMassima;
+                portieriAttuali = data.portieri;
+                difensoriAttuali = data.difensori;
+                centrocampistiAttuali = data.centrocampisti;
+                attaccantiAttuali = data.attaccanti;
+                aggiornaStatoPulsantiBazzer();
+            } catch (e) { console.error("Errore aggiornamento crediti:", e); }
+        }
+
+        // --- GESTIONE EVENTI SIGNALR ---
+        connection.on("MostraGiocatoreInAsta", (giocatore) => {
+            idListoneAttuale = giocatore.id;
+            ruoloGiocatoreAttuale = giocatore.ruolo;
+            document.getElementById("giocatore").textContent = `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
+            document.getElementById("offerente").textContent = "NESSUNO";
+            document.getElementById("offerta").textContent = "0";
+            offertaAttuale = 0;
+            aggiornaStatoPulsantiBazzer();
+            resettaTimer();
+        });
+
+        connection.on("AggiornaOfferta", (offerente, offerta) => {
+            document.getElementById("offerente").textContent = offerente;
+            document.getElementById("offerta").textContent = offerta;
+            offertaAttuale = offerta;
+            resettaTimer();
+        });
+
+        connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
+            alert(`Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
+            idListoneAttuale = 0;
+            ruoloGiocatoreAttuale = "";
+            document.getElementById("giocatore").textContent = "Nessun giocatore";
+            document.getElementById("offerente").textContent = "-";
+            document.getElementById("offerta").textContent = "0";
+            aggiornaStatoPulsantiBazzer();
+            resettaTimer();
+            aggiornaCrediti();
+        });
+
+        connection.on("AstaAnnullata", () => {
+             alert("L'amministratore ha annullato l'asta corrente.");
+             idListoneAttuale = 0;
+             ruoloGiocatoreAttuale = "";
+             document.getElementById("giocatore").textContent = "Nessun giocatore";
+             document.getElementById("offerente").textContent = "-";
+             document.getElementById("offerta").textContent = "0";
+             aggiornaStatoPulsantiBazzer();
+             resettaTimer();
+        });
+
+        connection.on("AggiornaUtente", () => { aggiornaCrediti(); });
+        connection.on("AggiornaDurataTimer", (nuoviSecondi) => { timerSecondi = nuoviSecondi; });
+
+        // --- GESTIONE CLICK E AVVIO ---
+        document.querySelectorAll(".bazzer").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const incremento = parseInt(btn.dataset.incremento);
+                const nuovaOfferta = offertaAttuale + incremento;
+                const puntataMassima = parseInt(document.getElementById('puntata').textContent);
+                if (nuovaOfferta > puntataMassima) {
+                    alert("Non hai abbastanza crediti per fare questa offerta! La tua puntata massima è " + puntataMassima);
+                    return;
+                }
+                await connection.invoke("InviaOfferta", nickname, nuovaOfferta);
+            });
+        });
+
+        document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
+            const inputOfferta = document.getElementById('offertaPersonalizzataInput');
+            const offertaInserita = parseInt(inputOfferta.value);
+            if (isNaN(offertaInserita) || offertaInserita <= 0) {
+                alert("Per favore, inserisci un valore numerico valido.");
+                return;
+            }
+            if (offertaInserita <= offertaAttuale) {
+                alert("La tua offerta deve essere superiore a quella attuale!");
+                return;
+            }
+            const puntataMassima = parseInt(document.getElementById('puntata').textContent);
+            if (offertaInserita > puntataMassima) {
+                alert("La tua offerta supera la tua puntata massima disponibile! (" + puntataMassima + ")");
+                return;
+            }
+            await connection.invoke("InviaOfferta", nickname, offertaInserita);
+            inputOfferta.value = "";
+        });
+
+        connection.start().then(() => {
+            connection.invoke("RichiediStatoAttuale");
+            aggiornaStatoPulsantiBazzer();
+        }).catch(err => console.error("Errore connessione SignalR:", err));
+    </script>
+}

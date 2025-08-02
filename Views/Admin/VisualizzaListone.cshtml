@@ -1,31 +1,232 @@
-﻿@model List<AstaLegheFC.Models.CalciatoreListone>
+﻿@using System.Text.Json
+@model List<AstaLegheFC.Models.CalciatoreListone>
 @{
     ViewData["Title"] = "Listone Calciatori";
+    var riepilogo = ViewBag.RiepilogoSquadre as List<AstaLegheFC.Models.ViewModels.SquadraRiepilogoViewModel> ?? new List<AstaLegheFC.Models.ViewModels.SquadraRiepilogoViewModel>();
+    var squadreJson = JsonSerializer.Serialize(riepilogo.Select(s => new { s.SquadraId, s.Nickname }));
 }
+
+<style>
+    #asta-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1050;
+        color: white;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+        #asta-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+    .asta-box {
+        background: linear-gradient(145deg, #34495e, #2c3e50);
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        border: 1px solid #3498db;
+        min-width: 650px;
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+
+    #asta-overlay.visible .asta-box {
+        transform: scale(1);
+    }
+
+    .asta-box-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 10px;
+    }
+
+    #overlay-logo-squadra {
+        height: 90px;
+        filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+    }
+
+    #overlay-nome-giocatore {
+        font-size: 3.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin: 0;
+        text-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    #overlay-dettagli-giocatore {
+        font-size: 1.5rem;
+        color: #95a5a6;
+        margin-top: 0;
+    }
+
+    #overlay-offerta {
+        font-size: 7rem;
+        font-weight: 700;
+        color: #f1c40f;
+        margin: 20px 0;
+        line-height: 1;
+        text-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+    }
+
+    #overlay-offerente {
+        font-size: 2.2rem;
+        font-weight: 300;
+    }
+
+    #overlay-log {
+        margin-top: 20px;
+        max-height: 150px;
+        overflow-y: auto;
+        text-align: left;
+        font-family: monospace;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 5px;
+        padding: 10px;
+    }
+
+        #overlay-log p {
+            margin: 2px 0;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 2px;
+        }
+
+    .asta-box-footer {
+        margin-top: 30px;
+    }
+</style>
 
 <h2 class="mt-3">Listone Calciatori</h2>
 
+@if (riepilogo != null && riepilogo.Any())
+{
+    <h4 class="mt-4">Riepilogo Squadre</h4>
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered table-sm text-center align-middle">
+            <thead class="table-primary">
+                <tr>
+                    <th>Nickname</th>
+                    <th>Crediti</th>
+                    <th>Puntata Max</th>
+                    <th>P</th>
+                    <th>D</th>
+                    <th>C</th>
+                    <th>A</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var s in riepilogo)
+                {
+                    <tr>
+                        <td>@s.Nickname</td>
+                        <td>@s.CreditiDisponibili</td>
+                        <td>@s.PuntataMassima</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('portieri-@s.Nickname')">
+                                @s.PortieriAssegnati.Count +/-
+                            </button>
+                            <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
+                                @foreach (var g in s.PortieriAssegnati)
+                                {
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                }
+                            </ul>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('difensori-@s.Nickname')">
+                                @s.DifensoriAssegnati.Count +/-
+                            </button>
+                            <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
+                                @foreach (var g in s.DifensoriAssegnati)
+                                {
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                }
+                            </ul>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('centro-@s.Nickname')">
+                                @s.CentrocampistiAssegnati.Count +/-
+                            </button>
+                            <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
+                                @foreach (var g in s.CentrocampistiAssegnati)
+                                {
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                }
+                            </ul>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('attaccanti-@s.Nickname')">
+                                @s.AttaccantiAssegnati.Count +/-
+                            </button>
+                            <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
+                                @foreach (var g in s.AttaccantiAssegnati)
+                                {
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                }
+                            </ul>
+                        </td>
+                        <td>
+                            <a asp-action="EsportaRosa"
+                               asp-controller="Admin"
+                               asp-route-squadraId="@s.SquadraId"
+                               class="btn btn-outline-primary btn-sm">
+                                Esporta
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
 <form id="filtroForm" method="get" asp-action="VisualizzaListone" class="row g-2 mb-4">
+    <input type="hidden" name="lega" value="@ViewBag.LegaAlias" />
     <div class="col-md-4">
-        <input type="text" name="nome" class="form-control" placeholder="Cerca per nome"
-               value="@ViewBag.Nome" oninput="submitFormDebounced()" />
+        <input type="text" name="nome" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" oninput="submitFormDebounced()" />
     </div>
     <div class="col-md-4">
-        <input type="text" name="squadra" class="form-control" placeholder="Cerca per squadra"
-               value="@ViewBag.Squadra" oninput="submitFormDebounced()" />
+        <input type="text" name="squadra" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" oninput="submitFormDebounced()" />
     </div>
     <div class="col-md-4">
-        <select name="ruolo" class="form-select" onchange="submitFormDebounced()">
+        <select name="ruolo" class="form-select" onchange="this.form.submit()">
             <option value="">Tutti i ruoli</option>
-            @foreach (var ruolo in (List<string>)ViewBag.RuoliDisponibili)
+            @foreach (var r in (List<string>)ViewBag.RuoliDisponibili)
             {
-                <option value="@ruolo" selected="@(ViewBag.Ruolo == ruolo ? "selected" : null)">
-                    @ruolo
-                </option>
+                <option value="@r" selected="@(ViewBag.Ruolo == r)">@r</option>
             }
         </select>
     </div>
 </form>
+
+<div class="row mb-3 align-items-center">
+    <div class="col-md-4">
+        <form id="formTimer" class="d-flex" onsubmit="impostaTimer(event)">
+            <input type="number" class="form-control me-2" id="secondiTimer" value="5" min="2" placeholder="Secondi Timer" />
+            <button type="submit" class="btn btn-secondary">Imposta</button>
+        </form>
+    </div>
+    <div class="col-md-4">
+        <div class="form-check form-switch fs-5">
+            <input class="form-check-input" type="checkbox" role="switch" id="bloccoPortieriSwitch" @(ViewBag.BloccoPortieriAttivo ? "checked" : "")>
+            <label class="form-check-label" for="bloccoPortieriSwitch">Blocco Portieri Attivo</label>
+        </div>
+    </div>
+</div>
 
 <div class="table-responsive">
     <table class="table table-striped table-bordered table-hover">
@@ -33,51 +234,237 @@
             <tr>
                 <th>Nome</th>
                 <th>Ruolo</th>
-                <th>Ruolo Mantra</th>
                 <th>Squadra</th>
-                <th>Qt.A</th>
-                <th>Qt.I</th>
-                <th>Diff</th>
-                <th>Qt.A M</th>
-                <th>Qt.I M</th>
-                <th>Diff.M</th>
-                <th>FVM</th>
-                <th>FVM M</th>
+                <th>Azioni</th>
             </tr>
         </thead>
         <tbody class="text-center">
             @foreach (var c in Model)
             {
-                <tr>
+                <tr id="riga-giocatore-@c.Id">
                     <td class="text-start">@c.Nome</td>
                     <td>@c.Ruolo</td>
-                    <td>@c.RuoloMantra</td>
                     <td class="text-start">@c.Squadra</td>
-                    <td>@c.QtA</td>
-                    <td>@c.QtI</td>
-                    <td>@c.Diff</td>
-                    <td>@c.QtAM</td>
-                    <td>@c.QtIM</td>
-                    <td>@c.DiffM</td>
-                    <td>@c.FVM</td>
-                    <td>@c.FVMM</td>
+                    <td>
+                        <form asp-action="AvviaAsta" method="post" style="display:inline;" class="form-avvia-asta">
+                            <input type="hidden" name="id" value="@c.Id" />
+                            <button type="submit" class="btn btn-success btn-sm">Asta</button>
+                        </form>
+                        <button class="btn btn-warning btn-sm btn-assegna"
+                                data-id="@c.Id"
+                                data-nome="@c.Nome">
+                            Assegna
+                        </button>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
 </div>
 
-@section Scripts {
-    <script>
-        let debounceTimer;
+<div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="assegnaModalLabel">Assegna Giocatore</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Stai assegnando: <strong id="nomeGiocatoreModale"></strong></p>
+                <input type="hidden" id="idGiocatoreModale" />
+                <div class="mb-3">
+                    <label for="squadraSelect" class="form-label">Assegna a:</label>
+                    <select id="squadraSelect" class="form-select"></select>
+                </div>
+                <div class="mb-3">
+                    <label for="costoInput" class="form-label">Costo:</label>
+                    <input type="number" id="costoInput" class="form-control" value="1" min="1" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" onclick="salvaAssegnazione()">Salva Assegnazione</button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div id="asta-overlay">
+    <div class="asta-box">
+        <div class="asta-box-header">
+            <img id="overlay-logo-squadra" src="" alt="Logo Squadra" />
+            <div>
+                <h2 id="overlay-nome-giocatore">NOME GIOCATORE</h2>
+                <p id="overlay-dettagli-giocatore">Ruolo - Squadra</p>
+            </div>
+        </div>
+        <h1 id="overlay-offerta">0</h1>
+        <h3 id="overlay-offerente">In attesa di offerte...</h3>
+        <div id="overlay-log"></div>
+        <div class="asta-box-footer">
+            <button class="btn btn-danger" onclick="annullaAsta()">Annulla Asta</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @Html.AntiForgeryToken()
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <script>
+        const squadre = JSON.parse('@Html.Raw(squadreJson)');
+        const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+
+        // --- GESTIONE SIGNALR ---
+        connection.on("MostraGiocatoreInAsta", (giocatore) => {
+            document.getElementById('overlay-nome-giocatore').innerText = giocatore.nome;
+            document.getElementById('overlay-dettagli-giocatore').innerText = `${giocatore.ruolo} - ${giocatore.squadraReale}`;
+            document.getElementById('overlay-logo-squadra').src = giocatore.logoUrl;
+            document.getElementById('overlay-offerta').innerText = '0';
+            document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
+            document.getElementById('overlay-offerente').style.color = '';
+            document.getElementById('overlay-log').innerHTML = '';
+            document.querySelector('.asta-box-footer').style.display = 'block';
+            document.getElementById('asta-overlay').classList.add('visible');
+        });
+
+        connection.on("AggiornaOfferta", (offerente, offerta) => {
+            document.getElementById('overlay-offerente').innerText = offerente;
+            document.getElementById('overlay-offerta').innerText = offerta;
+            const logContainer = document.getElementById('overlay-log');
+            if (logContainer) {
+                const logEntry = document.createElement('p');
+                logEntry.innerText = `${offerente} offre ${offerta}`;
+                logContainer.prepend(logEntry);
+            }
+        });
+
+        connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, offerente, offerta) => {
+            const offerenteEl = document.getElementById('overlay-offerente');
+            if (offerenteEl) {
+                offerenteEl.innerText = `AGGIUDICATO a ${offerente}!`;
+                offerenteEl.style.color = '#2ecc71';
+            }
+            document.querySelector('.asta-box-footer').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('asta-overlay').classList.remove('visible');
+                setTimeout(() => location.reload(), 300);
+            }, 4000);
+        });
+
+        connection.on("AstaAnnullata", () => {
+             document.getElementById('asta-overlay').classList.remove('visible');
+        });
+
+        connection.start().catch(err => console.error(err.toString()));
+
+        // --- GESTIONE BOTTONI E FORM ---
+        function annullaAsta() {
+            if (confirm("Sei sicuro di voler annullare l'asta in corso per tutti i partecipanti?")) {
+                fetch('/Admin/AnnullaAsta', { method: 'POST' })
+                .then(response => { if (!response.ok) alert("Errore"); });
+            }
+        }
+
+        document.querySelectorAll('.form-avvia-asta').forEach(form => {
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                fetch(this.action, { method: 'POST', body: new URLSearchParams(new FormData(this)) })
+                    .then(response => { if (!response.ok) alert('Errore avvio asta.'); });
+            });
+        });
+
+        document.querySelectorAll('.btn-assegna').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const giocatoreId = this.dataset.id;
+                const giocatoreNome = this.dataset.nome;
+                document.getElementById('idGiocatoreModale').value = giocatoreId;
+                document.getElementById('nomeGiocatoreModale').innerText = giocatoreNome;
+                const squadraSelect = document.getElementById('squadraSelect');
+                squadraSelect.innerHTML = '';
+                squadre.forEach(squadra => {
+                    const option = document.createElement('option');
+                    option.value = squadra.SquadraId;
+                    option.innerText = squadra.Nickname;
+                    squadraSelect.appendChild(option);
+                });
+                const modal = new bootstrap.Modal(document.getElementById('assegnaModal'));
+                modal.show();
+            });
+        });
+
+        function salvaAssegnazione() {
+            const payload = {
+                giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
+                squadraId: parseInt(document.getElementById('squadraSelect').value),
+                costo: parseInt(document.getElementById('costoInput').value)
+            };
+            fetch('/Admin/AssegnaManualmente', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(response => {
+                if (response.ok) { location.reload(); }
+                else { alert('Errore durante l\'assegnazione manuale.'); }
+            });
+        }
+
+        document.querySelectorAll('.btn-svincola').forEach(btn => {
+            btn.addEventListener('click', function () {
+                if (!confirm("Sei sicuro di voler svincolare questo giocatore?")) return;
+                const id = this.getAttribute('data-id');
+                fetch('/Admin/SvincolaGiocatore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: parseInt(id) })
+                }).then(response => {
+                    if (response.ok) location.reload();
+                    else alert("Errore nello svincolo.");
+                });
+            });
+        });
+
+        function impostaTimer(event) {
+            event.preventDefault();
+            const secondi = document.getElementById('secondiTimer').value;
+            fetch('/Admin/ImpostaTimer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ secondi: parseInt(secondi) })
+            }).then(response => {
+                if (response.ok) alert('Timer aggiornato a ' + secondi + ' secondi!');
+                else alert('Errore aggiornamento timer.');
+            });
+        }
+        document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
+
+        document.getElementById('bloccoPortieriSwitch').addEventListener('change', function() {
+            const isAttivo = this.checked;
+            fetch('/Admin/ImpostaBloccoPortieri', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ attivo: isAttivo })
+            })
+            .then(response => {
+                if (response.ok) {
+                    alert('Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
+                } else {
+                    alert('Errore durante l\'aggiornamento della regola.');
+                }
+            });
+        });
+
+        // --- FUNZIONI DI UTILITY ---
+        let debounceTimer;
         function submitFormDebounced() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                const form = document.getElementById("filtroForm");
-                const query = new URLSearchParams(new FormData(form)).toString();
-                window.location.href = form.action + "?" + query;
-            }, 500);
+            debounceTimer = setTimeout(() => { document.getElementById("filtroForm").submit(); }, 500);
+        }
+
+        function toggleLista(id) {
+            const lista = document.getElementById(id);
+            if (lista) {
+                lista.classList.toggle("d-none");
+            }
         }
     </script>
 }
