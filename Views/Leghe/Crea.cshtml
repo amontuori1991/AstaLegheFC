@@ -1,0 +1,35 @@
+﻿@model AstaLegheFC.Models.Lega
+@{
+    ViewData["Title"] = "Crea nuova lega";
+}
+
+<h2 class="mt-3">Crea nuova lega</h2>
+
+<form asp-action="Crea" method="post" class="mt-3">
+    <div class="mb-3">
+        <label asp-for="Nome" class="form-label">Nome lega</label>
+        <input asp-for="Nome" class="form-control" required />
+        <span asp-validation-for="Nome" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Alias" class="form-label">Alias (URL)</label>
+        <input asp-for="Alias" class="form-control" required />
+        <span asp-validation-for="Alias" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="CreditiIniziali" class="form-label">Crediti iniziali per squadra</label>
+        <input asp-for="CreditiIniziali" type="number" class="form-control" required min="1" />
+        <span asp-validation-for="CreditiIniziali" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Crea lega</button>
+    <a asp-action="Index" class="btn btn-secondary ms-2">Annulla</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
