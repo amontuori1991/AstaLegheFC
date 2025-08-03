@@ -4,6 +4,7 @@ using AstaLegheFC.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AstaLegheFC.Services
 {
@@ -11,9 +12,8 @@ namespace AstaLegheFC.Services
     {
         private readonly AppDbContext _context;
         private readonly IHubContext<BazzerHub> _hubContext;
-        private readonly BazzerService _bazzerService; // ✅ Aggiungi il BazzerService
+        private readonly BazzerService _bazzerService;
 
-        // ✅ Modifica il costruttore per ricevere anche il BazzerService
         public LegaService(AppDbContext context, IHubContext<BazzerHub> hubContext, BazzerService bazzerService)
         {
             _context = context;
@@ -21,13 +21,29 @@ namespace AstaLegheFC.Services
             _bazzerService = bazzerService;
         }
 
-        public async Task SvincolaGiocatoreAsync(int id)
+        public async Task SvincolaGiocatoreAsync(int id, int creditiDaRestituire)
         {
-            var giocatore = await _context.Giocatori.FindAsync(id);
-            if (giocatore != null)
+            var giocatore = await _context.Giocatori
+                .Include(g => g.Squadra)
+                .FirstOrDefaultAsync(g => g.Id == id);
+
+            if (giocatore != null && giocatore.Squadra != null)
             {
+                // Calcola la "penale" (o il "malus") dello svincolo
+                int costoOriginale = giocatore.CreditiSpesi ?? 0;
+                int malus = costoOriginale - creditiDaRestituire;
+
+                // Applica il malus direttamente ai crediti iniziali della squadra.
+                // In questo modo, quando la vista ricalcolerà i crediti disponibili,
+                // il rimborso risulterà corretto.
+                giocatore.Squadra.Crediti -= malus;
+
+                // Rimuovi il giocatore dalla rosa
                 _context.Giocatori.Remove(giocatore);
+
                 await _context.SaveChangesAsync();
+
+                // Notifica tutti gli utenti dell'aggiornamento
                 await _hubContext.Clients.All.SendAsync("AggiornaUtente");
             }
         }
@@ -51,7 +67,6 @@ namespace AstaLegheFC.Services
             };
             _context.Giocatori.Add(nuovoGiocatore);
 
-            // ✅ MODIFICA QUI: Aggiunto il controllo '_bazzerService.BloccoPortieriAttivo'
             if (_bazzerService.BloccoPortieriAttivo && calciatoreDaListone.Ruolo == "P")
             {
                 var idGiocatoriAcquistatiLega = await _context.Giocatori

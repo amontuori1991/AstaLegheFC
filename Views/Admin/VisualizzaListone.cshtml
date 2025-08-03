@@ -162,7 +162,7 @@
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.PortieriAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" onclick="apriModaleSvincolo(this)">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -173,7 +173,7 @@
                             <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.DifensoriAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" onclick="apriModaleSvincolo(this)">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -184,7 +184,7 @@
                             <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.CentrocampistiAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" onclick="apriModaleSvincolo(this)">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -195,7 +195,7 @@
                             <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.AttaccantiAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" onclick="apriModaleSvincolo(this)">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -304,6 +304,29 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                 <button type="button" class="btn btn-primary" onclick="salvaAssegnazione()">Salva Assegnazione</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="svincolaModal" tabindex="-1" aria-labelledby="svincolaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="svincolaModalLabel">Svincola Giocatore</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Stai svincolando: <strong id="nomeGiocatoreSvincola"></strong></p>
+                <input type="hidden" id="idGiocatoreSvincola" />
+                <div class="mb-3">
+                    <label for="creditiSvincoloInput" class="form-label">Crediti da restituire (costo originale: <span id="costoOriginaleSvincolo"></span>):</label>
+                    <input type="number" id="creditiSvincoloInput" class="form-control" value="1" min="0" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" id="btnConfermaSvincolo">Conferma Svincolo</button>
             </div>
         </div>
     </div>
@@ -465,7 +488,24 @@
             });
         }
 
-        // La logica per lo svincolo è stata spostata in site.js
+        document.getElementById('btnConfermaSvincolo').addEventListener('click', function() {
+            const payload = {
+                id: parseInt(document.getElementById('idGiocatoreSvincola').value),
+                creditiRestituiti: parseInt(document.getElementById('creditiSvincoloInput').value)
+            };
+
+            fetch('/Admin/SvincolaGiocatore', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    mostraMessaggio("Errore", "Errore durante lo svincolo.");
+                }
+            });
+        });
 
         async function impostaTimer(event) {
             event.preventDefault();
@@ -509,6 +549,20 @@
             if (lista) {
                 lista.classList.toggle("d-none");
             }
+        }
+
+        function apriModaleSvincolo(btn) {
+            const giocatoreId = btn.dataset.id;
+            const giocatoreNome = btn.dataset.nome;
+            const giocatoreCosto = btn.dataset.costo;
+
+            document.getElementById('idGiocatoreSvincola').value = giocatoreId;
+            document.getElementById('nomeGiocatoreSvincola').innerText = giocatoreNome;
+            document.getElementById('costoOriginaleSvincolo').innerText = giocatoreCosto;
+            document.getElementById('creditiSvincoloInput').value = giocatoreCosto;
+
+            const svincolaModal = new bootstrap.Modal(document.getElementById('svincolaModal'));
+            svincolaModal.show();
         }
     </script>
 }

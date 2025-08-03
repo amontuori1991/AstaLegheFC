@@ -50,8 +50,6 @@ namespace AstaLegheFC.Controllers
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
             ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
-
-            // ✅ AGGIUNTA QUESTA RIGA PER I SUONI DEL COUNTDOWN
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
 
             #region Riepilogo Squadre e Dati Vista
@@ -122,15 +120,17 @@ namespace AstaLegheFC.Controllers
         [HttpPost]
         public async Task<IActionResult> SvincolaGiocatore([FromBody] SvincolaRequest request)
         {
-            if (request.Id <= 0) return BadRequest("ID non valido.");
-            await _legaService.SvincolaGiocatoreAsync(request.Id);
+            if (request.Id <= 0 || request.CreditiRestituiti < 0) return BadRequest("Dati non validi.");
+
+            await _legaService.SvincolaGiocatoreAsync(request.Id, request.CreditiRestituiti);
+
             return Ok();
         }
 
         [HttpPost]
         public async Task<IActionResult> AssegnaManualmente([FromBody] AssegnaRequest request)
         {
-            if (request.Costo <= 0 || request.SquadraId <= 0 || request.GiocatoreId <= 0)
+            if (request.Costo < 0 || request.SquadraId <= 0 || request.GiocatoreId <= 0)
             {
                 return BadRequest("Dati non validi.");
             }
@@ -175,7 +175,11 @@ namespace AstaLegheFC.Controllers
             return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"{squadra.Nickname}.csv");
         }
 
-        public class SvincolaRequest { public int Id { get; set; } }
+        public class SvincolaRequest
+        {
+            public int Id { get; set; }
+            public int CreditiRestituiti { get; set; }
+        }
         public class TimerRequest { public int Secondi { get; set; } }
         public class AssegnaRequest
         {

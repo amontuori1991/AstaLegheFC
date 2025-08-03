@@ -292,7 +292,10 @@
             resettaTimer();
         });
 
-        connection.on("AggiornaUtente", () => { aggiornaCrediti(); });
+        connection.on("AggiornaUtente", () => {
+            aggiornaCrediti();
+            caricaListone(); // Ricarica la lista dei giocatori disponibili
+        });
         connection.on("AggiornaDurataTimer", (nuoviSecondi) => { timerSecondi = nuoviSecondi; });
 
         // --- GESTIONE CLICK E AVVIO ---

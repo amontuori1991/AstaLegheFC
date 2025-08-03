@@ -5,7 +5,7 @@ function mostraMessaggio(titolo, corpo, isConferma = false) {
         const modaleElement = document.getElementById('messaggioModale');
         if (!modaleElement) {
             console.error("Elemento del modale non trovato!");
-            resolve(false); // Se non trova il modale, restituisce 'false' per non bloccare lo script
+            resolve(false);
             return;
         }
 
@@ -20,35 +20,34 @@ function mostraMessaggio(titolo, corpo, isConferma = false) {
 
         const bootstrapModal = bootstrap.Modal.getOrCreateInstance(modaleElement);
 
-        // Funzione unica per chiudere e risolvere la promise, evitando esecuzioni multiple
-        const closeHandler = (value) => {
-            // Rimuovi i listener per evitare memory leak
-            btnOk.removeEventListener('click', okHandler);
-            btnAnnulla.removeEventListener('click', annullaHandler);
-            modaleElement.removeEventListener('hidden.bs.modal', hiddenHandler);
-            resolve(value);
-        };
-
-        const okHandler = () => {
+        const onOkClick = () => {
+            resolve(true);
             bootstrapModal.hide();
-            closeHandler(true);
         };
 
-        const annullaHandler = () => {
+        const onAnnullaClick = () => {
+            resolve(false);
             bootstrapModal.hide();
-            closeHandler(false);
         };
 
-        const hiddenHandler = () => closeHandler(false);
+        // Rimuovi listener precedenti per evitare esecuzioni multiple
+        const newBtnOk = btnOk.cloneNode(true);
+        btnOk.parentNode.replaceChild(newBtnOk, btnOk);
+        const newBtnAnnulla = btnAnnulla.cloneNode(true);
+        btnAnnulla.parentNode.replaceChild(newBtnAnnulla, btnAnnulla);
 
-        // Aggiungi i listener
-        btnOk.addEventListener('click', okHandler, { once: true });
-        btnAnnulla.addEventListener('click', annullaHandler, { once: true });
-        modaleElement.addEventListener('hidden.bs.modal', hiddenHandler, { once: true });
+        // Ricollega gli eventi
+        document.getElementById('messaggioModaleBtnOk').addEventListener('click', onOkClick, { once: true });
+        document.getElementById('messaggioModaleBtnAnnulla').addEventListener('click', onAnnullaClick, { once: true });
+
+        modaleElement.addEventListener('hidden.bs.modal', () => {
+            resolve(false);
+        }, { once: true });
 
         bootstrapModal.show();
     });
 }
+
 
 // Logica di caricamento pagina (loader)
 document.addEventListener("DOMContentLoaded", function () {
@@ -63,28 +62,5 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // ✅ LOGICA PER IL PULSANTE SVINCOLA SPOSTATA QUI
-    // Questo metodo (event delegation) garantisce che il click funzioni
-    // anche sui pulsanti che sono nascosti al caricamento della pagina.
-    document.addEventListener('click', async function (event) {
-        if (event.target && event.target.matches('.btn-svincola')) {
-            const btn = event.target;
-            const nomeGiocatore = btn.dataset.nome;
-
-            if (await mostraMessaggio("Conferma Svincolo", `Sei sicuro di voler svincolare ${nomeGiocatore}?`, true)) {
-                const id = btn.getAttribute('data-id');
-                fetch('/Admin/SvincolaGiocatore', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(id) })
-                }).then(async response => {
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        await mostraMessaggio("Errore", "Errore nello svincolo.");
-                    }
-                });
-            }
-        }
-    });
+    // NESSUN'ALTRA LOGICA QUI! Lo svincolo è gestito nella sua pagina.
 });
