@@ -77,16 +77,13 @@ a {
 /* Tabelle */
 .table {
     background-color: #2c3e50;
-    color: #FFFFFF;
     border-color: #34495e;
 }
 
-    .table > :not(caption) > * > * {
-        background-color: transparent;
-        border-color: #34495e;
+    .table td, .table th {
+        color: #ecf0f1;
     }
 
-/* ✅ CORREZIONE AGGIUNTA QUI */
 .table-striped > tbody > tr:nth-of-type(odd) > * {
     color: #FFFFFF !important;
 }
@@ -221,6 +218,39 @@ h1, h2, h3, h4, h5 {
 }
 
 /* =============================================== */
+/* STILE GIOCATORE IN ASTA (UTENTE)                */
+/* =============================================== */
+
+.giocatore-in-asta-container {
+    margin: 1rem 0;
+}
+
+    .giocatore-in-asta-container p {
+        margin-bottom: 0.5rem;
+        color: #95a5a6 !important;
+    }
+
+#giocatore-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: rgba(44, 62, 80, 0.5);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+#logo-giocatore-in-asta {
+    height: 40px;
+    width: 40px;
+    object-fit: contain;
+}
+
+#giocatore {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+/* =============================================== */
 /* STILE RESPONSIVE (MOBILE)                       */
 /* =============================================== */
 @media (max-width: 768px) {
@@ -267,5 +297,40 @@ h1, h2, h3, h4, h5 {
 
     #overlay-offerente {
         font-size: 1.5rem;
+    }
+}
+
+/* =============================================== */
+/* LOADER DI CARICAMENTO                           */
+/* =============================================== */
+#loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(26, 37, 51, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.loader-spinner {
+    border: 8px solid #34495e;
+    border-top: 8px solid #3498db;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1.5s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }

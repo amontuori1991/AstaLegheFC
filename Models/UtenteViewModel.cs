@@ -16,6 +16,8 @@
         public int DifensoriAcquistati { get; set; }
         public int CentrocampistiAcquistati { get; set; }
         public int AttaccantiAcquistati { get; set; }
+        public string LogoSquadra { get; set; }
+
     }
 
 

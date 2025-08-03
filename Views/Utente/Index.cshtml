@@ -4,21 +4,55 @@
     ViewData["Title"] = "Asta - Utente";
 }
 
+<style>
+    .ricerca-container {
+        margin-top: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    #risultati-ricerca {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #34495e;
+        border-radius: 5px;
+        padding: 5px;
+        background-color: #2c3e50;
+    }
+
+    .risultato-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #34495e;
+    }
+
+        .risultato-item:last-child {
+            border-bottom: none;
+        }
+</style>
+
 <h2>Benvenuto @Model.Nickname</h2>
 <p>Crediti a disposizione: <strong id="crediti">@Model.CreditiDisponibili</strong></p>
 <p>Puntata massima: <strong id="puntata">@Model.PuntataMassima</strong></p>
-<p>
-    Calciatore in asta: <strong id="giocatore">
-        @if (Model.CalciatoreInAsta != null && !string.IsNullOrEmpty(Model.CalciatoreInAsta.Nome))
-        {
-            @($"{Model.CalciatoreInAsta.Nome} ({Model.CalciatoreInAsta.Ruolo} - {Model.CalciatoreInAsta.Squadra})")
-        }
-        else
-        {
-            <text>Nessun giocatore</text>
-        }
-    </strong>
-</p>
+
+<div class="giocatore-in-asta-container">
+    <p class="mb-0">Calciatore in asta:</p>
+    <div id="giocatore-info">
+        <img id="logo-giocatore-in-asta" src="@Model.LogoSquadra" alt="Logo" style="display: @(string.IsNullOrEmpty(Model.LogoSquadra) ? "none" : "block");" />
+        <strong id="giocatore">
+            @if (Model.CalciatoreInAsta != null && !string.IsNullOrEmpty(Model.CalciatoreInAsta.Nome))
+            {
+                @($"{Model.CalciatoreInAsta.Nome} ({Model.CalciatoreInAsta.Ruolo} - {Model.CalciatoreInAsta.Squadra})")
+            }
+            else
+            {
+                <text>Nessun giocatore</text>
+            }
+        </strong>
+    </div>
+</div>
+
 <p>Timer: <strong id="timer">-</strong> secondi</p>
 <p>Attuale offerente: <strong id="offerente">@Model.OfferenteAttuale</strong></p>
 <p>Attuale offerta: <strong id="offerta">@Model.OffertaAttuale</strong> crediti</p>
@@ -39,10 +73,22 @@
     </div>
 </div>
 
+<div class="ricerca-container">
+    <hr style="border-color: #34495e;" />
+    <h4>Suggerisci un Giocatore all'Admin</h4>
+    <div class="row">
+        <div class="col-md-6">
+            <input type="text" id="input-ricerca-giocatore" class="form-control" placeholder="Cerca per nome..." />
+            <div id="risultati-ricerca" class="mt-2"></div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
         // --- VARIABILI DI STATO E REGOLE ---
+        let listoneCompleto = [];
         const nickname = "@Model.Nickname";
         const legaAlias = new URLSearchParams(window.location.search).get('lega');
         let offertaAttuale = parseInt("@Model.OffertaAttuale") || 0;
@@ -84,9 +130,7 @@
                     messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`;
                 }
             }
-
             document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata").forEach(el => el.disabled = !abilitato);
-
             if (!abilitato && messaggio) {
                 avvisoDiv.innerText = messaggio;
                 avvisoDiv.style.display = 'block';
@@ -133,11 +177,66 @@
             } catch (e) { console.error("Errore aggiornamento crediti:", e); }
         }
 
+        async function caricaListone() {
+            try {
+                const response = await fetch(`/Utente/GetListoneDisponibile?lega=${legaAlias}`);
+                if (response.ok) {
+                    listoneCompleto = await response.json();
+                }
+            } catch (e) {
+                console.error("Errore nel caricamento del listone:", e);
+            }
+        }
+
+        const inputRicerca = document.getElementById('input-ricerca-giocatore');
+        const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
+
+        inputRicerca.addEventListener('input', () => {
+            const testo = inputRicerca.value.toLowerCase();
+            risultatiRicercaDiv.innerHTML = '';
+            if (testo.length < 2) return;
+            const filtrati = listoneCompleto.filter(g => g.nome.toLowerCase().includes(testo));
+
+            filtrati.slice(0, 10).forEach(g => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'risultato-item';
+
+                const spanInfo = document.createElement('span');
+                spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra})`;
+
+                const suggestButton = document.createElement('button');
+                suggestButton.className = 'btn btn-sm btn-info';
+                suggestButton.textContent = 'Suggerisci';
+                suggestButton.addEventListener('click', () => suggerisciGiocatore(g.id));
+
+                itemDiv.appendChild(spanInfo);
+                itemDiv.appendChild(suggestButton);
+                risultatiRicercaDiv.appendChild(itemDiv);
+            });
+        });
+
+        function suggerisciGiocatore(giocatoreId) {
+            connection.invoke("SuggerisciGiocatore", giocatoreId, nickname, legaAlias)
+                .then(() => {
+                    mostraMessaggio("Suggerimento Inviato", "Il tuo suggerimento è stato inviato all'amministratore!");
+                    inputRicerca.value = '';
+                    risultatiRicercaDiv.innerHTML = '';
+                })
+                .catch(err => console.error("Errore nell'invio del suggerimento:", err));
+        }
+
         // --- GESTIONE EVENTI SIGNALR ---
         connection.on("MostraGiocatoreInAsta", (giocatore) => {
+            const logoImg = document.getElementById("logo-giocatore-in-asta");
             idListoneAttuale = giocatore.id;
             ruoloGiocatoreAttuale = giocatore.ruolo;
             document.getElementById("giocatore").textContent = `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
+            if(giocatore.logoUrl) {
+                logoImg.src = giocatore.logoUrl;
+                logoImg.style.display = 'block';
+            } else {
+                logoImg.style.display = 'none';
+            }
             document.getElementById("offerente").textContent = "NESSUNO";
             document.getElementById("offerta").textContent = "0";
             offertaAttuale = 0;
@@ -157,11 +256,13 @@
             idListoneAttuale = 0;
             ruoloGiocatoreAttuale = "";
             document.getElementById("giocatore").textContent = "Nessun giocatore";
+            document.getElementById("logo-giocatore-in-asta").style.display = 'none';
             document.getElementById("offerente").textContent = "-";
             document.getElementById("offerta").textContent = "0";
             aggiornaStatoPulsantiBazzer();
             resettaTimer();
             aggiornaCrediti();
+            caricaListone();
         });
 
         connection.on("AstaAnnullata", () => {
@@ -169,6 +270,7 @@
             idListoneAttuale = 0;
             ruoloGiocatoreAttuale = "";
             document.getElementById("giocatore").textContent = "Nessun giocatore";
+            document.getElementById("logo-giocatore-in-asta").style.display = 'none';
             document.getElementById("offerente").textContent = "-";
             document.getElementById("offerta").textContent = "0";
             aggiornaStatoPulsantiBazzer();
@@ -215,6 +317,7 @@
         connection.start().then(() => {
             connection.invoke("RichiediStatoAttuale");
             aggiornaStatoPulsantiBazzer();
+            caricaListone();
         }).catch(err => console.error("Errore connessione SignalR:", err));
     </script>
 }

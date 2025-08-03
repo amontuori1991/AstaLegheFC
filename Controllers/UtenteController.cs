@@ -1,4 +1,5 @@
 ﻿using AstaLegheFC.Data;
+using AstaLegheFC.Helpers;
 using AstaLegheFC.Models;
 using AstaLegheFC.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -62,7 +63,8 @@ namespace AstaLegheFC.Controllers
                 PortieriAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "P"),
                 DifensoriAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "D"),
                 CentrocampistiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "C"),
-                AttaccantiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "A")
+                AttaccantiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "A"),
+           LogoSquadra = giocatoreInAsta != null ? LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra) : ""
             };
 
             return View(viewModel);
@@ -99,5 +101,27 @@ namespace AstaLegheFC.Controllers
                 attaccanti = squadra.Giocatori.Count(g => g.Ruolo == "A")
             });
         }
+        [HttpGet]
+        public async Task<IActionResult> GetListoneDisponibile(string lega)
+        {
+            var legaModel = await _context.Leghe.FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
+            if (legaModel == null) return NotFound();
+
+            // Trova tutti i giocatori già acquistati in questa lega
+            var idGiocatoriAcquistati = await _context.Giocatori
+                .Where(g => g.Squadra.LegaId == legaModel.Id)
+                .Select(g => g.IdListone)
+                .ToListAsync();
+
+            // Restituisce la lista dei giocatori non acquistati, in un formato leggero
+            var listoneDisponibile = await _context.ListoneCalciatori
+                .Where(c => !idGiocatoriAcquistati.Contains(c.IdListone))
+                .OrderBy(c => c.Nome)
+                .Select(c => new { c.Id, c.Nome, c.Ruolo, c.Squadra }) // Seleziona solo i dati necessari
+                .ToListAsync();
+
+            return Json(listoneDisponibile);
+        }
     }
 }
+    

@@ -19,18 +19,30 @@ namespace AstaLegheFC.Hubs
             _context = context;
         }
 
+        // ✅ AGGIUNTO: Metodo per l'admin per unirsi a un gruppo privato
+        public async Task AggiungiAdminAlGruppo(string legaAlias)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"admin_{legaAlias}");
+        }
+
+        // ✅ AGGIUNTO: Metodo per ricevere un suggerimento e inoltrarlo all'admin
+        public async Task SuggerisciGiocatore(int giocatoreId, string suggeritore, string legaAlias)
+        {
+            var giocatore = await _context.ListoneCalciatori.FindAsync(giocatoreId);
+            if (giocatore != null)
+            {
+                // Invia il messaggio solo al gruppo degli admin di quella lega
+                await Clients.Group($"admin_{legaAlias}").SendAsync("GiocatoreSuggerito", giocatore, suggeritore);
+            }
+        }
+
         public async Task InviaOfferta(string offerente, int offerta)
         {
-            // ✅ CONTROLLO DI SICUREZZA SUL SERVER
             var (offerenteAttuale, offertaAttuale) = _bazzerService.GetOffertaAttuale();
-
-            // Se l'offerta ricevuta non è valida (inferiore o uguale a quella attuale),
-            // il server la ignora e non fa nulla.
             if (offerta <= offertaAttuale)
             {
                 return;
             }
-
             _bazzerService.AggiornaOfferta(offerente, offerta);
             await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta);
         }
@@ -95,8 +107,12 @@ namespace AstaLegheFC.Hubs
                     _bazzerService.SegnaAstaConclusa();
 
                     await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
-                    await Clients.Group(legaAlias.ToLower()).SendAsync("AggiornaUtente");
-                    await Clients.Group($"admin_{legaAlias.ToLower()}").SendAsync("AggiornaAdmin");
+
+                    // L'aggiornamento di Utente e Admin ora è gestito tramite AstaTerminata e Svincolo/Assegnazione.
+                    // Per evitare chiamate ridondanti, possiamo commentarle qui e affidarci a location.reload() lato admin
+                    // e alla funzione aggiornaCrediti() lato utente, già innescate da AstaTerminata.
+                    // await Clients.Group(legaAlias.ToLower()).SendAsync("AggiornaUtente");
+                    // await Clients.Group($"admin_{legaAlias}").SendAsync("AggiornaAdmin");
                 }
             }
             catch (Exception ex)
@@ -117,7 +133,8 @@ namespace AstaLegheFC.Hubs
                     id = giocatoreInAsta.Id,
                     nome = giocatoreInAsta.Nome,
                     ruolo = giocatoreInAsta.Ruolo,
-                    squadraReale = giocatoreInAsta.Squadra
+                    squadraReale = giocatoreInAsta.Squadra,
+                    logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra)
                 });
             }
             await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta);

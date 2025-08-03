@@ -7,6 +7,7 @@
 }
 
 <style>
+    /* Rimossa l'animazione 'flash' che non serve più */
     #asta-overlay {
         position: fixed;
         top: 0;
@@ -320,6 +321,7 @@
         const squadre = JSON.parse('@Html.Raw(squadreJson)');
         const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
         const durataTimer = @ViewBag.DurataTimer;
+        const legaAliasAdmin = "@ViewBag.LegaAlias";
         let countdownTimerAdmin = null;
 
         // --- GESTIONE SIGNALR ---
@@ -338,19 +340,15 @@
         connection.on("AggiornaOfferta", (offerente, offerta) => {
             const offerenteEl = document.getElementById('overlay-offerente');
             if (offerenteEl) offerenteEl.innerText = offerente;
-
             const offertaEl = document.getElementById('overlay-offerta');
             if(offertaEl) offertaEl.innerText = offerta;
-
             document.getElementById('suono-offerta').play();
-
             const logContainer = document.getElementById('overlay-log');
             if (logContainer) {
                 const logEntry = document.createElement('p');
                 logEntry.innerText = `${offerente} offre ${offerta}`;
                 logContainer.prepend(logEntry);
             }
-
             clearInterval(countdownTimerAdmin);
             let secondiRimanenti = durataTimer;
             countdownTimerAdmin = setInterval(() => {
@@ -369,14 +367,12 @@
         connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, offerente, offerta) => {
             clearInterval(countdownTimerAdmin);
             document.getElementById('suono-vittoria').play();
-
             const offerenteEl = document.getElementById('overlay-offerente');
             if (offerenteEl) {
                 offerenteEl.innerText = `AGGIUDICATO a ${offerente}!`;
                 offerenteEl.style.color = '#2ecc71';
             }
             document.querySelector('.asta-box-footer').style.display = 'none';
-
             setTimeout(() => {
                 document.getElementById('asta-overlay').classList.remove('visible');
                 setTimeout(() => location.reload(), 300);
@@ -388,7 +384,24 @@
              document.getElementById('asta-overlay').classList.remove('visible');
         });
 
-        connection.start().catch(err => console.error(err.toString()));
+        // ✅ MODIFICATA LA LOGICA PER RICEVERE IL SUGGERIMENTO
+        connection.on("GiocatoreSuggerito", (giocatore, suggeritore) => {
+            mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito di chiamare: ${giocatore.nome}`);
+
+            // Trova il campo di ricerca per nome
+            const inputNome = document.querySelector('form#filtroForm input[name="nome"]');
+            if (inputNome) {
+                // Inserisce il nome del giocatore nel campo
+                inputNome.value = giocatore.nome;
+
+                // Invia automaticamente il form per filtrare
+                document.getElementById('filtroForm').submit();
+            }
+        });
+
+        connection.start().then(() => {
+            connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
+        }).catch(err => console.error(err.toString()));
 
         // --- GESTIONE BOTTONI E FORM ---
         async function annullaAsta() {
