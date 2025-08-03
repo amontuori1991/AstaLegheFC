@@ -4,9 +4,14 @@ using AstaLegheFC.Hubs;
 using AstaLegheFC.Models;
 using AstaLegheFC.Models.ViewModels;
 using AstaLegheFC.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using OfficeOpenXml;
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -26,6 +31,84 @@ namespace AstaLegheFC.Controllers
             _bazzerService = bazzerService;
             _legaService = legaService;
             _hubContext = hubContext;
+        }
+
+        [HttpGet]
+        public IActionResult ImportaListone()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ImportaListone(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+            {
+                ViewBag.Errore = "Per favore, seleziona un file Excel valido.";
+                return View();
+            }
+
+            await _context.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"ListoneCalciatori\" RESTART IDENTITY");
+
+            var nuoviCalciatori = new List<CalciatoreListone>();
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+            using (var stream = new MemoryStream())
+            {
+                await file.CopyToAsync(stream);
+                using (var package = new ExcelPackage(stream))
+                {
+                    var worksheet = package.Workbook.Worksheets.FirstOrDefault();
+                    if (worksheet == null)
+                    {
+                        ViewBag.Errore = "Il file Excel non contiene fogli di lavoro.";
+                        return View();
+                    }
+
+                    var rowCount = worksheet.Dimension.Rows;
+                    for (int row = 1; row <= rowCount; row++)
+                    {
+                        try
+                        {
+                            var idValue = worksheet.Cells[row, 1].Value;
+                            if (idValue == null || !int.TryParse(idValue.ToString(), out int idListone))
+                            {
+                                continue;
+                            }
+
+                            // ✅ BLOCCO DI MAPPATURA CORRETTO
+                            var calciatore = new CalciatoreListone
+                            {
+                                IdListone = idListone, // Colonna A (1)
+                                Ruolo = worksheet.Cells[row, 2].Value?.ToString().Trim(),      // Colonna B (R)
+                                RuoloMantra = worksheet.Cells[row, 3].Value?.ToString().Trim(),// Colonna C (RM)
+                                Nome = worksheet.Cells[row, 4].Value?.ToString().Trim(),       // Colonna D (Nome)
+                                Squadra = worksheet.Cells[row, 5].Value?.ToString().Trim(),    // Colonna E (Squadra)
+                                QtA = Convert.ToInt32(worksheet.Cells[row, 6].Value),        // Colonna F (Qt.A)
+                                QtI = Convert.ToInt32(worksheet.Cells[row, 7].Value)         // Colonna G (Qt.I)
+                            };
+                            nuoviCalciatori.Add(calciatore);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Errore durante la lettura della riga {row}: {ex.Message}");
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            if (!nuoviCalciatori.Any())
+            {
+                ViewBag.Errore = "Nessun giocatore valido trovato nel file. Controlla che il formato sia corretto.";
+                return View();
+            }
+
+            await _context.ListoneCalciatori.AddRangeAsync(nuoviCalciatori);
+            await _context.SaveChangesAsync();
+
+            ViewBag.Messaggio = $"Importazione completata con successo! Sono stati aggiunti {nuoviCalciatori.Count} calciatori.";
+            return View();
         }
 
         public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo)
