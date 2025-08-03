@@ -21,7 +21,6 @@ body {
     font-family: 'Montserrat', sans-serif;
     background-color: #1a2533;
     color: #FFFFFF;
-    /* Layout per sticky footer */
     display: flex;
     flex-direction: column;
     min-height: 100vh;
@@ -30,7 +29,6 @@ body {
 
 main {
     color: #FFFFFF;
-    /* Permette al contenuto di espandersi e spingere il footer in basso */
     flex: 1 0 auto;
 }
 
@@ -216,18 +214,53 @@ h1, h2, h3, h4, h5 {
 .asta-box-footer {
     margin-top: 30px;
 }
-/* Righe disabilitate: testo più visibile */
-tr.disabled td,
-tr.unselectable td,
-td.disabled,
-td.unselectable,
-td.text-muted,
-td.text-secondary {
-    color: #bdc3c7 !important;
-    opacity: 1 !important;
 
-}
-/* Forza colore chiaro su tutte le celle delle tabelle */
-.table tbody td {
-    color: #f0f0f0 !important;
+/* =============================================== */
+/* STILE RESPONSIVE (MOBILE)                       */
+/* =============================================== */
+@media (max-width: 768px) {
+
+    h2 {
+        font-size: 1.8rem;
+    }
+
+    .pulsanti-offerta-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 5px;
+    }
+
+    .bazzer {
+        padding: 10px 15px;
+        font-size: 1.1rem;
+        flex-grow: 1;
+    }
+
+    .offerta-personalizzata-container {
+        max-width: 70%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .table-sm td, .table-sm th {
+        padding: .5rem;
+    }
+
+    .asta-box {
+        min-width: 90%;
+        padding: 20px;
+    }
+
+    #overlay-nome-giocatore {
+        font-size: 2rem;
+    }
+
+    #overlay-offerta {
+        font-size: 4rem;
+    }
+
+    #overlay-offerente {
+        font-size: 1.5rem;
+    }
 }

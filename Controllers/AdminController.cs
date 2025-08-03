@@ -1,5 +1,5 @@
 ﻿using AstaLegheFC.Data;
-using AstaLegheFC.Helpers; // ✅ Aggiungi questo using
+using AstaLegheFC.Helpers;
 using AstaLegheFC.Hubs;
 using AstaLegheFC.Models;
 using AstaLegheFC.Models.ViewModels;
@@ -7,6 +7,7 @@ using AstaLegheFC.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -50,6 +51,9 @@ namespace AstaLegheFC.Controllers
             ViewBag.Ruolo = ruolo;
             ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
 
+            // ✅ AGGIUNTA QUESTA RIGA PER I SUONI DEL COUNTDOWN
+            ViewBag.DurataTimer = _bazzerService.DurataTimer;
+
             #region Riepilogo Squadre e Dati Vista
             var squadre = await _context.Squadre
                 .Include(s => s.Giocatori)
@@ -63,7 +67,7 @@ namespace AstaLegheFC.Controllers
                 int creditiSpesi = s.Giocatori.Sum(g => g.CreditiSpesi ?? 0);
                 int creditiDisponibili = s.Crediti - creditiSpesi;
                 int giocatoriAcquistatiCount = s.Giocatori.Count;
-                int slotTotali = 28;
+                int slotTotali = RegoleLega.MaxPortieri + RegoleLega.MaxDifensori + RegoleLega.MaxCentrocampisti + RegoleLega.MaxAttaccanti;
                 int slotRimasti = slotTotali - giocatoriAcquistatiCount;
                 int puntataMassima = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
 
@@ -88,21 +92,6 @@ namespace AstaLegheFC.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ImpostaTimer([FromBody] TimerRequest request)
-        {
-            _bazzerService.ImpostaDurataTimer(request.Secondi);
-            await _hubContext.Clients.All.SendAsync("AggiornaDurataTimer", _bazzerService.DurataTimer);
-            return Ok();
-        }
-
-        [HttpPost]
-        public IActionResult ImpostaBloccoPortieri([FromBody] BloccoPortieriRequest request)
-        {
-            _bazzerService.ImpostaBloccoPortieri(request.Attivo);
-            return Ok();
-        }
-
-        [HttpPost]
         public async Task<IActionResult> AvviaAsta(int id)
         {
             var giocatore = await _context.ListoneCalciatori.FindAsync(id);
@@ -116,10 +105,17 @@ namespace AstaLegheFC.Controllers
                 nome = giocatore.Nome,
                 ruolo = giocatore.Ruolo,
                 squadraReale = giocatore.Squadra,
-                // ✅ AGGIUNTA LA CHIAMATA PER OTTENERE IL LOGO
                 logoUrl = LogoHelper.GetLogoUrl(giocatore.Squadra)
             });
 
+            return Ok();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AnnullaAsta()
+        {
+            _bazzerService.AnnullaAstaCorrente();
+            await _hubContext.Clients.All.SendAsync("AstaAnnullata");
             return Ok();
         }
 
@@ -138,19 +134,22 @@ namespace AstaLegheFC.Controllers
             {
                 return BadRequest("Dati non validi.");
             }
-
             await _legaService.AssegnaGiocatoreManualmenteAsync(request.GiocatoreId, request.SquadraId, request.Costo);
             return Ok();
         }
+
         [HttpPost]
-        public async Task<IActionResult> AnnullaAsta()
+        public async Task<IActionResult> ImpostaTimer([FromBody] TimerRequest request)
         {
-            // 1. Azzera lo stato dell'asta nel servizio
-            _bazzerService.AnnullaAstaCorrente();
+            _bazzerService.ImpostaDurataTimer(request.Secondi);
+            await _hubContext.Clients.All.SendAsync("AggiornaDurataTimer", _bazzerService.DurataTimer);
+            return Ok();
+        }
 
-            // 2. Invia una notifica a tutti i client che l'asta è stata annullata
-            await _hubContext.Clients.All.SendAsync("AstaAnnullata");
-
+        [HttpPost]
+        public IActionResult ImpostaBloccoPortieri([FromBody] BloccoPortieriRequest request)
+        {
+            _bazzerService.ImpostaBloccoPortieri(request.Attivo);
             return Ok();
         }
 

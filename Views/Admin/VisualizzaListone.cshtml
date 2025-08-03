@@ -20,7 +20,7 @@
         z-index: 1050;
         color: white;
         text-align: center;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        font-family: 'Montserrat', sans-serif;
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -76,10 +76,10 @@
     #overlay-offerta {
         font-size: 7rem;
         font-weight: 700;
-        color: #f1c40f;
         margin: 20px 0;
         line-height: 1;
         text-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+        color: #f1c40f !important;
     }
 
     #overlay-offerente {
@@ -142,7 +142,7 @@
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.PortieriAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -153,7 +153,7 @@
                             <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.DifensoriAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -164,7 +164,7 @@
                             <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.CentrocampistiAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -175,7 +175,7 @@
                             <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.AttaccantiAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">x</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -307,12 +307,18 @@
     </div>
 </div>
 
+<audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
+<audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
+<audio id="suono-vittoria" src="~/sounds/gavel.mp3" preload="auto"></audio>
+
 @section Scripts {
     @Html.AntiForgeryToken()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
         const squadre = JSON.parse('@Html.Raw(squadreJson)');
         const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+        const durataTimer = @ViewBag.DurataTimer;
+        let countdownTimerAdmin = null;
 
         // --- GESTIONE SIGNALR ---
         connection.on("MostraGiocatoreInAsta", (giocatore) => {
@@ -330,21 +336,41 @@
         connection.on("AggiornaOfferta", (offerente, offerta) => {
             document.getElementById('overlay-offerente').innerText = offerente;
             document.getElementById('overlay-offerta').innerText = offerta;
+            document.getElementById('suono-offerta').play();
+
             const logContainer = document.getElementById('overlay-log');
             if (logContainer) {
                 const logEntry = document.createElement('p');
                 logEntry.innerText = `${offerente} offre ${offerta}`;
                 logContainer.prepend(logEntry);
             }
+
+            clearInterval(countdownTimerAdmin);
+            let secondiRimanenti = durataTimer;
+            countdownTimerAdmin = setInterval(() => {
+                secondiRimanenti--;
+                if (secondiRimanenti >= 0) {
+                    const beep = document.getElementById('suono-countdown');
+                    beep.currentTime = 0;
+                    beep.play();
+                }
+                if (secondiRimanenti < -1) { // Lascia un secondo extra di buffer
+                    clearInterval(countdownTimerAdmin);
+                }
+            }, 1000);
         });
 
         connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, offerente, offerta) => {
+            clearInterval(countdownTimerAdmin);
+            document.getElementById('suono-vittoria').play();
+
             const offerenteEl = document.getElementById('overlay-offerente');
             if (offerenteEl) {
                 offerenteEl.innerText = `AGGIUDICATO a ${offerente}!`;
                 offerenteEl.style.color = '#2ecc71';
             }
             document.querySelector('.asta-box-footer').style.display = 'none';
+
             setTimeout(() => {
                 document.getElementById('asta-overlay').classList.remove('visible');
                 setTimeout(() => location.reload(), 300);
@@ -352,6 +378,7 @@
         });
 
         connection.on("AstaAnnullata", () => {
+             clearInterval(countdownTimerAdmin);
              document.getElementById('asta-overlay').classList.remove('visible');
         });
 

@@ -25,19 +25,17 @@
 
 <div id="avviso-ruolo-completo" class="alert alert-danger mt-3" style="display: none;"></div>
 
-<div class="mt-3">
+<div class="pulsanti-offerta-container mt-3">
     @foreach (var incremento in new[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 25, 30 })
     {
         <button class="bazzer btn btn-primary m-1" data-incremento="@incremento" disabled>+@incremento</button>
     }
 </div>
 
-<div class="mt-3 row align-items-center">
-    <div class="col-md-4">
-        <div class="input-group">
-            <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Offerta personalizzata" min="1" disabled>
-            <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
-        </div>
+<div class="offerta-personalizzata-container mt-3">
+    <div class="input-group">
+        <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Offerta personalizzata" min="1" disabled>
+        <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
     </div>
 </div>
 
