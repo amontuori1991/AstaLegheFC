@@ -334,3 +334,51 @@ h1, h2, h3, h4, h5 {
         transform: rotate(360deg);
     }
 }
+
+/* =============================================== */
+/* NOTIFICA TOAST PER SUGGERIMENTO                 */
+/* =============================================== */
+#toast-suggerimento {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #2c3e50;
+    border: 1px solid #3498db;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    color: white;
+    padding: 15px;
+    z-index: 1060;
+    width: 350px;
+    display: none; /* Nascosto di default */
+    opacity: 0;
+    transform: translateX(100%);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+    #toast-suggerimento.show {
+        display: block;
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+.toast-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.toast-body {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+    .toast-body img {
+        height: 50px;
+        width: 50px;
+        object-fit: contain;
+    }

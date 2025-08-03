@@ -32,7 +32,7 @@
         }
 </style>
 
-<h2>Benvenuto @Model.Nickname</h2>
+<h2 class="mt-4">Benvenuto @Model.Nickname</h2>
 <p>Crediti a disposizione: <strong id="crediti">@Model.CreditiDisponibili</strong></p>
 <p>Puntata massima: <strong id="puntata">@Model.PuntataMassima</strong></p>
 
@@ -84,6 +84,19 @@
     </div>
 </div>
 
+<div id="toast-suggerimento">
+    <div class="toast-header">
+        <strong>Suggerimento Inviato!</strong>
+    </div>
+    <div class="toast-body">
+        <img id="toast-logo" src="" alt="logo" />
+        <div>
+            <p id="toast-nome" class="mb-0"></p>
+            <p id="toast-dettagli" class="mb-0"></p>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
@@ -96,17 +109,14 @@
         let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
         let timerSecondi = @Model.TimerAsta;
         let timer = null;
-
         const maxPortieri = @RegoleLega.MaxPortieri;
         const maxDifensori = @RegoleLega.MaxDifensori;
         const maxCentrocampisti = @RegoleLega.MaxCentrocampisti;
         const maxAttaccanti = @RegoleLega.MaxAttaccanti;
-
         let portieriAttuali = @Model.PortieriAcquistati;
         let difensoriAttuali = @Model.DifensoriAcquistati;
         let centrocampistiAttuali = @Model.CentrocampistiAcquistati;
         let attaccantiAttuali = @Model.AttaccantiAcquistati;
-
         const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
 
         // --- FUNZIONI DI UTILITY ---
@@ -114,7 +124,6 @@
             const avvisoDiv = document.getElementById('avviso-ruolo-completo');
             let abilitato = idListoneAttuale > 0;
             let messaggio = "";
-
             if (abilitato) {
                 if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) {
                     abilitato = false;
@@ -190,39 +199,45 @@
 
         const inputRicerca = document.getElementById('input-ricerca-giocatore');
         const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
-
         inputRicerca.addEventListener('input', () => {
             const testo = inputRicerca.value.toLowerCase();
             risultatiRicercaDiv.innerHTML = '';
             if (testo.length < 2) return;
             const filtrati = listoneCompleto.filter(g => g.nome.toLowerCase().includes(testo));
-
             filtrati.slice(0, 10).forEach(g => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'risultato-item';
-
                 const spanInfo = document.createElement('span');
                 spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra})`;
-
                 const suggestButton = document.createElement('button');
                 suggestButton.className = 'btn btn-sm btn-info';
                 suggestButton.textContent = 'Suggerisci';
-                suggestButton.addEventListener('click', () => suggerisciGiocatore(g.id));
-
+                suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
                 itemDiv.appendChild(spanInfo);
                 itemDiv.appendChild(suggestButton);
                 risultatiRicercaDiv.appendChild(itemDiv);
             });
         });
 
-        function suggerisciGiocatore(giocatoreId) {
-            connection.invoke("SuggerisciGiocatore", giocatoreId, nickname, legaAlias)
+        function suggerisciGiocatore(giocatore) {
+            connection.invoke("SuggerisciGiocatore", giocatore.id, nickname, legaAlias)
                 .then(() => {
-                    mostraMessaggio("Suggerimento Inviato", "Il tuo suggerimento è stato inviato all'amministratore!");
+                    mostraToastSuggerimento(giocatore);
                     inputRicerca.value = '';
                     risultatiRicercaDiv.innerHTML = '';
                 })
                 .catch(err => console.error("Errore nell'invio del suggerimento:", err));
+        }
+
+        function mostraToastSuggerimento(giocatore) {
+            document.getElementById('toast-logo').src = `https://content.fantacalcio.it/web/img/team/${giocatore.squadra.toLowerCase().replace(' ', '-')}.png`;
+            document.getElementById('toast-nome').textContent = giocatore.nome;
+            document.getElementById('toast-dettagli').textContent = `${giocatore.ruolo} - ${giocatore.squadra}`;
+            const toastElement = document.getElementById('toast-suggerimento');
+            toastElement.classList.add('show');
+            setTimeout(() => {
+                toastElement.classList.remove('show');
+            }, 4000);
         }
 
         // --- GESTIONE EVENTI SIGNALR ---

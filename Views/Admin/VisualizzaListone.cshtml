@@ -7,7 +7,6 @@
 }
 
 <style>
-    /* Rimossa l'animazione 'flash' che non serve più */
     #asta-overlay {
         position: fixed;
         top: 0;
@@ -110,6 +109,24 @@
     .asta-box-footer {
         margin-top: 30px;
     }
+
+    @@keyframes flash {
+        0% {
+            background-color: rgba(52, 152, 219, 0);
+        }
+
+        50% {
+            background-color: rgba(52, 152, 219, 0.5);
+        }
+
+        100% {
+            background-color: rgba(52, 152, 219, 0);
+        }
+    }
+
+    .riga-suggerita {
+        animation: flash 1.5s 2;
+    }
 </style>
 
 <h2 class="mt-3">Listone Calciatori</h2>
@@ -145,7 +162,7 @@
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.PortieriAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -156,7 +173,7 @@
                             <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.DifensoriAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -167,7 +184,7 @@
                             <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.CentrocampistiAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -178,7 +195,7 @@
                             <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.AttaccantiAssegnati)
                                 {
-                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id">SVINCOLA</button></li>
+                                    <li>@g.Nome (@g.CreditiSpesi) <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome">SVINCOLA</button></li>
                                 }
                             </ul>
                         </td>
@@ -384,17 +401,11 @@
              document.getElementById('asta-overlay').classList.remove('visible');
         });
 
-        // ✅ MODIFICATA LA LOGICA PER RICEVERE IL SUGGERIMENTO
         connection.on("GiocatoreSuggerito", (giocatore, suggeritore) => {
             mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito di chiamare: ${giocatore.nome}`);
-
-            // Trova il campo di ricerca per nome
             const inputNome = document.querySelector('form#filtroForm input[name="nome"]');
             if (inputNome) {
-                // Inserisce il nome del giocatore nel campo
                 inputNome.value = giocatore.nome;
-
-                // Invia automaticamente il form per filtrare
                 document.getElementById('filtroForm').submit();
             }
         });
@@ -454,21 +465,7 @@
             });
         }
 
-        document.querySelectorAll('.btn-svincola').forEach(btn => {
-            btn.addEventListener('click', async function () {
-                if (await mostraMessaggio("Conferma Svincolo", "Sei sicuro di voler svincolare questo giocatore?", true)) {
-                    const id = this.getAttribute('data-id');
-                    fetch('/Admin/SvincolaGiocatore', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: parseInt(id) })
-                    }).then(async response => {
-                        if (response.ok) location.reload();
-                        else await mostraMessaggio("Errore", "Errore nello svincolo.");
-                    });
-                }
-            });
-        });
+        // La logica per lo svincolo è stata spostata in site.js
 
         async function impostaTimer(event) {
             event.preventDefault();
