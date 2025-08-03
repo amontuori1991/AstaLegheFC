@@ -153,7 +153,7 @@
         });
 
         connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
-            alert(`Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
+            mostraMessaggio('Asta Conclusa!', `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
             idListoneAttuale = 0;
             ruoloGiocatoreAttuale = "";
             document.getElementById("giocatore").textContent = "Nessun giocatore";
@@ -165,14 +165,14 @@
         });
 
         connection.on("AstaAnnullata", () => {
-             alert("L'amministratore ha annullato l'asta corrente.");
-             idListoneAttuale = 0;
-             ruoloGiocatoreAttuale = "";
-             document.getElementById("giocatore").textContent = "Nessun giocatore";
-             document.getElementById("offerente").textContent = "-";
-             document.getElementById("offerta").textContent = "0";
-             aggiornaStatoPulsantiBazzer();
-             resettaTimer();
+            mostraMessaggio("Asta Annullata", "L'amministratore ha annullato l'asta corrente.");
+            idListoneAttuale = 0;
+            ruoloGiocatoreAttuale = "";
+            document.getElementById("giocatore").textContent = "Nessun giocatore";
+            document.getElementById("offerente").textContent = "-";
+            document.getElementById("offerta").textContent = "0";
+            aggiornaStatoPulsantiBazzer();
+            resettaTimer();
         });
 
         connection.on("AggiornaUtente", () => { aggiornaCrediti(); });
@@ -185,7 +185,7 @@
                 const nuovaOfferta = offertaAttuale + incremento;
                 const puntataMassima = parseInt(document.getElementById('puntata').textContent);
                 if (nuovaOfferta > puntataMassima) {
-                    alert("Non hai abbastanza crediti per fare questa offerta! La tua puntata massima è " + puntataMassima);
+                    mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti per fare questa offerta! La tua puntata massima è " + puntataMassima);
                     return;
                 }
                 await connection.invoke("InviaOfferta", nickname, nuovaOfferta);
@@ -196,16 +196,16 @@
             const inputOfferta = document.getElementById('offertaPersonalizzataInput');
             const offertaInserita = parseInt(inputOfferta.value);
             if (isNaN(offertaInserita) || offertaInserita <= 0) {
-                alert("Per favore, inserisci un valore numerico valido.");
+                mostraMessaggio("Errore", "Per favore, inserisci un valore numerico valido.");
                 return;
             }
             if (offertaInserita <= offertaAttuale) {
-                alert("La tua offerta deve essere superiore a quella attuale!");
+                mostraMessaggio("Offerta non valida", "La tua offerta deve essere superiore a quella attuale!");
                 return;
             }
             const puntataMassima = parseInt(document.getElementById('puntata').textContent);
             if (offertaInserita > puntataMassima) {
-                alert("La tua offerta supera la tua puntata massima disponibile! (" + puntataMassima + ")");
+                mostraMessaggio("Offerta non valida", "La tua offerta supera la tua puntata massima disponibile! (" + puntataMassima + ")");
                 return;
             }
             await connection.invoke("InviaOfferta", nickname, offertaInserita);

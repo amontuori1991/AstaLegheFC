@@ -73,6 +73,81 @@ namespace AstaLegheFC.Controllers
 
             return RedirectToAction("Index", new { legaAlias = lega.Alias });
         }
+        [HttpGet]
+        public async Task<IActionResult> Modifica(int id)
+        {
+            var squadra = await _context.Squadre
+                .Include(s => s.Lega)
+                .FirstOrDefaultAsync(s => s.Id == id);
 
+            if (squadra == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.LegaAlias = squadra.Lega.Alias;
+            return View(squadra);
+        }
+
+        // ✅ AGGIUNTO METODO POST PER SALVARE LE MODIFICHE
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Modifica(int id, Squadra squadra)
+        {
+            if (id != squadra.Id)
+            {
+                return NotFound();
+            }
+
+            // Ricarica l'entità originale per preservare i valori non modificabili
+            var squadraOriginale = await _context.Squadre.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
+            if (squadraOriginale == null) return NotFound();
+
+            // Applica solo i campi modificabili
+            squadra.LegaId = squadraOriginale.LegaId;
+            squadra.Crediti = squadraOriginale.Crediti;
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(squadra);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    // Gestire eccezioni di concorrenza se necessario
+                    throw;
+                }
+
+                var lega = await _context.Leghe.FindAsync(squadra.LegaId);
+                return RedirectToAction(nameof(Index), new { legaAlias = lega.Alias });
+            }
+
+            // Se il modello non è valido, ricarica il legaAlias per il pulsante "Annulla"
+            var legaCorrente = await _context.Leghe.FindAsync(squadra.LegaId);
+            ViewBag.LegaAlias = legaCorrente.Alias;
+            return View(squadra);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Elimina(int id)
+        {
+            var squadra = await _context.Squadre
+                .Include(s => s.Lega)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (squadra == null)
+            {
+                return NotFound();
+            }
+
+            var legaAlias = squadra.Lega.Alias;
+
+            _context.Squadre.Remove(squadra);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("Index", new { legaAlias });
+        }
     }
 }

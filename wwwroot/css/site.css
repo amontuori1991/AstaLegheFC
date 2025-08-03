@@ -1,4 +1,4 @@
-/* =============================================== */
+﻿/* =============================================== */
 /* TEMA SCURO GLOBALE                              */
 /* =============================================== */
 
@@ -85,6 +85,11 @@ a {
         background-color: transparent;
         border-color: #34495e;
     }
+
+/* ✅ CORREZIONE AGGIUNTA QUI */
+.table-striped > tbody > tr:nth-of-type(odd) > * {
+    color: #FFFFFF !important;
+}
 
 .table-primary {
     --bs-table-bg: #3498db;

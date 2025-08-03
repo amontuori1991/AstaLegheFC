@@ -65,6 +65,7 @@
         text-transform: uppercase;
         margin: 0;
         text-shadow: 0 0 15px rgba(0,0,0,0.5);
+        color: white;
     }
 
     #overlay-dettagli-giocatore {
@@ -85,6 +86,7 @@
     #overlay-offerente {
         font-size: 2.2rem;
         font-weight: 300;
+        color: white;
     }
 
     #overlay-log {
@@ -217,7 +219,7 @@
     <div class="col-md-4">
         <form id="formTimer" class="d-flex" onsubmit="impostaTimer(event)">
             <input type="number" class="form-control me-2" id="secondiTimer" value="5" min="2" placeholder="Secondi Timer" />
-            <button type="submit" class="btn btn-secondary">Imposta</button>
+            <button type="submit" class="btn btn-secondary">Imposta Timer</button>
         </form>
     </div>
     <div class="col-md-4">
@@ -334,8 +336,12 @@
         });
 
         connection.on("AggiornaOfferta", (offerente, offerta) => {
-            document.getElementById('overlay-offerente').innerText = offerente;
-            document.getElementById('overlay-offerta').innerText = offerta;
+            const offerenteEl = document.getElementById('overlay-offerente');
+            if (offerenteEl) offerenteEl.innerText = offerente;
+
+            const offertaEl = document.getElementById('overlay-offerta');
+            if(offertaEl) offertaEl.innerText = offerta;
+
             document.getElementById('suono-offerta').play();
 
             const logContainer = document.getElementById('overlay-log');
@@ -354,7 +360,7 @@
                     beep.currentTime = 0;
                     beep.play();
                 }
-                if (secondiRimanenti < -1) { // Lascia un secondo extra di buffer
+                if (secondiRimanenti < -1) {
                     clearInterval(countdownTimerAdmin);
                 }
             }, 1000);
@@ -385,10 +391,10 @@
         connection.start().catch(err => console.error(err.toString()));
 
         // --- GESTIONE BOTTONI E FORM ---
-        function annullaAsta() {
-            if (confirm("Sei sicuro di voler annullare l'asta in corso per tutti i partecipanti?")) {
+        async function annullaAsta() {
+            if (await mostraMessaggio('Annulla Asta', 'Sei sicuro di voler annullare l\'asta in corso per tutti i partecipanti?', true)) {
                 fetch('/Admin/AnnullaAsta', { method: 'POST' })
-                .then(response => { if (!response.ok) alert("Errore"); });
+                    .then(response => { if (!response.ok) mostraMessaggio("Errore", "Errore durante l'annullamento dell'asta."); });
             }
         }
 
@@ -396,7 +402,7 @@
             form.addEventListener('submit', function (event) {
                 event.preventDefault();
                 fetch(this.action, { method: 'POST', body: new URLSearchParams(new FormData(this)) })
-                    .then(response => { if (!response.ok) alert('Errore avvio asta.'); });
+                    .then(response => { if (!response.ok) mostraMessaggio('Errore', 'Errore avvio asta.'); });
             });
         });
 
@@ -419,7 +425,7 @@
             });
         });
 
-        function salvaAssegnazione() {
+        async function salvaAssegnazione() {
             const payload = {
                 giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
                 squadraId: parseInt(document.getElementById('squadraSelect').value),
@@ -429,53 +435,54 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            }).then(response => {
+            }).then(async response => {
                 if (response.ok) { location.reload(); }
-                else { alert('Errore durante l\'assegnazione manuale.'); }
+                else { await mostraMessaggio('Errore', 'Errore durante l\'assegnazione manuale.'); }
             });
         }
 
         document.querySelectorAll('.btn-svincola').forEach(btn => {
-            btn.addEventListener('click', function () {
-                if (!confirm("Sei sicuro di voler svincolare questo giocatore?")) return;
-                const id = this.getAttribute('data-id');
-                fetch('/Admin/SvincolaGiocatore', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(id) })
-                }).then(response => {
-                    if (response.ok) location.reload();
-                    else alert("Errore nello svincolo.");
-                });
+            btn.addEventListener('click', async function () {
+                if (await mostraMessaggio("Conferma Svincolo", "Sei sicuro di voler svincolare questo giocatore?", true)) {
+                    const id = this.getAttribute('data-id');
+                    fetch('/Admin/SvincolaGiocatore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: parseInt(id) })
+                    }).then(async response => {
+                        if (response.ok) location.reload();
+                        else await mostraMessaggio("Errore", "Errore nello svincolo.");
+                    });
+                }
             });
         });
 
-        function impostaTimer(event) {
+        async function impostaTimer(event) {
             event.preventDefault();
             const secondi = document.getElementById('secondiTimer').value;
             fetch('/Admin/ImpostaTimer', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ secondi: parseInt(secondi) })
-            }).then(response => {
-                if (response.ok) alert('Timer aggiornato a ' + secondi + ' secondi!');
-                else alert('Errore aggiornamento timer.');
+            }).then(async response => {
+                if (response.ok) await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
+                else await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
             });
         }
         document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
 
-        document.getElementById('bloccoPortieriSwitch').addEventListener('change', function() {
+        document.getElementById('bloccoPortieriSwitch').addEventListener('change', async function() {
             const isAttivo = this.checked;
             fetch('/Admin/ImpostaBloccoPortieri', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ attivo: isAttivo })
             })
-            .then(response => {
+            .then(async response => {
                 if (response.ok) {
-                    alert('Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
+                    await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
                 } else {
-                    alert('Errore durante l\'aggiornamento della regola.');
+                    await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.');
                 }
             });
         });
