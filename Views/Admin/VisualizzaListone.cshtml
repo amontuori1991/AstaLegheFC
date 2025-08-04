@@ -26,10 +26,9 @@
         transition: opacity 0.3s ease, visibility 0.3s ease;
     }
 
-    /* Stili per la lista giocatori nel riepilogo */
     .player-row {
         display: flex;
-        align-items: center; /* Allinea verticalmente gli elementi al centro */
+        align-items: center;
         padding: 6px 0;
     }
 
@@ -37,32 +36,38 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-    /* --- MODIFICA CHIAVE QUI --- */
     .player-name {
         text-align: left;
-        margin-right: auto; /* Questa è la magia: spinge tutto il resto a destra */
-        padding-right: 10px; /* Aggiunge un piccolo spazio prima del logo */
+        margin-right: auto;
+        padding-right: 10px;
     }
 
     .player-logo {
         height: 22px;
         margin: 0 10px;
-        flex-shrink: 0; /* Impedisce al logo di rimpicciolirsi */
+        flex-shrink: 0;
     }
 
     .player-credits {
         text-align: center;
         min-width: 40px;
         padding: 0 10px;
-        flex-shrink: 0; /* Impedisce ai crediti di rimpicciolirsi */
+        flex-shrink: 0;
     }
 
     .player-action {
         text-align: right;
-        flex-shrink: 0; /* Impedisce al pulsante di rimpicciolirsi */
+        flex-shrink: 0;
     }
 
-    /* Il resto del tuo CSS originale invariato... */
+    .player-mantra {
+        color: #0dcaf0;
+        font-style: italic;
+        font-size: 0.9em;
+        margin-right: 8px;
+        flex-shrink: 0;
+    }
+
     #asta-overlay.visible {
         opacity: 1;
         visibility: visible;
@@ -81,6 +86,70 @@
 
     #asta-overlay.visible .asta-box {
         transform: scale(1);
+    }
+
+    .asta-box-header {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 10px;
+    }
+
+    #overlay-logo-squadra {
+        height: 90px;
+        filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+    }
+
+    #overlay-nome-giocatore {
+        font-size: 3.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        margin: 0;
+        text-shadow: 0 0 15px rgba(0,0,0,0.5);
+        color: white;
+    }
+
+    #overlay-dettagli-giocatore {
+        font-size: 1.5rem;
+        color: #95a5a6;
+        margin-top: 0;
+    }
+
+    #overlay-offerta {
+        font-size: 7rem;
+        font-weight: 700;
+        margin: 20px 0;
+        line-height: 1;
+        text-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
+        color: #f1c40f !important;
+    }
+
+    #overlay-offerente {
+        font-size: 2.2rem;
+        font-weight: 300;
+        color: white;
+    }
+
+    #overlay-log {
+        margin-top: 20px;
+        max-height: 150px;
+        overflow-y: auto;
+        text-align: left;
+        font-family: monospace;
+        background-color: rgba(0,0,0,0.3);
+        border-radius: 5px;
+        padding: 10px;
+    }
+
+        #overlay-log p {
+            margin: 2px 0;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 2px;
+        }
+
+    .asta-box-footer {
+        margin-top: 30px;
     }
 </style>
 
@@ -116,6 +185,10 @@
                                 {
                                     <li class="player-row">
                                         <span class="player-name">@g.Nome</span>
+                                        @if (ViewBag.MantraAttivo)
+                                        {
+                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                        }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
                                         <span class="player-credits">(@g.CreditiSpesi)</span>
                                         <span class="player-action">
@@ -132,6 +205,10 @@
                                 {
                                     <li class="player-row">
                                         <span class="player-name">@g.Nome</span>
+                                        @if (ViewBag.MantraAttivo)
+                                        {
+                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                        }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
                                         <span class="player-credits">(@g.CreditiSpesi)</span>
                                         <span class="player-action">
@@ -148,6 +225,10 @@
                                 {
                                     <li class="player-row">
                                         <span class="player-name">@g.Nome</span>
+                                        @if (ViewBag.MantraAttivo)
+                                        {
+                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                        }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
                                         <span class="player-credits">(@g.CreditiSpesi)</span>
                                         <span class="player-action">
@@ -164,6 +245,10 @@
                                 {
                                     <li class="player-row">
                                         <span class="player-name">@g.Nome</span>
+                                        @if (ViewBag.MantraAttivo)
+                                        {
+                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                        }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
                                         <span class="player-credits">(@g.CreditiSpesi)</span>
                                         <span class="player-action">
@@ -178,7 +263,6 @@
             </tbody>
         </table>
     </div>
-}
 }
 
 <form id="filtroForm" method="get" asp-action="VisualizzaListone" class="row g-2 mb-4">
@@ -210,7 +294,13 @@
     <div class="col-md-4">
         <div class="form-check form-switch fs-5">
             <input class="form-check-input" type="checkbox" role="switch" id="bloccoPortieriSwitch" @(ViewBag.BloccoPortieriAttivo ? "checked" : "")>
-            <label class="form-check-label" for="bloccoPortieriSwitch">Blocco Portieri Attivo</label>
+            <label class="form-check-label" for="bloccoPortieriSwitch">Blocco Portieri</label>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="form-check form-switch fs-5">
+            <input class="form-check-input" type="checkbox" role="switch" id="mantraSwitch" @(ViewBag.MantraAttivo ? "checked" : "")>
+            <label class="form-check-label" for="mantraSwitch">Mantra</label>
         </div>
     </div>
 </div>
@@ -230,11 +320,14 @@
             {
                 <tr id="riga-giocatore-@c.Id">
                     <td class="text-start">@c.Nome</td>
-                    <td>@c.Ruolo</td>
+                    <td>@(ViewBag.MantraAttivo? c.RuoloMantra: c.Ruolo)</td>
                     <td class="text-start">@c.Squadra</td>
                     <td>
                         <form asp-action="AvviaAsta" method="post" style="display:inline;" class="form-avvia-asta">
                             <input type="hidden" name="id" value="@c.Id" />
+
+                            <input type="hidden" name="mantra" value="@ViewBag.MantraAttivo.ToString().ToLower()" />
+
                             <button type="submit" class="btn btn-success btn-sm">Asta</button>
                         </form>
                         <button class="btn btn-warning btn-sm btn-assegna"
@@ -329,6 +422,90 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
 
     <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const mantraSwitch = document.getElementById('mantraSwitch');
+            if (mantraSwitch) {
+                mantraSwitch.addEventListener('change', function () {
+                    const isAttivo = this.checked;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('mantra', isAttivo);
+                    window.location.href = url.toString();
+                });
+            }
+
+            document.querySelectorAll('.form-avvia-asta').forEach(form => {
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    fetch(this.action, { method: 'POST', body: new URLSearchParams(new FormData(this)) })
+                        .then(response => { if (!response.ok) mostraMessaggio('Errore', 'Errore avvio asta.'); });
+                });
+            });
+
+            document.querySelectorAll('.btn-assegna').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const giocatoreId = this.dataset.id;
+                    const giocatoreNome = this.dataset.nome;
+                    document.getElementById('idGiocatoreModale').value = giocatoreId;
+                    document.getElementById('nomeGiocatoreModale').innerText = giocatoreNome;
+                    const squadraSelect = document.getElementById('squadraSelect');
+                    squadraSelect.innerHTML = '';
+                    squadre.forEach(squadra => {
+                        const option = document.createElement('option');
+                        option.value = squadra.SquadraId;
+                        option.innerText = squadra.Nickname;
+                        squadraSelect.appendChild(option);
+                    });
+                    const modal = new bootstrap.Modal(document.getElementById('assegnaModal'));
+                    modal.show();
+                });
+            });
+
+            const btnConfermaSvincolo = document.getElementById('btnConfermaSvincolo');
+            if(btnConfermaSvincolo) {
+                btnConfermaSvincolo.addEventListener('click', function () {
+                    const payload = {
+                        id: parseInt(document.getElementById('idGiocatoreSvincola').value),
+                        creditiRestituiti: parseInt(document.getElementById('creditiSvincoloInput').value)
+                    };
+                    fetch('/Admin/SvincolaGiocatore', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }).then(response => {
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            mostraMessaggio("Errore", "Errore durante lo svincolo.");
+                        }
+                    });
+                });
+            }
+
+            const formTimer = document.getElementById('formTimer');
+            if(formTimer) {
+                formTimer.addEventListener('submit', impostaTimer);
+            }
+
+            const bloccoPortieriSwitch = document.getElementById('bloccoPortieriSwitch');
+            if(bloccoPortieriSwitch) {
+                bloccoPortieriSwitch.addEventListener('change', async function () {
+                    const isAttivo = this.checked;
+                    fetch('/Admin/ImpostaBloccoPortieri', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ attivo: isAttivo })
+                    })
+                    .then(async response => {
+                        if (response.ok) {
+                            await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
+                        } else {
+                            await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.');
+                        }
+                    });
+                });
+            }
+        });
+
         const squadre = JSON.parse('@Html.Raw(squadreJson)');
         const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
         const durataTimer = @ViewBag.DurataTimer;
@@ -417,33 +594,6 @@
             }
         }
 
-        document.querySelectorAll('.form-avvia-asta').forEach(form => {
-            form.addEventListener('submit', function (event) {
-                event.preventDefault();
-                fetch(this.action, { method: 'POST', body: new URLSearchParams(new FormData(this)) })
-                    .then(response => { if (!response.ok) mostraMessaggio('Errore', 'Errore avvio asta.'); });
-            });
-        });
-
-        document.querySelectorAll('.btn-assegna').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const giocatoreId = this.dataset.id;
-                const giocatoreNome = this.dataset.nome;
-                document.getElementById('idGiocatoreModale').value = giocatoreId;
-                document.getElementById('nomeGiocatoreModale').innerText = giocatoreNome;
-                const squadraSelect = document.getElementById('squadraSelect');
-                squadraSelect.innerHTML = '';
-                squadre.forEach(squadra => {
-                    const option = document.createElement('option');
-                    option.value = squadra.SquadraId;
-                    option.innerText = squadra.Nickname;
-                    squadraSelect.appendChild(option);
-                });
-                const modal = new bootstrap.Modal(document.getElementById('assegnaModal'));
-                modal.show();
-            });
-        });
-
         async function salvaAssegnazione() {
             const payload = {
                 giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
@@ -460,24 +610,6 @@
             });
         }
 
-        document.getElementById('btnConfermaSvincolo').addEventListener('click', function () {
-            const payload = {
-                id: parseInt(document.getElementById('idGiocatoreSvincola').value),
-                creditiRestituiti: parseInt(document.getElementById('creditiSvincoloInput').value)
-            };
-            fetch('/Admin/SvincolaGiocatore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    mostraMessaggio("Errore", "Errore durante lo svincolo.");
-                }
-            });
-        });
-
         async function impostaTimer(event) {
             event.preventDefault();
             const secondi = document.getElementById('secondiTimer').value;
@@ -490,23 +622,6 @@
                 else await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
             });
         }
-        document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
-
-        document.getElementById('bloccoPortieriSwitch').addEventListener('change', async function () {
-            const isAttivo = this.checked;
-            fetch('/Admin/ImpostaBloccoPortieri', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ attivo: isAttivo })
-            })
-            .then(async response => {
-                if (response.ok) {
-                    await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
-                } else {
-                    await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.');
-                }
-            });
-        });
 
         // --- FUNZIONI DI UTILITY ---
         let debounceTimer;

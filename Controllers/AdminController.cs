@@ -113,7 +113,9 @@ namespace AstaLegheFC.Controllers
 
         // File: Controllers/AdminController.cs
 
-        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo)
+        // File: Controllers/AdminController.cs
+
+        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo, [FromQuery(Name = "mantra")] bool mantraAttivo = false)
         {
             if (string.IsNullOrEmpty(lega)) return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
             var legaModel = await _context.Leghe.FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
@@ -131,24 +133,23 @@ namespace AstaLegheFC.Controllers
             if (!string.IsNullOrEmpty(ruolo)) queryListone = queryListone.Where(c => c.Ruolo == ruolo);
 
             var listoneDisponibile = await queryListone.OrderBy(g => g.Nome).ToListAsync();
+
             ViewBag.Nome = nome;
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
             ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
+            ViewBag.MantraAttivo = mantraAttivo; // <-- Questa riga ora funzionerà correttamente
 
-            #region Riepilogo Squadre e Dati Vista (Blocco Corretto)
-
-            // 1. PRIMA: Carichiamo tutti i dati necessari dal database in un'unica query.
+            #region Riepilogo Squadre e Dati Vista
             var squadreDaDb = await _context.Squadre
-                .Include(s => s.Giocatori) // Includiamo i giocatori associati
+                .Include(s => s.Giocatori)
                 .Where(s => s.LegaId == legaModel.Id)
                 .OrderBy(s => s.Nickname)
-                .ToListAsync(); // Eseguiamo la query e portiamo i dati in memoria.
+                .ToListAsync();
 
             var riepilogo = new List<SquadraRiepilogoViewModel>();
 
-            // 2. POI: Lavoriamo sulla lista in memoria per fare i calcoli e creare il ViewModel.
             foreach (var s in squadreDaDb)
             {
                 int creditiSpesi = s.Giocatori.Sum(g => g.CreditiSpesi ?? 0);
@@ -165,7 +166,6 @@ namespace AstaLegheFC.Controllers
                     CreditiDisponibili = creditiDisponibili,
                     PuntataMassima = puntataMassima > 0 ? puntataMassima : 0,
 
-                    // Ora che 's.Giocatori' è una lista in memoria, possiamo usare LogoHelper senza problemi.
                     PortieriAssegnati = s.Giocatori.Where(g => g.Ruolo == "P").Select(g => new GiocatoreAssegnato
                     {
                         Id = g.Id,
@@ -173,7 +173,8 @@ namespace AstaLegheFC.Controllers
                         CreditiSpesi = g.CreditiSpesi ?? 0,
                         SquadraReale = g.SquadraReale,
                         LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
-                        Ruolo = g.Ruolo
+                        Ruolo = g.Ruolo,
+                        RuoloMantra = g.RuoloMantra
                     }).ToList(),
                     DifensoriAssegnati = s.Giocatori.Where(g => g.Ruolo == "D").Select(g => new GiocatoreAssegnato
                     {
@@ -182,7 +183,8 @@ namespace AstaLegheFC.Controllers
                         CreditiSpesi = g.CreditiSpesi ?? 0,
                         SquadraReale = g.SquadraReale,
                         LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
-                        Ruolo = g.Ruolo
+                        Ruolo = g.Ruolo,
+                        RuoloMantra = g.RuoloMantra
                     }).ToList(),
                     CentrocampistiAssegnati = s.Giocatori.Where(g => g.Ruolo == "C").Select(g => new GiocatoreAssegnato
                     {
@@ -191,7 +193,8 @@ namespace AstaLegheFC.Controllers
                         CreditiSpesi = g.CreditiSpesi ?? 0,
                         SquadraReale = g.SquadraReale,
                         LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
-                        Ruolo = g.Ruolo
+                        Ruolo = g.Ruolo,
+                        RuoloMantra = g.RuoloMantra
                     }).ToList(),
                     AttaccantiAssegnati = s.Giocatori.Where(g => g.Ruolo == "A").Select(g => new GiocatoreAssegnato
                     {
@@ -200,7 +203,8 @@ namespace AstaLegheFC.Controllers
                         CreditiSpesi = g.CreditiSpesi ?? 0,
                         SquadraReale = g.SquadraReale,
                         LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
-                        Ruolo = g.Ruolo
+                        Ruolo = g.Ruolo,
+                        RuoloMantra = g.RuoloMantra
                     }).ToList()
                 });
             }
@@ -212,19 +216,25 @@ namespace AstaLegheFC.Controllers
             return View("VisualizzaListone", listoneDisponibile);
         }
 
+        // In Controllers/AdminController.cs
+
         [HttpPost]
-        public async Task<IActionResult> AvviaAsta(int id)
+        public async Task<IActionResult> AvviaAsta(int id, [FromForm(Name = "mantra")] bool mantraAttivo)
         {
             var giocatore = await _context.ListoneCalciatori.FindAsync(id);
             if (giocatore == null) return NotFound();
 
-            _bazzerService.ImpostaGiocatoreInAsta(giocatore);
+            // Passiamo al service sia il giocatore che la modalità corrente
+            _bazzerService.ImpostaGiocatoreInAsta(giocatore, mantraAttivo);
+
+            // Ora usiamo la variabile locale, che è sicura al 100%
+            var ruoloDaMostrare = mantraAttivo ? giocatore.RuoloMantra : giocatore.Ruolo;
 
             await _hubContext.Clients.All.SendAsync("MostraGiocatoreInAsta", new
             {
                 id = giocatore.Id,
                 nome = giocatore.Nome,
-                ruolo = giocatore.Ruolo,
+                ruolo = ruoloDaMostrare, // Ora questo è garantito essere corretto
                 squadraReale = giocatore.Squadra,
                 logoUrl = LogoHelper.GetLogoUrl(giocatore.Squadra)
             });

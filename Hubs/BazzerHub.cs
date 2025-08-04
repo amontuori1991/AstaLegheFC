@@ -68,6 +68,7 @@ namespace AstaLegheFC.Hubs
                         Nome = giocatoreInAsta.Nome,
                         SquadraReale = giocatoreInAsta.Squadra,
                         Ruolo = giocatoreInAsta.Ruolo,
+                        RuoloMantra = giocatoreInAsta.RuoloMantra,
                         SquadraId = squadraVincitrice.Id,
                         IdListone = giocatoreInAsta.IdListone,
                         CreditiSpesi = offerta

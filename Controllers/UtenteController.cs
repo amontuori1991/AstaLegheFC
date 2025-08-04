@@ -19,6 +19,10 @@ namespace AstaLegheFC.Controllers
             _bazzerService = bazzerService;
         }
 
+        // In Controllers/UtenteController.cs
+
+        // File: Controllers/UtenteController.cs
+
         public async Task<IActionResult> Index(string nick, string lega)
         {
             if (string.IsNullOrEmpty(nick) || string.IsNullOrEmpty(lega))
@@ -28,7 +32,7 @@ namespace AstaLegheFC.Controllers
 
             var squadra = await _context.Squadre
                 .Include(s => s.Lega)
-                .Include(s => s.Giocatori)
+                .Include(s => s.Giocatori) // CORRETTO (con la 'c')
                 .FirstOrDefaultAsync(s => s.Nickname == nick && s.Lega.Alias.ToLower() == lega.ToLower());
 
             if (squadra == null)
@@ -38,6 +42,8 @@ namespace AstaLegheFC.Controllers
 
             var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
             var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
+
+            var mantraAttivo = _bazzerService.MantraAttivo;
 
             int creditiUsati = squadra.Giocatori?.Sum(g => g.CreditiSpesi) ?? 0;
             int creditiDisponibili = squadra.Crediti - creditiUsati;
@@ -50,11 +56,13 @@ namespace AstaLegheFC.Controllers
                 Nickname = squadra.Nickname,
                 CreditiDisponibili = creditiDisponibili,
                 PuntataMassima = puntataMassima > 0 ? puntataMassima : 0,
+                MantraAttivo = mantraAttivo,
                 CalciatoreInAsta = giocatoreInAsta == null ? null : new GiocatoreInAstaViewModel
                 {
-                    IdListone = giocatoreInAsta.Id,
+                    IdListone = giocatoreInAsta.IdListone,
                     Nome = giocatoreInAsta.Nome,
-                    Ruolo = giocatoreInAsta.Ruolo,
+                    Ruolo = mantraAttivo ? giocatoreInAsta.RuoloMantra : giocatoreInAsta.Ruolo,
+                    RuoloMantra = giocatoreInAsta.RuoloMantra,
                     Squadra = giocatoreInAsta.Squadra
                 },
                 OfferenteAttuale = offerente,
@@ -64,7 +72,7 @@ namespace AstaLegheFC.Controllers
                 DifensoriAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "D"),
                 CentrocampistiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "C"),
                 AttaccantiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "A"),
-           LogoSquadra = giocatoreInAsta != null ? LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra) : ""
+                LogoSquadra = giocatoreInAsta != null ? LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra) : ""
             };
 
             return View(viewModel);

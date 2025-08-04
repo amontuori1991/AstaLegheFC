@@ -61,6 +61,7 @@ namespace AstaLegheFC.Services
                 IdListone = calciatoreDaListone.IdListone,
                 Nome = calciatoreDaListone.Nome,
                 Ruolo = calciatoreDaListone.Ruolo,
+                RuoloMantra = calciatoreDaListone.RuoloMantra,
                 SquadraReale = calciatoreDaListone.Squadra,
                 SquadraId = squadraId,
                 CreditiSpesi = costo

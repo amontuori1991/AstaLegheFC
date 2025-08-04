@@ -11,7 +11,7 @@ namespace AstaLegheFC.Services
 
         public int DurataTimer { get; private set; } = 5;
         public bool BloccoPortieriAttivo { get; private set; } = true;
-
+        public bool MantraAttivo { get; private set; } = false;
         public void ImpostaDurataTimer(int secondi)
         {
             DurataTimer = Math.Max(2, secondi);
@@ -22,12 +22,21 @@ namespace AstaLegheFC.Services
             BloccoPortieriAttivo = attivo;
         }
 
-        public void ImpostaGiocatoreInAsta(CalciatoreListone giocatore)
+        public void ImpostaModalitaMantra(bool attivo)
+        {
+            MantraAttivo = attivo;
+        }
+
+        // In Services/BazzerService.cs
+
+        public void ImpostaGiocatoreInAsta(CalciatoreListone giocatore, bool mantraAttivo)
         {
             _giocatoreInAsta = giocatore;
             _offerenteAttuale = "-";
             _offertaAttuale = 0;
             _astaConclusa = false;
+            // Salva la modalità insieme al giocatore
+            this.MantraAttivo = mantraAttivo;
         }
 
         // ✅ AGGIUNTO METODO PER ANNULLARE E AZZERARE L'ASTA

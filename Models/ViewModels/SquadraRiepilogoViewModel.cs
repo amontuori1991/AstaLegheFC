@@ -30,5 +30,7 @@
         public string SquadraReale { get; set; }
         public string LogoUrl { get; set; }
         public string Ruolo { get; set; }
+
+        public string RuoloMantra { get; set; }
     }
 }
