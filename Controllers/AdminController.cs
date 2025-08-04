@@ -111,6 +111,8 @@ namespace AstaLegheFC.Controllers
             return View();
         }
 
+        // File: Controllers/AdminController.cs
+
         public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo)
         {
             if (string.IsNullOrEmpty(lega)) return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
@@ -135,15 +137,19 @@ namespace AstaLegheFC.Controllers
             ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
 
-            #region Riepilogo Squadre e Dati Vista
-            var squadre = await _context.Squadre
-                .Include(s => s.Giocatori)
+            #region Riepilogo Squadre e Dati Vista (Blocco Corretto)
+
+            // 1. PRIMA: Carichiamo tutti i dati necessari dal database in un'unica query.
+            var squadreDaDb = await _context.Squadre
+                .Include(s => s.Giocatori) // Includiamo i giocatori associati
                 .Where(s => s.LegaId == legaModel.Id)
                 .OrderBy(s => s.Nickname)
-                .ToListAsync();
+                .ToListAsync(); // Eseguiamo la query e portiamo i dati in memoria.
 
             var riepilogo = new List<SquadraRiepilogoViewModel>();
-            foreach (var s in squadre)
+
+            // 2. POI: Lavoriamo sulla lista in memoria per fare i calcoli e creare il ViewModel.
+            foreach (var s in squadreDaDb)
             {
                 int creditiSpesi = s.Giocatori.Sum(g => g.CreditiSpesi ?? 0);
                 int creditiDisponibili = s.Crediti - creditiSpesi;
@@ -158,10 +164,44 @@ namespace AstaLegheFC.Controllers
                     Nickname = s.Nickname,
                     CreditiDisponibili = creditiDisponibili,
                     PuntataMassima = puntataMassima > 0 ? puntataMassima : 0,
-                    PortieriAssegnati = s.Giocatori.Where(g => g.Ruolo == "P").Select(g => new GiocatoreAssegnato { Id = g.Id, Nome = g.Nome, CreditiSpesi = g.CreditiSpesi ?? 0 }).ToList(),
-                    DifensoriAssegnati = s.Giocatori.Where(g => g.Ruolo == "D").Select(g => new GiocatoreAssegnato { Id = g.Id, Nome = g.Nome, CreditiSpesi = g.CreditiSpesi ?? 0 }).ToList(),
-                    CentrocampistiAssegnati = s.Giocatori.Where(g => g.Ruolo == "C").Select(g => new GiocatoreAssegnato { Id = g.Id, Nome = g.Nome, CreditiSpesi = g.CreditiSpesi ?? 0 }).ToList(),
-                    AttaccantiAssegnati = s.Giocatori.Where(g => g.Ruolo == "A").Select(g => new GiocatoreAssegnato { Id = g.Id, Nome = g.Nome, CreditiSpesi = g.CreditiSpesi ?? 0 }).ToList()
+
+                    // Ora che 's.Giocatori' è una lista in memoria, possiamo usare LogoHelper senza problemi.
+                    PortieriAssegnati = s.Giocatori.Where(g => g.Ruolo == "P").Select(g => new GiocatoreAssegnato
+                    {
+                        Id = g.Id,
+                        Nome = g.Nome,
+                        CreditiSpesi = g.CreditiSpesi ?? 0,
+                        SquadraReale = g.SquadraReale,
+                        LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
+                        Ruolo = g.Ruolo
+                    }).ToList(),
+                    DifensoriAssegnati = s.Giocatori.Where(g => g.Ruolo == "D").Select(g => new GiocatoreAssegnato
+                    {
+                        Id = g.Id,
+                        Nome = g.Nome,
+                        CreditiSpesi = g.CreditiSpesi ?? 0,
+                        SquadraReale = g.SquadraReale,
+                        LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
+                        Ruolo = g.Ruolo
+                    }).ToList(),
+                    CentrocampistiAssegnati = s.Giocatori.Where(g => g.Ruolo == "C").Select(g => new GiocatoreAssegnato
+                    {
+                        Id = g.Id,
+                        Nome = g.Nome,
+                        CreditiSpesi = g.CreditiSpesi ?? 0,
+                        SquadraReale = g.SquadraReale,
+                        LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
+                        Ruolo = g.Ruolo
+                    }).ToList(),
+                    AttaccantiAssegnati = s.Giocatori.Where(g => g.Ruolo == "A").Select(g => new GiocatoreAssegnato
+                    {
+                        Id = g.Id,
+                        Nome = g.Nome,
+                        CreditiSpesi = g.CreditiSpesi ?? 0,
+                        SquadraReale = g.SquadraReale,
+                        LogoUrl = LogoHelper.GetLogoUrl(g.SquadraReale),
+                        Ruolo = g.Ruolo
+                    }).ToList()
                 });
             }
             ViewBag.RiepilogoSquadre = riepilogo;

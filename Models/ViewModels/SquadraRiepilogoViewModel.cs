@@ -18,10 +18,17 @@
         public List<GiocatoreAssegnato> AttaccantiAssegnati { get; set; } = new();
     }
 
+    // File: Models/ViewModels/SquadraRiepilogoViewModel.cs
+
     public class GiocatoreAssegnato
     {
-        public int Id { get; set; } // <-- questo serve per svincolarlo
+        public int Id { get; set; }
         public string Nome { get; set; } = string.Empty;
         public int CreditiSpesi { get; set; }
+
+        // 👇 ASSICURATI DI AGGIUNGERE QUESTE DUE RIGHE 👇
+        public string SquadraReale { get; set; }
+        public string LogoUrl { get; set; }
+        public string Ruolo { get; set; }
     }
 }
