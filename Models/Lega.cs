@@ -1,4 +1,6 @@
-﻿namespace AstaLegheFC.Models
+﻿using System.Collections.Generic; // Assicurati che ci sia questo using
+
+namespace AstaLegheFC.Models
 {
     public class Lega
     {
@@ -7,6 +9,7 @@
         public string Alias { get; set; }
         public int CreditiIniziali { get; set; }
 
-        public ICollection<Squadra> Squadres { get; set; } = new List<Squadra>();
+        // ✅ AGGIUNGI QUESTA RIGA
+        public List<Squadra> Squadre { get; set; } = new List<Squadra>();
     }
 }
