@@ -443,15 +443,112 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
 
     <script>
-        // Funzione per il debounce definita globalmente per essere trovata dall'HTML
+        // ===================================================================================
+        // FUNZIONI E VARIABILI GLOBALI
+        // Definite qui per essere accessibili da tutto lo script e dall'HTML (es. onclick)
+        // ===================================================================================
+
         let debounceTimer;
         function submitFormDebounced() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => { document.getElementById("filtroForm").submit(); }, 500);
         }
 
-        // Tutto il codice che interagisce con la pagina viene eseguito solo quando l'HTML è pronto
-        document.addEventListener('DOMContentLoaded', function() {
+        // Definiamo la durata del timer qui in modo che sia accessibile sia dal DOMContentLoaded che da impostaTimer
+        let durataTimer = @ViewBag.DurataTimer;
+
+        async function impostaTimer(event) {
+            event.preventDefault();
+            const secondi = document.getElementById('secondiTimer').value;
+            fetch('/Admin/ImpostaTimer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ secondi: parseInt(secondi) })
+            }).then(async response => {
+                if (response.ok) {
+                    durataTimer = parseInt(secondi); // Aggiorna la variabile globale
+                    await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
+                } else {
+                    await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
+                }
+            });
+        }
+
+        async function annullaAsta() {
+            if (typeof mostraMessaggio === 'function' && await mostraMessaggio('Annulla Asta', 'Sei sicuro di voler annullare l\'asta in corso per tutti i partecipanti?', true)) {
+                fetch('/Admin/AnnullaAsta', {
+                    method: 'POST',
+                    headers: {
+                        // 👇 CORREZIONE CHIAVE: Questo è il nome corretto dell'header di sicurezza 👇
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                }).then(response => {
+                    if (!response.ok) {
+                        mostraMessaggio("Errore", "Si è verificato un errore durante l'annullamento dell'asta.");
+                    }
+                    // Non c'è un 'else' perché l'aggiornamento dell'interfaccia avviene tramite SignalR
+                });
+            }
+        }
+
+        async function salvaAssegnazione() {
+            const payload = {
+                giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
+                squadraId: parseInt(document.getElementById('squadraSelect').value),
+                costo: parseInt(document.getElementById('costoInput').value)
+            };
+            fetch('/Admin/AssegnaManualmente', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    // 👇 CORREZIONE CHIAVE: Questo è il nome corretto dell'header di sicurezza 👇
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                },
+                body: JSON.stringify(payload)
+            }).then(async response => {
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    await mostraMessaggio('Errore', 'Si è verificato un errore durante l\'assegnazione manuale.');
+                }
+            });
+        }
+
+        function toggleLista(id) {
+            const lista = document.getElementById(id);
+            if (lista) {
+                lista.classList.toggle("d-none");
+            }
+        }
+
+        function apriModaleSvincolo(btn) {
+            const giocatoreId = btn.dataset.id;
+            const giocatoreNome = btn.dataset.nome;
+            const giocatoreCosto = btn.dataset.costo;
+            const giocatoreSquadra = btn.dataset.squadra;
+            const logoUrl = btn.dataset.logo;
+            const giocatoreRuolo = btn.dataset.ruolo;
+
+            document.getElementById('idGiocatoreSvincola').value = giocatoreId;
+            document.getElementById('costoOriginaleSvincolo').innerText = giocatoreCosto;
+            document.getElementById('creditiSvincoloInput').value = giocatoreCosto;
+            document.getElementById('logoGiocatoreSvincola').src = logoUrl;
+            document.getElementById('nomeGiocatoreSvincolo').innerText = giocatoreNome;
+            document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${giocatoreRuolo} - Squadra: ${giocatoreSquadra}`;
+
+            const svincolaModal = new bootstrap.Modal(document.getElementById('svincolaModal'));
+            svincolaModal.show();
+        }
+
+        // ===================================================================================
+        // CODICE ESEGUITO DOPO IL CARICAMENTO COMPLETO DELLA PAGINA
+        // ===================================================================================
+        document.addEventListener('DOMContentLoaded', function () {
+
+            const squadre = JSON.parse('@Html.Raw(squadreJson)');
+            const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+            const legaAliasAdmin = "@ViewBag.LegaAlias";
+            let countdownTimerAdmin = null;
 
             // --- GESTIONE FOCUS ---
             const urlParams = new URLSearchParams(window.location.search);
@@ -463,23 +560,14 @@
                 nomeFilter.value = val;
             }
 
-            // --- ATTIVAZIONE DEI FILTRI ---
-            // Nota: L'HTML usa oninput="...", quindi questa parte non è più necessaria
-            // Se in futuro rimuoverai 'oninput' dall'HTML, dovrai riattivarla.
-            // const squadraFilter = document.getElementById('squadraFilterInput');
-            // if (nomeFilter) {
-            //     nomeFilter.addEventListener('input', submitFormDebounced);
-            // }
-            // if (squadraFilter) {
-            //     squadraFilter.addEventListener('input', submitFormDebounced);
-            // }
-
-            // --- LOGICA ESISTENTE ---
-            const squadre = JSON.parse('@Html.Raw(squadreJson)');
-            const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-            let durataTimer = @ViewBag.DurataTimer;
-            const legaAliasAdmin = "@ViewBag.LegaAlias";
-            let countdownTimerAdmin = null;
+            // --- ATTIVAZIONE DEI FILTRI (in modo programmatico) ---
+            const squadraFilter = document.getElementById('squadraFilterInput');
+            if (nomeFilter) {
+                nomeFilter.addEventListener('input', submitFormDebounced);
+            }
+            if (squadraFilter) {
+                squadraFilter.addEventListener('input', submitFormDebounced);
+            }
 
             // --- GESTIONE SIGNALR ---
             connection.on("MostraGiocatoreInAsta", (giocatore) => {
@@ -566,11 +654,7 @@
                 }
             });
 
-            connection.start().then(() => {
-                connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
-            }).catch(err => console.error(err.toString()));
-
-            // --- GESTIONE EVENTI DEI PULSANTI (ora dentro DOMContentLoaded) ---
+            // --- GESTIONE ALTRI EVENTI ---
             document.querySelectorAll('.form-avvia-asta').forEach(form => {
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
@@ -598,126 +682,32 @@
                 });
             });
 
-            const btnConfermaSvincolo = document.getElementById('btnConfermaSvincolo');
-            if (btnConfermaSvincolo) {
-                btnConfermaSvincolo.addEventListener('click', function () {
-                    const payload = {
-                        id: parseInt(document.getElementById('idGiocatoreSvincola').value),
-                        creditiRestituiti: parseInt(document.getElementById('creditiSvincoloInput').value)
-                    };
-                    fetch('/Admin/SvincolaGiocatore', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    }).then(response => {
-                        if (response.ok) {
-                            location.reload();
-                        } else {
-                            mostraMessaggio("Errore", "Errore durante lo svincolo.");
-                        }
-                    });
-                });
-            }
+            document.getElementById('btnConfermaSvincolo')?.addEventListener('click', function () {
+                const payload = { id: parseInt(document.getElementById('idGiocatoreSvincola').value), creditiRestituiti: parseInt(document.getElementById('creditiSvincoloInput').value) };
+                fetch('/Admin/SvincolaGiocatore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+                    .then(response => { if (response.ok) { location.reload(); } else { mostraMessaggio("Errore", "Errore durante lo svincolo."); } });
+            });
 
-            const formTimer = document.getElementById('formTimer');
-            if (formTimer) {
-                formTimer.addEventListener('submit', impostaTimer);
-            }
+            document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
 
-            const bloccoPortieriSwitch = document.getElementById('bloccoPortieriSwitch');
-            if (bloccoPortieriSwitch) {
-                bloccoPortieriSwitch.addEventListener('change', async function () {
-                    const isAttivo = this.checked;
-                    fetch('/Admin/ImpostaBloccoPortieri', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ attivo: isAttivo })
-                    })
-                    .then(async response => {
-                        if (response.ok) {
-                            await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
-                        } else {
-                            await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.');
-                        }
-                    });
-                });
-            }
-            const mantraSwitch = document.getElementById('mantraSwitch');
-            if (mantraSwitch) {
-                mantraSwitch.addEventListener('change', function () {
-                    const isAttivo = this.checked;
-                    const url = new URL(window.location.href);
-                    url.searchParams.set('mantra', isAttivo);
-                    window.location.href = url.toString();
-                });
-            }
+            document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function () {
+                const isAttivo = this.checked;
+                fetch('/Admin/ImpostaBloccoPortieri', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attivo: isAttivo }) })
+                    .then(async response => { if (response.ok) { await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA')); } else { await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.'); } });
+            });
+
+            document.getElementById('mantraSwitch')?.addEventListener('change', function () {
+                const isAttivo = this.checked;
+                const url = new URL(window.location.href);
+                url.searchParams.set('mantra', isAttivo);
+                window.location.href = url.toString();
+            });
+
+            // --- AVVIO CONNESSIONE ---
+            connection.start().then(() => {
+                connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
+            }).catch(err => console.error(err.toString()));
 
         }); // <-- Fine del DOMContentLoaded
-
-        // --- FUNZIONI DEFINITE FUORI PER ESSERE ACCESSIBILI DALL'HTML ---
-        async function annullaAsta() {
-            if (await mostraMessaggio('Annulla Asta', 'Sei sicuro di voler annullare l\'asta in corso per tutti i partecipanti?', true)) {
-                fetch('/Admin/AnnullaAsta', { method: 'POST' })
-                    .then(response => { if (!response.ok) mostraMessaggio("Errore", "Errore durante l'annullamento dell'asta."); });
-            }
-        }
-        async function salvaAssegnazione() {
-            const payload = {
-                giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
-                squadraId: parseInt(document.getElementById('squadraSelect').value),
-                costo: parseInt(document.getElementById('costoInput').value)
-            };
-            fetch('/Admin/AssegnaManualmente', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(async response => {
-                if (response.ok) { location.reload(); }
-                else { await mostraMessaggio('Errore', 'Errore durante l\'assegnazione manuale.'); }
-            });
-        }
-        async function impostaTimer(event) {
-             event.preventDefault();
-            const secondi = document.getElementById('secondiTimer').value;
-            fetch('/Admin/ImpostaTimer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ secondi: parseInt(secondi) })
-            }).then(async response => {
-                if (response.ok) {
-                    // La variabile 'durataTimer' viene aggiornata qui, ma deve essere definita nello scope corretto
-                    // Assicurati che 'let durataTimer' sia definito all'inizio dello script
-                    // Questo aggiornamento verrà fatto nella versione finale e completa
-                    await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
-                } else {
-                    await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
-                }
-            });
-        }
-        function toggleLista(id) {
-            const lista = document.getElementById(id);
-            if (lista) {
-                lista.classList.toggle("d-none");
-            }
-        }
-        function apriModaleSvincolo(btn) {
-            const giocatoreId = btn.dataset.id;
-            const giocatoreNome = btn.dataset.nome;
-            const giocatoreCosto = btn.dataset.costo;
-            const giocatoreSquadra = btn.dataset.squadra;
-            const logoUrl = btn.dataset.logo;
-            const giocatoreRuolo = btn.dataset.ruolo;
-
-            document.getElementById('idGiocatoreSvincola').value = giocatoreId;
-            document.getElementById('costoOriginaleSvincolo').innerText = giocatoreCosto;
-            document.getElementById('creditiSvincoloInput').value = giocatoreCosto;
-
-            document.getElementById('logoGiocatoreSvincola').src = logoUrl;
-            document.getElementById('nomeGiocatoreSvincolo').innerText = giocatoreNome;
-            document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${giocatoreRuolo} - Squadra: ${giocatoreSquadra}`;
-
-            const svincolaModal = new bootstrap.Modal(document.getElementById('svincolaModal'));
-            svincolaModal.show();
-        }
     </script>
 }

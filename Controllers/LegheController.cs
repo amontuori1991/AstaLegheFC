@@ -134,9 +134,16 @@ namespace AstaLegheFC.Controllers
 
                 try
                 {
-                    // 4. Salva l'oggetto originale, che ha ancora il suo AdminId corretto
-                    // Non serve chiamare _context.Update() perché l'oggetto è già tracciato da EF
                     await _context.SaveChangesAsync();
+
+                    // 👇 NUOVA RIGA: Invia le nuove regole a tutti i client connessi 👇
+                    await _hubContext.Clients.All.SendAsync("AggiornaRegoleLega", new
+                    {
+                        maxPortieri = legaOriginale.MaxPortieri,
+                        maxDifensori = legaOriginale.MaxDifensori,
+                        maxCentrocampisti = legaOriginale.MaxCentrocampisti,
+                        maxAttaccanti = legaOriginale.MaxAttaccanti
+                    });
                 }
                 catch (DbUpdateConcurrencyException)
                 {

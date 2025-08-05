@@ -349,6 +349,20 @@
             });
             connection.on("AggiornaDurataTimer", (nuoviSecondi) => { timerSecondi = nuoviSecondi; });
 
+                    connection.on("AggiornaRegoleLega", (regole) => {
+            console.log("Regole della lega aggiornate in tempo reale!", regole); // Messaggio di debug
+
+            // Aggiorna le variabili JavaScript locali con le nuove regole
+            maxPortieri = regole.maxPortieri;
+            maxDifensori = regole.maxDifensori;
+            maxCentrocampisti = regole.maxCentrocampisti;
+            maxAttaccanti = regole.maxAttaccanti;
+
+            // Richiama la funzione che abilita/disabilita i pulsanti
+            // per riflettere immediatamente il cambiamento
+            aggiornaStatoPulsantiBazzer();
+        });
+
             // --- GESTIONE CLICK E AVVIO ---
             document.querySelectorAll(".bazzer").forEach(btn => {
                 btn.addEventListener("click", async () => {
