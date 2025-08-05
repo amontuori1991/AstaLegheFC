@@ -196,7 +196,13 @@ namespace AstaLegheFC.Controllers
             }
             ViewBag.RiepilogoSquadre = riepilogo;
             ViewBag.LegaAlias = legaModel.Alias;
-            ViewBag.RuoliDisponibili = await _context.ListoneCalciatori.Where(c => c.AdminId == adminId).Select(c => c.Ruolo).Distinct().OrderBy(r => r).ToListAsync();
+            // Se il mantra è attivo, seleziona i ruoli mantra, altrimenti quelli normali
+            ViewBag.RuoliDisponibili = await (mantraAttivo
+            ? _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.RuoloMantra != null).Select(c => c.RuoloMantra)
+            : _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.Ruolo != null).Select(c => c.Ruolo))
+        .Distinct()
+        .OrderBy(r => r)
+        .ToListAsync();
             #endregion
 
             return View("VisualizzaListone", listoneDisponibile);
