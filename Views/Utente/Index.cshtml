@@ -109,10 +109,10 @@
         let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
         let timerSecondi = @Model.TimerAsta;
         let timer = null;
-        const maxPortieri = @RegoleLega.MaxPortieri;
-        const maxDifensori = @RegoleLega.MaxDifensori;
-        const maxCentrocampisti = @RegoleLega.MaxCentrocampisti;
-        const maxAttaccanti = @RegoleLega.MaxAttaccanti;
+        const maxPortieri = @Model.MaxPortieri;
+        const maxDifensori = @Model.MaxDifensori;
+        const maxCentrocampisti = @Model.MaxCentrocampisti;
+        const maxAttaccanti = @Model.MaxAttaccanti;
         let portieriAttuali = @Model.PortieriAcquistati;
         let difensoriAttuali = @Model.DifensoriAcquistati;
         let centrocampistiAttuali = @Model.CentrocampistiAcquistati;

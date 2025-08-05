@@ -178,7 +178,7 @@ namespace AstaLegheFC.Controllers
                 int creditiSpesi = s.Giocatori.Sum(g => g.CreditiSpesi ?? 0);
                 int creditiDisponibili = s.Crediti - creditiSpesi;
                 int giocatoriAcquistatiCount = s.Giocatori.Count;
-                int slotTotali = RegoleLega.MaxPortieri + RegoleLega.MaxDifensori + RegoleLega.MaxCentrocampisti + RegoleLega.MaxAttaccanti;
+                int slotTotali = legaModel.MaxPortieri + legaModel.MaxDifensori + legaModel.MaxCentrocampisti + legaModel.MaxAttaccanti;
                 int slotRimasti = slotTotali - giocatoriAcquistatiCount;
                 int puntataMassima = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
 

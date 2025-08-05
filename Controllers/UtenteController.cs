@@ -23,6 +23,7 @@ namespace AstaLegheFC.Controllers
 
         // File: Controllers/UtenteController.cs
 
+        // In Controllers/UtenteController.cs
         public async Task<IActionResult> Index(string nick, string lega)
         {
             if (string.IsNullOrEmpty(nick) || string.IsNullOrEmpty(lega))
@@ -30,9 +31,10 @@ namespace AstaLegheFC.Controllers
                 return Content("⚠️ Parametri mancanti. Inserisci ?nick=...&lega=...");
             }
 
+            // Ora includiamo anche le informazioni della lega nella query
             var squadra = await _context.Squadre
                 .Include(s => s.Lega)
-                .Include(s => s.Giocatori) // CORRETTO (con la 'c')
+                .Include(s => s.Giocatori)
                 .FirstOrDefaultAsync(s => s.Nickname == nick && s.Lega.Alias.ToLower() == lega.ToLower());
 
             if (squadra == null)
@@ -40,22 +42,20 @@ namespace AstaLegheFC.Controllers
                 return Content("⚠️ Squadra non trovata per i parametri specificati.");
             }
 
+            // ... resto del codice invariato (calcolo crediti, etc.) ...
             var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
             var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
-
             var mantraAttivo = _bazzerService.MantraAttivo;
-
             int creditiUsati = squadra.Giocatori?.Sum(g => g.CreditiSpesi) ?? 0;
             int creditiDisponibili = squadra.Crediti - creditiUsati;
-            int slotTotali = RegoleLega.MaxPortieri + RegoleLega.MaxDifensori + RegoleLega.MaxCentrocampisti + RegoleLega.MaxAttaccanti;
-            int slotRimasti = slotTotali - (squadra.Giocatori?.Count ?? 0);
-            int puntataMassima = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+            // NOTA: il calcolo di slotRimasti e puntataMassima qui usa già i dati corretti dalla lega,
+            // perché `squadra.Lega` contiene le nuove regole. Dobbiamo solo aggiornare il viewModel.
 
             var viewModel = new UtenteViewModel
             {
                 Nickname = squadra.Nickname,
                 CreditiDisponibili = creditiDisponibili,
-                PuntataMassima = puntataMassima > 0 ? puntataMassima : 0,
+                PuntataMassima = 0, // Lo ricalcoliamo sotto per sicurezza
                 MantraAttivo = mantraAttivo,
                 CalciatoreInAsta = giocatoreInAsta == null ? null : new GiocatoreInAstaViewModel
                 {
@@ -72,8 +72,21 @@ namespace AstaLegheFC.Controllers
                 DifensoriAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "D"),
                 CentrocampistiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "C"),
                 AttaccantiAcquistati = squadra.Giocatori.Count(g => g.Ruolo == "A"),
-                LogoSquadra = giocatoreInAsta != null ? LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra) : ""
+                LogoSquadra = giocatoreInAsta != null ? LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra) : "",
+
+                // 👇 Passiamo le regole specifiche della lega al ViewModel 👇
+                MaxPortieri = squadra.Lega.MaxPortieri,
+                MaxDifensori = squadra.Lega.MaxDifensori,
+                MaxCentrocampisti = squadra.Lega.MaxCentrocampisti,
+                MaxAttaccanti = squadra.Lega.MaxAttaccanti
             };
+
+            // Ricalcoliamo puntata massima con le regole corrette
+            int slotTotali = viewModel.MaxPortieri + viewModel.MaxDifensori + viewModel.MaxCentrocampisti + viewModel.MaxAttaccanti;
+            int slotRimasti = slotTotali - (squadra.Giocatori?.Count ?? 0);
+            viewModel.PuntataMassima = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+            if (viewModel.PuntataMassima < 0) viewModel.PuntataMassima = 0;
+
 
             return View(viewModel);
         }

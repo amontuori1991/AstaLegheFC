@@ -50,7 +50,7 @@ namespace AstaLegheFC.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Crea([Bind("Id,Nome,Alias,CreditiIniziali")] Lega lega)
+        public async Task<IActionResult> Crea([Bind("Id,Nome,Alias,CreditiIniziali,MaxPortieri,MaxDifensori,MaxCentrocampisti,MaxAttaccanti")] Lega lega)
         {
             var adminId = _userManager.GetUserId(User);
             lega.AdminId = adminId;
@@ -89,57 +89,64 @@ namespace AstaLegheFC.Controllers
             return View(lega);
         }
 
+        // In Controllers/LegheController.cs
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Modifica(int id, [Bind("Id,Nome,Alias,CreditiIniziali")] Lega lega)
+        public async Task<IActionResult> Modifica(int id, Lega legaModificataDalForm) // Ho rinominato 'lega' per maggiore chiarezza
         {
-            if (id != lega.Id)
+            if (id != legaModificataDalForm.Id)
             {
                 return NotFound();
             }
 
+            var adminId = _userManager.GetUserId(User);
+
+            // 1. Carica la lega originale dal database, verificando che appartenga all'admin
+            var legaOriginale = await _context.Leghe.FirstOrDefaultAsync(l => l.Id == id && l.AdminId == adminId);
+
+            // 2. Se non la troviamo (o non appartiene all'utente), neghiamo l'accesso
+            if (legaOriginale == null)
+            {
+                return Forbid(); // Accesso negato
+            }
+
+            // Aggiungiamo un ulteriore controllo sull'alias per evitare duplicati durante la modifica
+            if (legaOriginale.Alias.ToLower() != legaModificataDalForm.Alias.ToLower())
+            {
+                bool aliasEsistente = await _context.Leghe.AnyAsync(l => l.Alias.ToLower() == legaModificataDalForm.Alias.ToLower());
+                if (aliasEsistente)
+                {
+                    ModelState.AddModelError("Alias", "Questo alias è già in uso. Scegline uno diverso.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
+                // 3. Copia SOLO i campi modificabili dal form all'oggetto originale
+                legaOriginale.Nome = legaModificataDalForm.Nome;
+                legaOriginale.Alias = legaModificataDalForm.Alias;
+                legaOriginale.CreditiIniziali = legaModificataDalForm.CreditiIniziali;
+                legaOriginale.MaxPortieri = legaModificataDalForm.MaxPortieri;
+                legaOriginale.MaxDifensori = legaModificataDalForm.MaxDifensori;
+                legaOriginale.MaxCentrocampisti = legaModificataDalForm.MaxCentrocampisti;
+                legaOriginale.MaxAttaccanti = legaModificataDalForm.MaxAttaccanti;
+
                 try
                 {
-                    var aliasEsistente = await _context.Leghe
-                        .FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.Alias.ToLower() && l.Id != lega.Id);
-
-                    if (aliasEsistente != null)
-                    {
-                        ModelState.AddModelError("Alias", "Alias già esistente. Scegline uno diverso.");
-                        return View(lega);
-                    }
-
-                    _context.Update(lega);
+                    // 4. Salva l'oggetto originale, che ha ancora il suo AdminId corretto
+                    // Non serve chiamare _context.Update() perché l'oggetto è già tracciato da EF
                     await _context.SaveChangesAsync();
-
-                    var squadreDaAggiornare = await _context.Squadre
-                        .Where(s => s.LegaId == lega.Id)
-                        .ToListAsync();
-
-                    foreach (var squadra in squadreDaAggiornare)
-                    {
-                        squadra.Crediti = lega.CreditiIniziali;
-                    }
-                    await _context.SaveChangesAsync();
-
-                    await _hubContext.Clients.All.SendAsync("AggiornaUtente");
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!_context.Leghe.Any(e => e.Id == lega.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    throw; // Gestire eccezione se necessario
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(lega);
+
+            // Se il modello non è valido, ritorna alla vista con i dati inseriti dall'utente
+            return View(legaModificataDalForm);
         }
 
         [HttpPost]

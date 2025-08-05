@@ -15,6 +15,10 @@
         public int AttaccantiAcquistati { get; set; }
         public string LogoSquadra { get; set; }
         public bool MantraAttivo { get; set; }
+        public int MaxPortieri { get; set; }
+        public int MaxDifensori { get; set; }
+        public int MaxCentrocampisti { get; set; }
+        public int MaxAttaccanti { get; set; }
     }
 
     // ASSICURATI CHE LA CLASSE GiocatoreInAstaViewModel SIA STATA CANCELLATA DA QUESTO FILE
