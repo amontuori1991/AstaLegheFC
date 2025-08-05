@@ -7,6 +7,26 @@
 }
 
 <style>
+    #overlay-timer {
+        font-size: 3.5rem; /* Metà dei 7rem dell'offerta */
+        font-weight: 700;
+        line-height: 1;
+        margin: 0;
+        transition: color 0.3s ease-in-out; /* Effetto di transizione per il cambio colore */
+    }
+
+    .timer-green {
+        color: #2ecc71; /* Verde */
+    }
+
+    .timer-yellow {
+        color: #f1c40f; /* Giallo (lo stesso dell'offerta) */
+    }
+
+    .timer-red {
+        color: #e74c3c; /* Rosso */
+    }
+
     #asta-overlay {
         position: fixed;
         top: 0;
@@ -404,6 +424,7 @@
                 <p id="overlay-dettagli-giocatore">Ruolo - Squadra</p>
             </div>
         </div>
+        <h1 id="overlay-timer" class="mb-2">--</h1>
         <h1 id="overlay-offerta">0</h1>
         <h3 id="overlay-offerente">In attesa di offerte...</h3>
         <div id="overlay-log"></div>
@@ -513,6 +534,8 @@
         let countdownTimerAdmin = null;
 
         // --- GESTIONE SIGNALR ---
+                // In Views/Admin/VisualizzaListone.cshtml, dentro il tag <script>
+
         connection.on("MostraGiocatoreInAsta", (giocatore) => {
             document.getElementById('overlay-nome-giocatore').innerText = giocatore.nome;
             document.getElementById('overlay-dettagli-giocatore').innerText = `${giocatore.ruolo} - ${giocatore.squadraReale}`;
@@ -521,6 +544,12 @@
             document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
             document.getElementById('overlay-offerente').style.color = '';
             document.getElementById('overlay-log').innerHTML = '';
+
+            // NUOVO: Resettiamo il timer quando appare un nuovo giocatore
+            const timerEl = document.getElementById('overlay-timer');
+            timerEl.innerText = '--';
+            timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
+
             document.querySelector('.asta-box-footer').style.display = 'block';
             document.getElementById('asta-overlay').classList.add('visible');
         });
@@ -529,7 +558,7 @@
             const offerenteEl = document.getElementById('overlay-offerente');
             if (offerenteEl) offerenteEl.innerText = offerente;
             const offertaEl = document.getElementById('overlay-offerta');
-            if (offertaEl) offertaEl.innerText = offerta;
+            if(offertaEl) offertaEl.innerText = offerta;
             document.getElementById('suono-offerta').play();
             const logContainer = document.getElementById('overlay-log');
             if (logContainer) {
@@ -537,15 +566,39 @@
                 logEntry.innerText = `${offerente} offre ${offerta}`;
                 logContainer.prepend(logEntry);
             }
+
             clearInterval(countdownTimerAdmin);
             let secondiRimanenti = durataTimer;
+
+            // NUOVO: Prendiamo il riferimento all'elemento timer
+            const timerEl = document.getElementById('overlay-timer');
+
+            // Impostiamo subito il valore iniziale
+            timerEl.innerText = secondiRimanenti;
+            timerEl.classList.remove('timer-yellow', 'timer-red');
+            timerEl.classList.add('timer-green');
+
             countdownTimerAdmin = setInterval(() => {
                 secondiRimanenti--;
+
                 if (secondiRimanenti >= 0) {
+                    // NUOVO: Aggiorniamo il testo e il colore del timer ad ogni secondo
+                    timerEl.innerText = secondiRimanenti;
+
+                    timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
+                    if (secondiRimanenti > 5) {
+                        timerEl.classList.add('timer-green');
+                    } else if (secondiRimanenti >= 4) { // 4 e 5
+                        timerEl.classList.add('timer-yellow');
+                    } else { // 3, 2, 1, 0
+                        timerEl.classList.add('timer-red');
+                    }
+
                     const beep = document.getElementById('suono-countdown');
                     beep.currentTime = 0;
                     beep.play();
                 }
+
                 if (secondiRimanenti < -1) {
                     clearInterval(countdownTimerAdmin);
                 }
