@@ -529,7 +529,7 @@
 
         const squadre = JSON.parse('@Html.Raw(squadreJson)');
         const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-        const durataTimer = @ViewBag.DurataTimer;
+        let durataTimer = @ViewBag.DurataTimer;
         const legaAliasAdmin = "@ViewBag.LegaAlias";
         let countdownTimerAdmin = null;
 
@@ -671,8 +671,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ secondi: parseInt(secondi) })
             }).then(async response => {
-                if (response.ok) await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
-                else await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
+                durataTimer = parseInt(secondi);
+                    await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
+                } else {
+                    await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
+                }
             });
         }
 
