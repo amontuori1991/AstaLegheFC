@@ -663,7 +663,7 @@
             });
         }
 
-        async function impostaTimer(event) {
+                async function impostaTimer(event) {
             event.preventDefault();
             const secondi = document.getElementById('secondiTimer').value;
             fetch('/Admin/ImpostaTimer', {
@@ -671,7 +671,11 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ secondi: parseInt(secondi) })
             }).then(async response => {
-                durataTimer = parseInt(secondi);
+                if (response.ok) {
+                    // 👇 ECCO LA MODIFICA CHIAVE 👇
+                    // Aggiorniamo la variabile JavaScript locale con il nuovo valore!
+                    durataTimer = parseInt(secondi);
+
                     await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
                 } else {
                     await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
