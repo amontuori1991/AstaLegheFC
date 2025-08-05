@@ -1,8 +1,12 @@
 ﻿@using AstaLegheFC.Models
 @model AstaLegheFC.Models.UtenteViewModel
+
 @{
     ViewData["Title"] = "Asta - Utente";
+    Layout = "~/Views/Shared/_LayoutAsta.cshtml"; // <-- AGGIUNGI QUESTA RIGA
 }
+
+
 
 <style>
 
@@ -39,13 +43,16 @@
         border-bottom: 1px solid #34495e;
     }
 
+    #offertaPersonalizzataInput {
+        font-size: 16px;
+    }
         .risultato-item:last-child {
             border-bottom: none;
         }
 </style>
 
-<div class="row mt-4">
-    <div class="col-lg-8 mb-4">
+<div class="row mt-md-4">
+    <div class="col-md-7 col-lg-8 mb-3 mb-md-0">
         <div class="card text-center shadow-lg h-100">
             <div class="card-header bg-dark text-white">
                 <p class="mb-0">Calciatore in asta:</p>
@@ -76,11 +83,8 @@
         </div>
     </div>
 
-    <div class="col-lg-4">
+    <div class="col-md-5 col-lg-4">
         <div class="card shadow mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Ciao, @Model.Nickname!</h5>
-            </div>
             <ul class="list-group list-group-flush">
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     Crediti Disponibili
@@ -94,25 +98,24 @@
         </div>
 
         <div class="card shadow mb-4">
-            <div class="card-header">
-                <h5 class="mb-0">Fai la tua Offerta</h5>
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Offri</h5>
+                <span class="text-muted small">Rilanci rapidi</span>
             </div>
             <div class="card-body">
                 <div id="avviso-ruolo-completo" class="alert alert-danger" style="display: none;"></div>
-                <p class="text-muted small">Rilanci rapidi:</p>
+
                 <div class="pulsanti-offerta-container d-flex flex-wrap gap-2">
-                    @foreach (var incremento in new[] { 1, 2, 3, 5, 10, 20 })
+                    @foreach (var incremento in new[] { 1, 2, 3, 5, 10, 15, 20, 25, 30, 50 })
                     {
                         <button class="bazzer btn btn-outline-primary flex-grow-1" data-incremento="@incremento" disabled>+@incremento</button>
                     }
                 </div>
                 <hr />
-                <p class="text-muted small mt-3">Offerta personalizzata:</p>
-                <div class="offerta-personalizzata-container">
-                    <div class="input-group">
-                        <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Valore" min="1" disabled>
-                        <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
-                    </div>
+                <div class="input-group mt-3">
+                    <span class="input-group-text" id="basic-addon1">Off. Pers.</span>
+                    <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Valore" aria-label="Offerta personalizzata" min="1" disabled>
+                    <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
                 </div>
             </div>
         </div>
