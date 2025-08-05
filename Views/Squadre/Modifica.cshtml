@@ -1,0 +1,43 @@
+﻿@model AstaLegheFC.Models.Squadra
+@{
+    ViewData["Title"] = "Modifica Squadra";
+}
+
+<h2 class="mt-4">Modifica Squadra - @Model.Nome</h2>
+<hr />
+
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Modifica">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            @* Campi nascosti per preservare i dati che non devono essere modificati *@
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="LegaId" />
+            <input type="hidden" asp-for="Crediti" />
+
+            <div class="mb-3">
+                <label asp-for="Nome" class="form-label">Nome Squadra</label>
+                <input asp-for="Nome" class="form-control" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Nickname" class="form-label">Nickname Accesso</label>
+                <input asp-for="Nickname" class="form-control" />
+                <span asp-validation-for="Nickname" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mt-4">
+                <input type="submit" value="Salva Modifiche" class="btn btn-primary" />
+                <a asp-action="Index" asp-route-legaAlias="@ViewBag.LegaAlias" class="btn btn-secondary">Annulla</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

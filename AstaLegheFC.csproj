@@ -1,9 +1,36 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<IdentityUIFrameworkVersion>Bootstrap5</IdentityUIFrameworkVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="EPPlus" Version="6.2.3" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.11" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.11">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
+
+	</ItemGroup>
+	<ItemGroup>
+		<Content Include="wwwroot\manifest.json" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="wwwroot\service-worker.js" CopyToPublishDirectory="PreserveNewest" />
+
+		<Content Include="wwwroot\images\icons\icon-192x192.png" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="wwwroot\images\icons\icon-512x512.png" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="wwwroot\images\icons\apple-touch-icon.png" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
 
 </Project>

@@ -1,0 +1,57 @@
+﻿@page
+@model AccessDeniedModel
+@{
+    ViewData["Title"] = "Accesso negato";
+}
+
+<style>
+    body {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .accessdenied-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .logo-bazzer {
+        max-height: 240px;
+        margin-bottom: 20px;
+    }
+
+    .text-danger {
+        color: #ff5252 !important;
+    }
+
+    .btn-home {
+        background-color: #e91e63;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        font-size: 1.1rem;
+        border-radius: 6px;
+        margin-top: 20px;
+        text-decoration: none;
+    }
+
+        .btn-home:hover {
+            background-color: #c2185b;
+            text-decoration: none;
+        }
+</style>
+
+<div class="accessdenied-container">
+    <img src="~/png/logo_bazzer.png" alt="Logo Bazzer" class="logo-bazzer" />
+
+    <h2 class="text-danger mb-3">Accesso negato</h2>
+    <p class="text-danger">Non hai i permessi per accedere a questa risorsa.</p>
+
+    <a href="/" class="btn-home">Torna alla Home</a>
+</div>

@@ -1,0 +1,67 @@
+﻿@model AstaLegheFC.Models.Lega
+@{
+    ViewData["Title"] = "Crea nuova lega";
+}
+
+<h2 class="mt-3">Crea nuova lega</h2>
+
+<form asp-action="Crea" method="post" class="mt-4">
+    @Html.AntiForgeryToken()
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="Nome" class="form-label">Nome lega</label>
+            <input asp-for="Nome" class="form-control" required />
+            <span asp-validation-for="Nome" class="text-danger"></span>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label asp-for="Alias" class="form-label">Alias (per URL)</label>
+            <input asp-for="Alias" class="form-control" required />
+            <span asp-validation-for="Alias" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label asp-for="CreditiIniziali" class="form-label">Crediti iniziali per squadra</label>
+        <input asp-for="CreditiIniziali" type="number" class="form-control" required min="1" />
+        <span asp-validation-for="CreditiIniziali" class="text-danger"></span>
+    </div>
+
+    <hr />
+    <h4 class="mt-4">Regole Rosa</h4>
+
+    <div class="row">
+        <div class="col-md-3 mb-3">
+            <label asp-for="MaxPortieri" class="form-label">Slot P</label>
+            <input asp-for="MaxPortieri" type="number" class="form-control" required min="1" />
+            <span asp-validation-for="MaxPortieri" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="MaxDifensori" class="form-label">Slot D</label>
+            <input asp-for="MaxDifensori" type="number" class="form-control" required min="1" />
+            <span asp-validation-for="MaxDifensori" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="MaxCentrocampisti" class="form-label">Slot C</label>
+            <input asp-for="MaxCentrocampisti" type="number" class="form-control" required min="1" />
+            <span asp-validation-for="MaxCentrocampisti" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 mb-3">
+            <label asp-for="MaxAttaccanti" class="form-label">Slot A</label>
+            <input asp-for="MaxAttaccanti" type="number" class="form-control" required min="1" />
+            <span asp-validation-for="MaxAttaccanti" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <button type="submit" class="btn btn-primary">Crea lega</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Annulla</a>
+    </div>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

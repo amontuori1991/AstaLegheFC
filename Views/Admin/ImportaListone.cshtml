@@ -1,0 +1,24 @@
+﻿@{
+    ViewData["Title"] = "Importa Listone Calciatori";
+}
+
+<h2>Importa Listone Calciatori</h2>
+
+<form asp-controller="Admin" asp-action="ImportaListone" enctype="multipart/form-data" method="post">
+    <div class="form-group">
+        <label for="file">Seleziona file .xlsx</label>
+        <input type="file" name="file" class="form-control" accept=".xlsx" required />
+    </div>
+    <br />
+    <button type="submit" class="btn btn-primary">Importa</button>
+</form>
+
+@if (ViewBag.Errore != null)
+{
+    <div class="alert alert-danger mt-3">@ViewBag.Errore</div>
+}
+
+@if (ViewBag.Messaggio != null)
+{
+    <div class="alert alert-success mt-3">@ViewBag.Messaggio</div>
+}

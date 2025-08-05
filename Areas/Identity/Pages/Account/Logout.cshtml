@@ -1,0 +1,82 @@
+﻿@page
+@model LogoutModel
+@{
+    ViewData["Title"] = "Logout";
+}
+
+<style>
+    body {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .logout-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .logout-box {
+        max-width: 600px;
+    }
+
+    .btn-logout {
+        background-color: #e91e63;
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        font-size: 1.1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 20px;
+    }
+
+        .btn-logout:hover {
+            background-color: #c2185b;
+        }
+
+    .logo-bazzer {
+        max-height: 240px;
+        margin-bottom: 20px;
+    }
+
+    a {
+        color: #f06292;
+        text-decoration: none;
+    }
+
+        a:hover {
+            color: #ff80ab;
+            text-decoration: underline;
+        }
+</style>
+
+<div class="logout-container">
+    <img src="~/png/logo_bazzer.png" alt="Logo Bazzer" class="logo-bazzer" />
+
+    <div class="logout-box">
+        <h2 class="mb-4">@ViewData["Title"]</h2>
+
+        @{
+            if (User.Identity?.IsAuthenticated ?? false)
+            {
+                <form asp-area="Identity"
+                      asp-page="/Account/Logout"
+                      asp-route-returnUrl="@Url.Page("/", new { area = "" })"
+                      method="post">
+                    <button type="submit" class="btn-logout">Clicca qui per disconnetterti</button>
+                </form>
+            }
+            else
+            {
+                <p>Sei stato disconnesso con successo dall'applicazione.</p>
+                <p><a href="/">Torna alla home</a></p>
+            }
+        }
+    </div>
+</div>

@@ -1,0 +1,79 @@
+﻿@model IEnumerable<AstaLegheFC.Models.Lega>
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewData["Title"] = "Gestione Leghe";
+}
+
+<h2 class="mt-3">Gestione Leghe</h2>
+
+<a asp-action="Crea" class="btn btn-success mb-3">+ Crea nuova lega</a>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped text-center align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th>Nome</th>
+                <th>Alias</th>
+                <th>Crediti Iniziali</th>
+                <th>Azioni Principali</th>
+                <th>Gestione Lega</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var lega in Model)
+            {
+                <tr>
+                    <td>@lega.Nome</td>
+                    <td>@lega.Alias</td>
+                    <td>@lega.CreditiIniziali</td>
+                    <td>
+                        <a class="btn btn-primary btn-sm"
+                           asp-controller="Squadre"
+                           asp-action="Index"
+                           asp-route-legaAlias="@lega.Alias">
+                            Gestisci squadre
+                        </a>
+
+                        <a class="btn btn-info btn-sm"
+                           asp-controller="Admin"
+                           asp-action="VisualizzaListone"
+                           asp-route-lega="@lega.Alias">
+                            Avvia Asta
+                        </a>
+                    </td>
+                    <td>
+                        <div class="d-flex justify-content-center gap-2">
+                            <a asp-action="Modifica" asp-route-id="@lega.Id" class="btn btn-warning btn-sm">Modifica</a>
+
+                            <form asp-action="Elimina" asp-route-id="@lega.Id" method="post" class="form-elimina-lega" data-nome-lega="@lega.Nome">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-danger btn-sm">Elimina</button>
+                            </form>
+
+                            @* ✅ PULSANTE AGGIUNTO QUI *@
+                            <a asp-action="EsportaRoseLega" asp-route-legaId="@lega.Id" class="btn btn-success btn-sm">Esporta Rose</a>
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        // Gestione pop-up di conferma per l'eliminazione
+        document.querySelectorAll('.form-elimina-lega').forEach(form => {
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                const nomeLega = this.dataset.nomeLega;
+                const messaggio = `Sei sicuro di voler eliminare la lega '${nomeLega}'? TUTTE le squadre e i giocatori al suo interno verranno cancellati definitivamente.`;
+
+                if (await mostraMessaggio('Conferma Eliminazione Lega', messaggio, true)) {
+                    this.submit();
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,81 @@
+﻿@page
+@model ConfirmEmailChangeModel
+@{
+    ViewData["Title"] = "Conferma cambio email";
+}
+
+<style>
+    body {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .confirm-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .logo-bazzer {
+        max-height: 240px;
+        margin-bottom: 20px;
+    }
+
+    .text-success {
+        color: #4caf50 !important;
+    }
+
+    .text-danger {
+        color: #ff5252 !important;
+    }
+
+    .alert-success-custom {
+        background-color: #2e7d32;
+        color: #ffffff;
+        border: 1px solid #43a047;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        max-width: 500px;
+    }
+
+    .alert-danger-custom {
+        background-color: #c62828;
+        color: #ffffff;
+        border: 1px solid #e53935;
+        padding: 15px;
+        border-radius: 6px;
+        margin-top: 20px;
+        max-width: 500px;
+    }
+
+    .btn-home {
+        margin-top: 25px;
+        background-color: #e91e63;
+        color: white;
+        padding: 10px 24px;
+        border: none;
+        border-radius: 6px;
+        text-decoration: none;
+    }
+
+        .btn-home:hover {
+            background-color: #c2185b;
+            text-decoration: none;
+        }
+</style>
+
+<div class="confirm-container">
+    <img src="~/png/logo_bazzer.png" alt="Logo Bazzer" class="logo-bazzer" />
+
+    <h2 class="mb-4">@ViewData["Title"]</h2>
+
+    <partial name="_StatusMessage" model="Model.StatusMessage" />
+
+    <a href="/" class="btn-home">Torna alla Home</a>
+</div>

@@ -1,0 +1,144 @@
+﻿using AstaLegheFC.Data;
+using AstaLegheFC.Models;
+using AstaLegheFC.Services;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace AstaLegheFC.Hubs
+{
+    public class BazzerHub : Hub
+    {
+        private readonly BazzerService _bazzerService;
+        private readonly AppDbContext _context;
+
+        public BazzerHub(BazzerService bazzerService, AppDbContext context)
+        {
+            _bazzerService = bazzerService;
+            _context = context;
+        }
+
+        // ✅ AGGIUNTO: Metodo per l'admin per unirsi a un gruppo privato
+        public async Task AggiungiAdminAlGruppo(string legaAlias)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"admin_{legaAlias}");
+        }
+
+        // ✅ AGGIUNTO: Metodo per ricevere un suggerimento e inoltrarlo all'admin
+        public async Task SuggerisciGiocatore(int giocatoreId, string suggeritore, string legaAlias)
+        {
+            var giocatore = await _context.ListoneCalciatori.FindAsync(giocatoreId);
+            if (giocatore != null)
+            {
+                // Invia il messaggio solo al gruppo degli admin di quella lega
+                await Clients.Group($"admin_{legaAlias}").SendAsync("GiocatoreSuggerito", giocatore, suggeritore);
+            }
+        }
+
+        public async Task InviaOfferta(string offerente, int offerta)
+        {
+            var (offerenteAttuale, offertaAttuale) = _bazzerService.GetOffertaAttuale();
+            if (offerta <= offertaAttuale)
+            {
+                return;
+            }
+            _bazzerService.AggiornaOfferta(offerente, offerta);
+            await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta);
+        }
+
+        public async Task TerminaAsta(string legaAlias)
+        {
+            try
+            {
+                var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
+                var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
+
+                if (_bazzerService.AstaConclusa() || giocatoreInAsta == null || offerente == "-" || offerta <= 0 || string.IsNullOrEmpty(legaAlias))
+                    return;
+
+                var squadraVincitrice = await _context.Squadre
+                    .Include(s => s.Lega)
+                    .FirstOrDefaultAsync(s => s.Nickname == offerente && s.Lega.Alias.ToLower() == legaAlias.ToLower());
+
+                if (squadraVincitrice != null)
+                {
+                    var nuovoGiocatore = new Giocatore
+                    {
+                        Nome = giocatoreInAsta.Nome,
+                        SquadraReale = giocatoreInAsta.Squadra,
+                        Ruolo = giocatoreInAsta.Ruolo,
+                        RuoloMantra = giocatoreInAsta.RuoloMantra,
+                        SquadraId = squadraVincitrice.Id,
+                        IdListone = giocatoreInAsta.IdListone,
+                        CreditiSpesi = offerta
+                    };
+                    _context.Giocatori.Add(nuovoGiocatore);
+
+                    if (_bazzerService.BloccoPortieriAttivo && giocatoreInAsta.Ruolo == "P")
+                    {
+                        var idGiocatoriAcquistatiLega = await _context.Giocatori
+                            .Where(g => g.Squadra.LegaId == squadraVincitrice.LegaId)
+                            .Select(g => g.IdListone)
+                            .ToListAsync();
+
+                        var altriPortieri = await _context.ListoneCalciatori
+                            .Where(p => p.Squadra == giocatoreInAsta.Squadra &&
+                                        p.Ruolo == "P" &&
+                                        p.Id != giocatoreInAsta.Id &&
+                                        !idGiocatoriAcquistatiLega.Contains(p.IdListone))
+                            .ToListAsync();
+
+                        foreach (var portiere in altriPortieri)
+                        {
+                            var portiereCollegato = new Giocatore
+                            {
+                                IdListone = portiere.IdListone,
+                                Nome = portiere.Nome,
+                                Ruolo = portiere.Ruolo,
+                                SquadraReale = portiere.Squadra,
+                                SquadraId = squadraVincitrice.Id,
+                                CreditiSpesi = 0
+                            };
+                            _context.Giocatori.Add(portiereCollegato);
+                        }
+                    }
+
+                    await _context.SaveChangesAsync();
+                    _bazzerService.SegnaAstaConclusa();
+
+                    await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
+
+                    // L'aggiornamento di Utente e Admin ora è gestito tramite AstaTerminata e Svincolo/Assegnazione.
+                    // Per evitare chiamate ridondanti, possiamo commentarle qui e affidarci a location.reload() lato admin
+                    // e alla funzione aggiornaCrediti() lato utente, già innescate da AstaTerminata.
+                    // await Clients.Group(legaAlias.ToLower()).SendAsync("AggiornaUtente");
+                    // await Clients.Group($"admin_{legaAlias}").SendAsync("AggiornaAdmin");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Eccezione in TerminaAsta: {ex.Message}");
+                throw;
+            }
+        }
+
+        public async Task RichiediStatoAttuale()
+        {
+            var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
+            var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
+            if (giocatoreInAsta != null)
+            {
+                await Clients.Caller.SendAsync("MostraGiocatoreInAsta", new
+                {
+                    id = giocatoreInAsta.Id,
+                    nome = giocatoreInAsta.Nome,
+                    ruolo = giocatoreInAsta.Ruolo,
+                    squadraReale = giocatoreInAsta.Squadra,
+                    logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra)
+                });
+            }
+            await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta);
+        }
+    }
+}

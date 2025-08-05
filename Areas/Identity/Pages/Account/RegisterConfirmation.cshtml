@@ -1,0 +1,77 @@
+﻿@page
+@model RegisterConfirmationModel
+@{
+    ViewData["Title"] = "Conferma registrazione";
+}
+
+<style>
+    body {
+        background-color: #1e1e1e;
+        color: #f0f0f0;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    .confirmation-container {
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .logo-bazzer {
+        max-height: 240px;
+        margin-bottom: 20px;
+    }
+
+    a {
+        color: #f06292;
+        text-decoration: none;
+    }
+
+        a:hover {
+            color: #ff80ab;
+            text-decoration: underline;
+        }
+
+    .btn-home {
+        background-color: #e91e63;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        font-size: 1.1rem;
+        border-radius: 6px;
+        margin-top: 25px;
+        text-decoration: none;
+    }
+
+        .btn-home:hover {
+            background-color: #c2185b;
+            text-decoration: none;
+        }
+</style>
+
+<div class="confirmation-container">
+    <img src="~/png/logo_bazzer.png" alt="Logo Bazzer" class="logo-bazzer" />
+
+    <h2 class="mb-4">@ViewData["Title"]</h2>
+
+    @if (Model.DisplayConfirmAccountLink)
+    {
+        <p>
+            Questa applicazione non ha ancora un servizio di invio email configurato.
+            In ambiente di sviluppo puoi confermare il tuo account manualmente cliccando qui:<br />
+            <a id="confirm-link" href="@Model.EmailConfirmationUrl">Conferma il tuo account</a>
+        </p>
+    }
+    else
+    {
+        <p>
+            Controlla la tua email per confermare il tuo account.
+        </p>
+    }
+
+    <a href="/" class="btn-home">Torna alla Home</a>
+</div>

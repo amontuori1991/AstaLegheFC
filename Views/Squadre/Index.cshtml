@@ -1,0 +1,99 @@
+﻿@model List<AstaLegheFC.Models.Squadra>
+@{
+    ViewData["Title"] = "Squadre";
+    var nomeLega = ViewBag.LegaNome as string;
+    var legaId = ViewBag.LegaId != null ? (int)ViewBag.LegaId : 0;
+}
+
+<h2 class="mt-4">Squadre - @nomeLega</h2>
+
+<a class="btn btn-primary mb-3" asp-action="Crea" asp-route-legaId="@legaId">
+    + Aggiungi Squadra
+</a>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Nessuna squadra ancora creata.</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>Nome Squadra</th>
+                    <th>Nickname</th>
+                    <th>Crediti</th>
+                    <th>Link Accesso</th>
+                    <th>Azioni</th>
+                </tr>
+            </thead>
+            <tbody class="text-center align-middle">
+                @foreach (var squadra in Model)
+                {
+                    <tr>
+                        <td>@squadra.Nome</td>
+                        <td>@squadra.Nickname</td>
+                        <td>@squadra.Crediti</td>
+                        <td style="min-width: 450px;">
+                            <div class="input-group">
+                                <input type="text" class="form-control" value="@ViewBag.BaseUrl/Utente?lega=@ViewBag.LegaAlias&nick=@squadra.Nickname" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copiaLink(this)">Copia</button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a asp-action="Modifica" asp-route-id="@squadra.Id" class="btn btn-warning btn-sm">Modifica</a>
+
+                                @* ✅ 1. MODIFICATO IL FORM DI ELIMINAZIONE *@
+                                <form asp-action="Elimina" asp-route-id="@squadra.Id" method="post" class="form-elimina-squadra" data-nome-squadra="@squadra.Nome">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        Elimina
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        function copiaLink(button) {
+            const input = button.previousElementSibling;
+            input.select();
+            input.setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(input.value).then(() => {
+                const originalText = button.innerText;
+                button.innerText = 'Copiato!';
+                setTimeout(() => {
+                    button.innerText = originalText;
+                }, 1500);
+            }).catch(err => {
+                console.error('Errore durante la copia: ', err);
+            });
+        }
+
+        // ✅ 2. AGGIUNTO LO SCRIPT PER USARE IL NUOVO POP-UP
+        document.querySelectorAll('.form-elimina-squadra').forEach(form => {
+            form.addEventListener('submit', async function(event) {
+                // Impedisce al form di partire subito
+                event.preventDefault();
+
+                const nomeSquadra = this.dataset.nomeSquadra;
+                const messaggio = `Sei sicuro di voler eliminare la squadra ${nomeSquadra}? Tutti i giocatori acquistati verranno persi.`;
+
+                // Mostra il nostro modale personalizzato e aspetta la risposta
+                if (await mostraMessaggio('Conferma Eliminazione', messaggio, true)) {
+                    // Se l'utente ha cliccato "OK", invia il form
+                    this.submit();
+                }
+                // Se l'utente clicca "Annulla" o chiude, non succede nulla.
+            });
+        });
+    </script>
+}
