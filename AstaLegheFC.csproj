@@ -24,5 +24,13 @@
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
 
 	</ItemGroup>
+	<ItemGroup>
+		<Content Include="wwwroot\manifest.json" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="wwwroot\service-worker.js" CopyToPublishDirectory="PreserveNewest" />
+
+		<Content Include="wwwroot\images\icons\icon-192x192.png" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="wwwroot\images\icons\icon-512x512.png" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="wwwroot\images\icons\apple-touch-icon.png" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
 
 </Project>
