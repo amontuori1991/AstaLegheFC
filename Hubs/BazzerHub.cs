@@ -108,6 +108,7 @@ namespace AstaLegheFC.Hubs
                     _bazzerService.SegnaAstaConclusa();
 
                     await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
+                    _bazzerService.AnnullaAstaCorrente();
 
                     // L'aggiornamento di Utente e Admin ora è gestito tramite AstaTerminata e Svincolo/Assegnazione.
                     // Per evitare chiamate ridondanti, possiamo commentarle qui e affidarci a location.reload() lato admin
