@@ -382,3 +382,19 @@ h1, h2, h3, h4, h5 {
         width: 50px;
         object-fit: contain;
     }
+
+/* =============================================== */
+/* FIX PER ETICHETTE IDENTITY SU SFONDO SCURO      */
+/* =============================================== */
+
+/* Colore dell'etichetta quando è dentro l'input box */
+.form-floating > label {
+    color: #8f9ea9; /* Un grigio chiaro, puoi cambiarlo a piacimento */
+}
+
+/* Colore dell'etichetta quando l'utente clicca sull'input o ha già scritto qualcosa */
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label,
+.form-floating > .form-select ~ label {
+    color: #adb5bd;
+}

@@ -48,10 +48,15 @@ namespace AstaLegheFC.Services
             }
         }
 
-        public async Task AssegnaGiocatoreManualmenteAsync(int giocatoreId, int squadraId, int costo)
+        // In Services/LegaService.cs
+
+        public async Task AssegnaGiocatoreManualmenteAsync(int giocatoreId, int squadraId, int costo, string adminId)
         {
-            var calciatoreDaListone = await _context.ListoneCalciatori.FindAsync(giocatoreId);
-            if (calciatoreDaListone == null) return;
+            // La ricerca ora controlla che il giocatore appartenga al listone dell'admin corretto
+            var calciatoreDaListone = await _context.ListoneCalciatori
+                .FirstOrDefaultAsync(c => c.Id == giocatoreId && c.AdminId == adminId);
+
+            if (calciatoreDaListone == null) return; // Non fa nulla se il giocatore non è dell'admin
 
             var squadra = await _context.Squadre.FindAsync(squadraId);
             if (squadra == null) return;
@@ -79,7 +84,8 @@ namespace AstaLegheFC.Services
                     .Where(p => p.Squadra == calciatoreDaListone.Squadra &&
                                 p.Ruolo == "P" &&
                                 p.Id != calciatoreDaListone.Id &&
-                                !idGiocatoriAcquistatiLega.Contains(p.IdListone))
+                                !idGiocatoriAcquistatiLega.Contains(p.IdListone) &&
+                                p.AdminId == adminId) // Aggiunto controllo di sicurezza anche qui
                     .ToListAsync();
 
                 foreach (var portiere in altriPortieri)
@@ -89,6 +95,7 @@ namespace AstaLegheFC.Services
                         IdListone = portiere.IdListone,
                         Nome = portiere.Nome,
                         Ruolo = portiere.Ruolo,
+                        RuoloMantra = portiere.RuoloMantra,
                         SquadraReale = portiere.Squadra,
                         SquadraId = squadraId,
                         CreditiSpesi = 0

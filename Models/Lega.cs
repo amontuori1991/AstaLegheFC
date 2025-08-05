@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic; // Assicurati che ci sia questo using
+﻿using System.Collections.Generic;
 
 namespace AstaLegheFC.Models
 {
@@ -8,8 +8,7 @@ namespace AstaLegheFC.Models
         public string Nome { get; set; }
         public string Alias { get; set; }
         public int CreditiIniziali { get; set; }
-
-        // ✅ AGGIUNGI QUESTA RIGA
+        public string? AdminId { get; set; }
         public List<Squadra> Squadre { get; set; } = new List<Squadra>();
     }
 }

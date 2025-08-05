@@ -3,26 +3,37 @@
     ViewData["Title"] = "Crea Squadra";
 }
 
-<h2 class="mt-3">Crea nuova squadra</h2>
+<h2 class="mt-3">Crea nuova squadra per la lega: @ViewBag.LegaNome</h2>
+<hr />
 
-<form asp-action="Crea" method="post">
-    <input type="hidden" asp-for="LegaId" />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Crea" method="post">
 
-    <div class="mb-3">
-        <label asp-for="Nome" class="form-label">Nome Squadra</label>
-        <input asp-for="Nome" class="form-control" placeholder="Inserisci nome squadra" />
-        <span asp-validation-for="Nome" class="text-danger"></span>
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="LegaId" />
+
+            <div class="mb-3">
+                <label asp-for="Nome" class="form-label">Nome Squadra</label>
+                <input asp-for="Nome" class="form-control" placeholder="Inserisci nome squadra" />
+                <span asp-validation-for="Nome" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Nickname" class="form-label">Nickname Accesso</label>
+                <input asp-for="Nickname" class="form-control" placeholder="Esempio: alex123" />
+                <span asp-validation-for="Nickname" class="text-danger"></span>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success">Salva</button>
+                <a asp-action="Index" asp-route-legaAlias="@ViewBag.LegaAlias" class="btn btn-secondary">Annulla</a>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="mb-3">
-        <label asp-for="Nickname" class="form-label">Nickname Accesso</label>
-        <input asp-for="Nickname" class="form-control" placeholder="Esempio: alex123" />
-        <span asp-validation-for="Nickname" class="text-danger"></span>
-    </div>
-
-    <button type="submit" class="btn btn-success">Salva</button>
-    <a asp-action="Index" asp-route-legaAlias="@ViewBag.LegaAlias" class="btn btn-secondary">Annulla</a>
-</form>
 
 @section Scripts {
     @{

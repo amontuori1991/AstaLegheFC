@@ -1,32 +1,41 @@
-﻿using AstaLegheFC.Data;
+﻿using System.Linq;
+using System.Text; // ✅ Aggiungi questo using
+using System.Threading.Tasks;
+using AstaLegheFC.Data;
 using AstaLegheFC.Hubs;
 using AstaLegheFC.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Text; // ✅ Aggiungi questo using
-using System.Threading.Tasks;
 
 namespace AstaLegheFC.Controllers
 {
+    [Authorize]
     public class LegheController : Controller
     {
         private readonly AppDbContext _context;
+        private readonly UserManager<IdentityUser> _userManager;
         private readonly IHubContext<BazzerHub> _hubContext;
 
-        public LegheController(AppDbContext context, IHubContext<BazzerHub> hubContext)
+        public LegheController(AppDbContext context,
+        UserManager<IdentityUser> userManager,        // <-- Aggiunto
+        IHubContext<BazzerHub> hubContext)
         {
             _context = context;
-            _hubContext = hubContext;
+            _userManager = userManager;                   // <-- Aggiunto
+            _hubContext = hubContext;                     // <-- Questo rimane
+
         }
 
         public async Task<IActionResult> Index()
         {
-            var leghe = await _context.Leghe
-                .OrderBy(l => l.Nome)
-                .ToListAsync();
+            var adminId = _userManager.GetUserId(User);
 
+            var leghe = await _context.Leghe
+                                      .Where(l => l.AdminId == adminId) // <-- FILTRO FONDAMENTALE
+                                      .ToListAsync();
             return View(leghe);
         }
 
@@ -36,23 +45,31 @@ namespace AstaLegheFC.Controllers
             return View();
         }
 
+
+        // In Controllers/LegheController.cs
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Crea(Lega lega)
+        public async Task<IActionResult> Crea([Bind("Id,Nome,Alias,CreditiIniziali")] Lega lega)
         {
+            var adminId = _userManager.GetUserId(User);
+            lega.AdminId = adminId;
+
+            // MODIFICATO: Ora il controllo è globale e non più legato all'admin
+            bool aliasEsistente = await _context.Leghe
+                                              .AnyAsync(l => l.Alias.ToLower() == lega.Alias.ToLower());
+
+            if (aliasEsistente)
+            {
+                ModelState.AddModelError("Alias", "Questo alias è già in uso da un altro utente. Scegline uno diverso.");
+            }
+
             if (ModelState.IsValid)
             {
-                if (await _context.Leghe.AnyAsync(l => l.Alias.ToLower() == lega.Alias.ToLower()))
-                {
-                    ModelState.AddModelError("Alias", "Alias già esistente. Scegline uno diverso.");
-                    return View(lega);
-                }
-
-                _context.Leghe.Add(lega);
+                _context.Add(lega);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-
             return View(lega);
         }
 

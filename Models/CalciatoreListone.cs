@@ -16,5 +16,6 @@
         public int? DiffM { get; set; }              // Excel: Diff.M
         public int? FVM { get; set; }                // Excel: FVM
         public int? FVMM { get; set; }               // Excel: FVM M
+        public string AdminId { get; set; }
     }
 }
