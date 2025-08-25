@@ -314,6 +314,8 @@
     <input type="hidden" name="lega" value="@ViewBag.LegaAlias" />
     <input type="hidden" name="iniziale" id="inizialeInput" value="@(ViewBag.Iniziale ?? "")" />
     <input type="hidden" name="sorteggio" id="sorteggioInput" value="@(ViewBag.SorteggioLetteraAttivo ? "true" : "false")" />
+    <input type="hidden" name="bp" id="bpInput" value="@(ViewBag.BloccoPortieriAttivo ? "true" : "false")" />
+
     <div class="col-md-4"><input type="text" name="nome" id="nomeFilterInput" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" /></div>
     <div class="col-md-4"><input type="text" name="squadra" id="squadraFilterInput" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" /></div>
     <div class="col-md-4">
@@ -974,17 +976,24 @@
             });
 
             document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
-            document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
-                const isAttivo = this.checked;
-                fetch('/Admin/ImpostaBloccoPortieri',{
-                    method:'POST',
-                    headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify({ attivo:isAttivo })
-                }).then(async r=>{
-                    if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
-                    else await mostraMessaggio('Errore','Errore aggiornamento regola.');
-                });
+                    document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
+            const isAttivo = this.checked;
+
+            // 👉 Aggiorna l'hidden così i futuri submit dei filtri portano lo stato
+            const bpHidden = document.getElementById('bpInput');
+            if (bpHidden) bpHidden.value = isAttivo ? 'true' : 'false';
+
+            // Mantieni anche la chiamata lato server (così gli utenti live ricevono lo stato aggiornato)
+            fetch('/Admin/ImpostaBloccoPortieri', {
+                method:'POST',
+                headers:{ 'Content-Type':'application/json' },
+                body: JSON.stringify({ attivo:isAttivo })
+            }).then(async r=>{
+                if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri ' + (isAttivo ? 'ATTIVATO' : 'DISATTIVATO'));
+                else await mostraMessaggio('Errore','Errore aggiornamento regola.');
             });
+        });
+
             document.getElementById('mantraSwitch')?.addEventListener('change', function(){
                 const isAttivo=this.checked;
                 const url=new URL(window.location.href);

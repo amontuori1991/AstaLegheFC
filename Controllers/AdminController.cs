@@ -129,7 +129,7 @@ namespace AstaLegheFC.Controllers
             return View();
         }
 
-        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo, [FromQuery(Name = "mantra")] bool mantraAttivo = false, [FromQuery(Name = "sorteggio")] bool sorteggioLetteraAttivo = false, [FromQuery(Name = "iniziale")] string? iniziale = null)
+        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo, [FromQuery(Name = "mantra")] bool mantraAttivo = false, [FromQuery(Name = "sorteggio")] bool sorteggioLetteraAttivo = false, [FromQuery(Name = "iniziale")] string? iniziale = null, [FromQuery(Name = "bp")] bool? bp = null)
         {
             if (string.IsNullOrEmpty(lega)) return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
 
@@ -155,11 +155,14 @@ namespace AstaLegheFC.Controllers
 
             var listoneDisponibile = await queryListone.OrderBy(g => g.Nome).ToListAsync();
 
+            var bloccoPortieriAttivo = bp ?? _bazzerService.BloccoPortieriAttivo;
+            _bazzerService.ImpostaBloccoPortieri(bloccoPortieriAttivo);
+
             ViewBag.Nome = nome;
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
             ViewBag.SorteggioLetteraAttivo = sorteggioLetteraAttivo;
-            ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
+            ViewBag.BloccoPortieriAttivo = bloccoPortieriAttivo; // default OFF a ogni render della pagina
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
             ViewBag.MantraAttivo = mantraAttivo;
             ViewBag.AdminNick = User.Identity?.Name ?? "ADMIN";   // <-- aggiunto
