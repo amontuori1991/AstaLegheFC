@@ -129,7 +129,7 @@ namespace AstaLegheFC.Controllers
             return View();
         }
 
-        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo, [FromQuery(Name = "mantra")] bool mantraAttivo = false)
+        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo, [FromQuery(Name = "mantra")] bool mantraAttivo = false, [FromQuery(Name = "sorteggio")] bool sorteggioLetteraAttivo = false, [FromQuery(Name = "iniziale")] string? iniziale = null)
         {
             if (string.IsNullOrEmpty(lega)) return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
 
@@ -150,12 +150,15 @@ namespace AstaLegheFC.Controllers
             if (!string.IsNullOrEmpty(nome)) queryListone = queryListone.Where(c => c.Nome.ToLower().Contains(nome.ToLower()));
             if (!string.IsNullOrEmpty(squadra)) queryListone = queryListone.Where(c => c.Squadra.ToLower().Contains(squadra.ToLower()));
             if (!string.IsNullOrEmpty(ruolo)) queryListone = queryListone.Where(c => c.Ruolo == ruolo);
+            if (!string.IsNullOrEmpty(iniziale))
+                queryListone = queryListone.Where(c => EF.Functions.Like(c.Nome, iniziale + "%"));
 
             var listoneDisponibile = await queryListone.OrderBy(g => g.Nome).ToListAsync();
 
             ViewBag.Nome = nome;
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
+            ViewBag.SorteggioLetteraAttivo = sorteggioLetteraAttivo;
             ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
             ViewBag.MantraAttivo = mantraAttivo;
