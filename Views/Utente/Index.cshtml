@@ -48,6 +48,59 @@
     #offertaPersonalizzataInput, #input-ricerca-giocatore {
         font-size: 16px;
     }
+
+    /* ===== Toast suggerimento (utente) ===== */
+    .toast-suggerimento {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: rgba(0,0,0,.85);
+        color: #fff;
+        box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        opacity: 0;
+        transform: translateY(12px);
+        pointer-events: none;
+        transition: opacity .25s ease, transform .25s ease;
+        z-index: 2000;
+    }
+
+        .toast-suggerimento.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .toast-suggerimento img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+        }
+
+        .toast-suggerimento .toast-body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .toast-suggerimento .toast-ok {
+            margin-top: 2px;
+            font-size: .9rem;
+            color: #2ecc71;
+        }
+
+        .toast-suggerimento .toast-close {
+            margin-left: 6px;
+            background: transparent;
+            border: 0;
+            color: #fff;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+        }
 </style>
 
 <div class="row mt-md-4">
@@ -130,6 +183,17 @@
         </div>
 
     </div>
+</div>
+
+<!-- ✅ Toast suggerimento -->
+<div id="toast-suggerimento" class="toast-suggerimento" role="status" aria-live="polite" aria-atomic="true">
+    <img id="toast-logo" alt="Logo squadra" />
+    <div class="toast-body">
+        <strong id="toast-nome"></strong>
+        <div id="toast-dettagli" class="small text-muted"></div>
+        <div class="toast-ok">Suggerimento inviato all’admin ✅</div>
+    </div>
+    <button type="button" class="toast-close" aria-label="Chiudi">&times;</button>
 </div>
 
 @section Scripts {
@@ -263,13 +327,31 @@
                     .catch(err => console.error("Errore nell'invio del suggerimento:", err));
             }
 
+            // ✅ Funzione toast robusta (logo, nome, dettagli, auto-hide)
             function mostraToastSuggerimento(giocatore) {
-                document.getElementById('toast-logo').src = `https://content.fantacalcio.it/web/img/team/${giocatore.squadra.toLowerCase().replace(' ', '-')}.png`;
-                document.getElementById('toast-nome').textContent = giocatore.nome;
-                document.getElementById('toast-dettagli').textContent = `${giocatore.ruolo} - ${giocatore.squadra}`;
-                const toastElement = document.getElementById('toast-suggerimento');
-                toastElement.classList.add('show');
-                setTimeout(() => { toastElement.classList.remove('show'); }, 4000);
+                const el = document.getElementById('toast-suggerimento');
+                const logo = document.getElementById('toast-logo');
+                const nome = document.getElementById('toast-nome');
+                const dettagli = document.getElementById('toast-dettagli');
+
+                if (!el || !logo || !nome || !dettagli) return;
+
+                const teamSlug = (giocatore.squadra || '').toLowerCase().replace(/\s+/g, '-');
+                const logoUrl = `https://content.fantacalcio.it/web/img/team/${teamSlug}.png`;
+                logo.style.display = 'block';
+                logo.src = logoUrl;
+                logo.onerror = () => { logo.style.display = 'none'; };
+
+                nome.textContent = giocatore.nome || '';
+                dettagli.textContent = `${giocatore.ruolo || ''} - ${giocatore.squadra || ''}`;
+
+                el.classList.add('show');
+
+                const hide = () => el.classList.remove('show');
+                const closeBtn = el.querySelector('.toast-close');
+                if (closeBtn) closeBtn.onclick = hide;
+
+                setTimeout(hide, 4000);
             }
 
             // --- GESTIONE EVENTI SIGNALR ---
