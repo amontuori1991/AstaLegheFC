@@ -136,11 +136,7 @@ namespace AstaLegheFC.Controllers
             var adminId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(adminId)) return Unauthorized();
 
-            // =============== MODIFICA CHIAVE QUI ===============
-            // Aggiungiamo il controllo sull'AdminId anche qui per trovare la lega corretta
             var legaModel = await _context.Leghe.FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower() && l.AdminId == adminId);
-
-            // Se la lega non esiste O non appartiene all'utente, restituisce un errore di accesso negato
             if (legaModel == null) return Forbid("Lega non trovata o non appartenente a questo utente.");
 
             var idGiocatoriAcquistati = await _context.Giocatori
@@ -163,9 +159,10 @@ namespace AstaLegheFC.Controllers
             ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
             ViewBag.MantraAttivo = mantraAttivo;
+            ViewBag.AdminNick = User.Identity?.Name ?? "ADMIN";   // <-- aggiunto
             _bazzerService.ImpostaModalitaMantra(mantraAttivo);
 
-            #region Riepilogo Squadre e Dati Vista
+            // Riepilogo
             var squadreDaDb = await _context.Squadre
                 .Include(s => s.Giocatori)
                 .Where(s => s.LegaId == legaModel.Id)
@@ -196,17 +193,15 @@ namespace AstaLegheFC.Controllers
             }
             ViewBag.RiepilogoSquadre = riepilogo;
             ViewBag.LegaAlias = legaModel.Alias;
-            // Se il mantra è attivo, seleziona i ruoli mantra, altrimenti quelli normali
+
             ViewBag.RuoliDisponibili = await (mantraAttivo
-            ? _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.RuoloMantra != null).Select(c => c.RuoloMantra)
-            : _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.Ruolo != null).Select(c => c.Ruolo))
-        .Distinct()
-        .OrderBy(r => r)
-        .ToListAsync();
-            #endregion
+                ? _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.RuoloMantra != null).Select(c => c.RuoloMantra)
+                : _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.Ruolo != null).Select(c => c.Ruolo))
+                .Distinct().OrderBy(r => r).ToListAsync();
 
             return View("VisualizzaListone", listoneDisponibile);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> AvviaAsta(int id, [FromForm(Name = "mantra")] bool mantraAttivo)

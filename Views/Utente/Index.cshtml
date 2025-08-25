@@ -15,12 +15,22 @@
         line-height: 1;
     }
 
-    #offerente {
-        font-weight: 300;
+    #offerta.display-1 {
+        margin: 0; /* azzera i margini verticali del numero grande */
+        line-height: 0.9; /* compattalo un filo */
     }
 
-    #offerta.display-1 {
-        margin: .25rem 0 .25rem;
+    #offerente {
+        margin-top: .15rem; /* quasi attaccato al numero */
+        margin-bottom: 0;
+        line-height: 1.1;
+    }
+    /* il label "da" compatto e meno ingombrante */
+    #label-da {
+        display: block;
+        margin: .10rem 0 0;
+        font-size: .9rem;
+        opacity: .7;
     }
 
     #risultati-ricerca {
@@ -48,7 +58,7 @@
         font-size: 16px;
     }
 
-    /* Pulsante azioni header (non ingombra) */
+    /* Header actions */
     .card-header {
         position: relative;
     }
@@ -61,58 +71,73 @@
         gap: .5rem;
     }
 
-    /* Toast suggerimento */
+    /* Toast suggerimento – centrato, compatto */
     .toast-suggerimento {
         position: fixed;
-        right: 20px;
-        bottom: 80px;
-        display: flex;
-        gap: 12px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(.98);
+        display: inline-flex; /* <— compatto, non si “stende” */
         align-items: center;
-        padding: 12px 14px;
-        border-radius: 10px;
-        background: rgba(0,0,0,.85);
+        gap: 12px;
+        padding: 14px 16px 14px 14px;
+        border-radius: 12px;
+        background: rgba(0,0,0,.92);
         color: #fff;
-        box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        box-shadow: 0 14px 36px rgba(0,0,0,.5);
         opacity: 0;
-        transform: translateY(12px);
         pointer-events: none;
-        transition: opacity .25s ease, transform .25s ease;
-        z-index: 2000;
+        transition: opacity .2s ease, transform .2s ease;
+        z-index: 3000;
+        box-sizing: border-box;
+        /* limiti di dimensione */
+        max-width: 420px;
+        width: auto;
+        max-height: 220px;
+        height: auto;
+        overflow: hidden; /* niente “stiramento” verticale */
     }
 
         .toast-suggerimento.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translate(-50%, -50%) scale(1);
             pointer-events: auto;
         }
 
-        .toast-suggerimento img {
-            width: 40px;
-            height: 40px;
+        .toast-suggerimento img#toast-logo {
+            width: 48px;
+            height: 48px;
             object-fit: contain;
+            flex-shrink: 0; /* non farlo schiacciare/allungare */
         }
 
         .toast-suggerimento .toast-body {
             display: flex;
             flex-direction: column;
+            flex: 0 0 auto; /* <— NON riempire lo spazio */
+            min-width: 0; /* elisione corretta del testo */
         }
 
         .toast-suggerimento .toast-ok {
             margin-top: 2px;
-            font-size: .9rem;
+            font-size: .95rem;
             color: #2ecc71;
+            white-space: nowrap;
         }
 
         .toast-suggerimento .toast-close {
-            margin-left: 6px;
+            position: absolute; /* <— non altera l’altezza del box */
+            top: 6px;
+            right: 8px;
             background: transparent;
             border: 0;
             color: #fff;
-            font-size: 20px;
+            font-size: 18px;
             line-height: 1;
             cursor: pointer;
+            padding: 0;
         }
+
 
     /* Barra crediti in fondo */
     #crediti-bar {
@@ -231,8 +256,57 @@
         opacity: .9;
     }
 
+    .pl-role {
+        margin-left: 6px;
+        font-style: italic;
+        font-size: .85em;
+        color: #0dcaf0;
+        white-space: nowrap;
+    }
+
+    /* Overlay Pausa */
+    #pausa-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        text-align: center;
+        color: #fff;
+        padding: 20px;
+    }
+
+        #pausa-overlay.visible {
+            display: flex;
+        }
+
+    #pausa-box {
+        background: linear-gradient(145deg,#34495e,#2c3e50);
+        border: 1px solid #3498db;
+        border-radius: 14px;
+        padding: 24px 20px;
+        max-width: 520px;
+        width: 92%;
+        box-shadow: 0 10px 30px rgba(0,0,0,.6);
+    }
+
+        #pausa-box h3 {
+            margin: 0 0 .5rem 0;
+            color: #f1c40f;
+        }
+
+        #pausa-box p {
+            margin: 0;
+        }
+
+    #pausa-remaining {
+        font-weight: 700;
+    }
+
     /* Mobile */
-    @@media (max-width: 576px) {
+    @@media (max-width:576px) {
         h2#giocatore {
             font-size: 1.05rem;
             line-height: 1.2;
@@ -286,14 +360,14 @@
     <div class="col-md-7 col-lg-8 mb-3 mb-md-0">
         <div class="card text-center shadow-lg h-100">
             <div class="card-header bg-dark text-white">
-                <!-- Azioni header: bottone "Rose" -->
+                <!-- Azioni header -->
                 <div class="header-actions">
                     <button id="btnRiepilogo" class="btn btn-outline-info btn-sm">Rose</button>
                 </div>
 
                 <div id="giocatore-info" class="d-flex justify-content-center align-items-center gap-3">
                     <img id="logo-giocatore-in-asta" src="@Model.LogoSquadra" alt="Logo"
-                         style="height: 40px; display: @(string.IsNullOrEmpty(Model.LogoSquadra) ? "none" : "block");" />
+                         style="height:40px; display:@(string.IsNullOrEmpty(Model.LogoSquadra) ? "none" : "block");" />
                     <h2 id="giocatore" class="mb-0">
                         @if (Model.CalciatoreInAsta != null && !string.IsNullOrEmpty(Model.CalciatoreInAsta.Nome))
                         {
@@ -309,7 +383,7 @@
             <div class="card-body d-flex flex-column justify-content-center">
                 <h5 class="card-title text-muted">Offerta Attuale</h5>
                 <p id="offerta" class="display-1 fw-bold text-warning">@Model.OffertaAttuale</p>
-                <p class="mb-1">da</p>
+                <small id="label-da" class="text-muted">da</small>
                 <h3 id="offerente" class="text-info">@Model.OfferenteAttuale</h3>
             </div>
             <div class="card-footer bg-dark text-white">
@@ -326,7 +400,7 @@
                 <span class="text-muted small">Rilanci rapidi</span>
             </div>
             <div class="card-body">
-                <div id="avviso-ruolo-completo" class="alert alert-danger" style="display: none;"></div>
+                <div id="avviso-ruolo-completo" class="alert alert-danger" style="display:none;"></div>
 
                 <div class="pulsanti-offerta-container d-flex flex-wrap gap-2">
                     @foreach (var incremento in new[] { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50 })
@@ -344,9 +418,7 @@
         </div>
 
         <div class="card shadow">
-            <div class="card-header">
-                <h5 class="mb-0">Suggerisci un Giocatore</h5>
-            </div>
+            <div class="card-header"><h5 class="mb-0">Suggerisci un Giocatore</h5></div>
             <div class="card-body">
                 <input type="text" id="input-ricerca-giocatore" class="form-control" placeholder="Cerca per nome..." />
                 <div id="risultati-ricerca" class="mt-2"></div>
@@ -373,7 +445,7 @@
 </div>
 <div class="spacer-crediti"></div>
 
-<!-- Modal riepilogo rose -->
+<!-- Modal riepilogo rose (tutte le squadre; la tua aperta di default) -->
 <div class="modal fade" id="modalRiepilogo" tabindex="-1" aria-labelledby="modalRiepilogoLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
         <div class="modal-content">
@@ -389,6 +461,15 @@
                 <button class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Overlay Pausa -->
+<div id="pausa-overlay">
+    <div id="pausa-box">
+        <h3>⏸ Asta in pausa</h3>
+        <p>Attendi che l’amministratore riprenda l’asta.</p>
+        <p class="mt-2">Tempo rimanente al momento della pausa: <span id="pausa-remaining">--</span>s</p>
     </div>
 </div>
 
@@ -417,14 +498,22 @@
             let centrocampistiAttuali = @Model.CentrocampistiAcquistati;
             let attaccantiAttuali = @Model.AttaccantiAcquistati;
 
+            // Stato pausa lato client (per UI e guard offer)
+            let pausaAttivaClient = false;
+
             const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
 
             /* =======================
                UTILS
             ======================= */
+            function setBidControlsEnabled(enabled){
+                document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata")
+                    .forEach(el => el.disabled = !enabled);
+            }
+
             function aggiornaStatoPulsantiBazzer() {
-                const avvisoDiv = document.getElementById('avviso-ruolo-completo');
-                let abilitato = idListoneAttuale > 0;
+                // Abilitati solo se c'è un giocatore in asta e NON siamo in pausa
+                let abilitato = idListoneAttuale > 0 && !pausaAttivaClient;
                 let messaggio = "";
                 if (abilitato) {
                     if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) {
@@ -437,19 +526,23 @@
                         abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`;
                     }
                 }
-                document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata").forEach(el => el.disabled = !abilitato);
-                if (!abilitato && messaggio) { avvisoDiv.innerText = messaggio; avvisoDiv.style.display = 'block'; } else { avvisoDiv.style.display = 'none'; }
+                setBidControlsEnabled(abilitato);
+                const avvisoDiv = document.getElementById('avviso-ruolo-completo');
+                if (!abilitato && messaggio) { avvisoDiv.innerText = messaggio; avvisoDiv.style.display = 'block'; }
+                else { avvisoDiv.style.display = 'none'; }
             }
+
+            function stopCountdown(){ clearInterval(countdownTimerUtente); countdownTimerUtente = null; }
 
             function aggiornaCountdownDaFineUtc() {
                 const timerEl = document.getElementById("timer");
-                clearInterval(countdownTimerUtente);
+                stopCountdown();
                 if (!idListoneAttuale || !fineUtcCorrente) { if (timerEl) timerEl.textContent = "-"; return; }
                 const end = new Date(fineUtcCorrente);
                 const tick = () => {
                     const sec = Math.ceil((end.getTime() - Date.now()) / 1000);
                     timerEl.textContent = sec >= 0 ? sec : 0;
-                    if (sec <= -1) { clearInterval(countdownTimerUtente); }
+                    if (sec <= -1) stopCountdown();
                 };
                 tick();
                 countdownTimerUtente = setInterval(tick, 1000);
@@ -457,114 +550,120 @@
 
             async function aggiornaCrediti() {
                 try {
-                    const res = await fetch(`/utente/crediti?nick=${nickname}&lega=${legaAlias}`);
+                    const res = await fetch(`/utente/crediti?nick=${encodeURIComponent(nickname)}&lega=${encodeURIComponent(legaAlias)}`);
                     if (!res.ok) return;
                     const data = await res.json();
-                    const elCred = document.getElementById("crediti-bottom");
-                    const elMax  = document.getElementById("puntata-bottom");
-                    if (elCred) elCred.textContent = data.creditiDisponibili;
-                    if (elMax)  elMax.textContent  = data.puntataMassima;
-                    portieriAttuali = data.portieri;
-                    difensoriAttuali = data.difensori;
-                    centrocampistiAttuali = data.centrocampisti;
-                    attaccantiAttuali = data.attaccanti;
+                    document.getElementById("crediti-bottom").textContent = data.creditiDisponibili;
+                    document.getElementById("puntata-bottom").textContent = data.puntataMassima;
+                    portieriAttuali = data.portieri; difensoriAttuali = data.difensori; centrocampistiAttuali = data.centrocampisti; attaccantiAttuali = data.attaccanti;
                     aggiornaStatoPulsantiBazzer();
                 } catch (e) { console.error("Errore aggiornamento crediti:", e); }
             }
 
             async function caricaListone() {
                 try {
-                    const res = await fetch(`/Utente/GetListoneDisponibile?lega=${legaAlias}`);
+                    const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
                     if (res.ok) listoneCompleto = await res.json();
                 } catch (e) { console.error("Errore nel caricamento del listone:", e); }
             }
 
             /* =======================
-               RIEPILOGO ROSE (MODAL)
+               RIEPILOGO ROSE (tutte)
             ======================= */
             const modalEl = document.getElementById('modalRiepilogo');
             const riepilogoContainer = document.getElementById('riepilogoContainer');
             const riepilogoLoading = document.getElementById('riepilogo-loading');
 
-            function renderListaGiocatori(titolo, arr) {
-                const items = (arr || []).map(p => `
+        function renderListaGiocatori(titolo, arr, mantraAttivo) {
+            const items = (arr || []).map(p => {
+                const ruoloVisibile = mantraAttivo ? (p.ruoloMantra || p.ruolo) : p.ruolo;
+                return `
                   <div class="pl-item">
                     <div class="pl-left">
                       <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
                       <span class="pl-name">${p.nome}</span>
+                      <span class="pl-role">${ruoloVisibile || ''}</span>
                     </div>
                     <span class="pl-cred">(${p.crediti})</span>
                   </div>
-                `).join('') || `<div class="text-muted small">Nessuno</div>`;
-                return `
-                  <div class="role-col">
-                    <div class="role-title">${titolo}</div>
-                    ${items}
-                  </div>
                 `;
-            }
+            }).join('') || `<div class="text-muted small">Nessuno</div>`;
 
-            function renderAccordionSquadre(data) {
-                const squads = (data && data.squads) ? data.squads : [];
-                const accId = 'acc-riepilogo';
-                const html = squads.map((s, idx) => {
-                    const collapseId = `collapse-${s.squadraId}`;
-                    const headingId = `heading-${s.squadraId}`;
-                    const show = s.isMe ? 'show' : '';
-                    const myTeamClass = s.isMe ? 'my-team' : '';
-                    const counts = {
-                        P: (s.portieri || []).length,
-                        D: (s.difensori || []).length,
-                        C: (s.centrocampisti || []).length,
-                        A: (s.attaccanti || []).length
-                    };
-                    return `
-                      <div class="accordion-item ${myTeamClass}">
-                        <h2 class="accordion-header" id="${headingId}">
-                          <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
-                                  data-bs-toggle="collapse" data-bs-target="#${collapseId}"
-                                  aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
-                            <span class="team-chip">${s.nickname}</span>
-                            <span class="ms-3 small text-muted">P:${counts.P} D:${counts.D} C:${counts.C} A:${counts.A}</span>
-                            ${s.isMe ? '<span class="badge bg-info ms-2">La tua</span>' : ''}
-                          </button>
-                        </h2>
-                        <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
-                          <div class="accordion-body">
-                            <div class="d-flex flex-wrap gap-3">
-                              ${renderListaGiocatori('Portieri', s.portieri)}
-                              ${renderListaGiocatori('Difensori', s.difensori)}
-                              ${renderListaGiocatori('Centrocampisti', s.centrocampisti)}
-                              ${renderListaGiocatori('Attaccanti', s.attaccanti)}
-                            </div>
-                          </div>
+            return `
+              <div class="role-col">
+                <div class="role-title">${titolo}</div>
+                ${items}
+              </div>
+            `;
+        }
+
+
+         function renderAccordionSquadre(data) {
+            const squads = (data && data.squads) ? data.squads : [];
+            const mantraAttivo = !!data?.mantraAttivo;
+            const accId = 'acc-riepilogo';
+
+            const html = squads.map((s) => {
+                const collapseId = `collapse-${s.squadraId}`;
+                const headingId = `heading-${s.squadraId}`;
+                const show = s.isMe ? 'show' : '';
+                const myTeamClass = s.isMe ? 'my-team' : '';
+                const counts = {
+                    P: (s.portieri || []).length,
+                    D: (s.difensori || []).length,
+                    C: (s.centrocampisti || []).length,
+                    A: (s.attaccanti || []).length
+                };
+
+                return `
+                  <div class="accordion-item ${myTeamClass}">
+                    <h2 class="accordion-header" id="${headingId}">
+                      <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
+                              data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                              aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
+                        <span class="team-chip">${s.nickname}</span>
+                        <span class="ms-3 small text-muted">P:${counts.P} D:${counts.D} C:${counts.C} A:${counts.A}</span>
+                        ${s.isMe ? '<span class="badge bg-info ms-2">La tua</span>' : ''}
+                      </button>
+                    </h2>
+                    <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
+                      <div class="accordion-body">
+                        <div class="d-flex flex-wrap gap-3">
+                          ${renderListaGiocatori('Portieri', s.portieri, mantraAttivo)}
+                          ${renderListaGiocatori('Difensori', s.difensori, mantraAttivo)}
+                          ${renderListaGiocatori('Centrocampisti', s.centrocampisti, mantraAttivo)}
+                          ${renderListaGiocatori('Attaccanti', s.attaccanti, mantraAttivo)}
                         </div>
                       </div>
-                    `;
-                }).join('');
+                    </div>
+                  </div>
+                `;
+            }).join('');
 
-                return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
-            }
+            return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
+        }
 
-            async function apriRiepilogo() {
-                try {
-                    riepilogoLoading.style.display = 'block';
-                    riepilogoContainer.innerHTML = '';
-                    const res = await fetch(`/utente/riepilogo?lega=${legaAlias}&nick=${encodeURIComponent(nickname)}`);
-                    if (!res.ok) { riepilogoContainer.innerHTML = '<div class="text-danger">Errore nel caricamento del riepilogo.</div>'; return; }
-                    const data = await res.json();
-                    riepilogoContainer.innerHTML = renderAccordionSquadre(data);
-                } catch (e) {
-                    console.error(e);
-                    riepilogoContainer.innerHTML = '<div class="text-danger">Errore inatteso.</div>';
-                } finally {
-                    riepilogoLoading.style.display = 'none';
+        async function apriRiepilogo() {
+            try {
+                riepilogoLoading.style.display = 'block';
+                riepilogoContainer.innerHTML = '';
+                const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+                if (!res.ok) {
+                    riepilogoContainer.innerHTML = '<div class="text-danger">Errore nel caricamento del riepilogo.</div>';
+                    return;
                 }
+                const data = await res.json(); // contiene anche data.mantraAttivo
+                riepilogoContainer.innerHTML = renderAccordionSquadre(data);
+            } catch (e) {
+                console.error(e);
+                riepilogoContainer.innerHTML = '<div class="text-danger">Errore inatteso.</div>';
+            } finally {
+                riepilogoLoading.style.display = 'none';
             }
+        }
 
             document.getElementById('btnRiepilogo').addEventListener('click', () => {
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
+                bootstrap.Modal.getOrCreateInstance(modalEl).show();
                 apriRiepilogo();
             });
 
@@ -640,6 +739,7 @@
                 document.getElementById("offerta").textContent = "0";
                 offertaAttuale = 0;
                 fineUtcCorrente = null;
+
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
             });
@@ -649,7 +749,8 @@
                 document.getElementById("offerta").textContent = offerta || 0;
                 offertaAttuale = offerta || 0;
                 fineUtcCorrente = fineUtc || null;
-                aggiornaCountdownDaFineUtc();
+
+                if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
             });
 
             connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
@@ -658,43 +759,69 @@
                 } else {
                     alert(`Asta Conclusa! Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
                 }
-                idListoneAttuale = 0;
-                ruoloGiocatoreAttuale = "";
+                idListoneAttuale = 0; ruoloGiocatoreAttuale = "";
                 document.getElementById("giocatore").textContent = "Nessun giocatore";
                 document.getElementById("logo-giocatore-in-asta").style.display = 'none';
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
-                fineUtcCorrente = null;
+                fineUtcCorrente = null; stopCountdown(); document.getElementById("timer").textContent = "-";
+                pausaAttivaClient = false; document.getElementById('pausa-overlay').classList.remove('visible');
+
                 aggiornaStatoPulsantiBazzer();
-                aggiornaCountdownDaFineUtc();
-                aggiornaCrediti();
-                caricaListone();
+                aggiornaCrediti(); caricaListone();
             });
 
             connection.on("AstaAnnullata", () => {
                 if (typeof mostraMessaggio === 'function') {
                     mostraMessaggio("Asta Annullata", "L'amministratore ha annullato l'asta corrente.");
                 } else {
-                    alert("Asta Annullata", "L'amministratore ha annullato l'asta corrente.");
+                    alert("Asta Annullata");
                 }
-                idListoneAttuale = 0;
-                ruoloGiocatoreAttuale = "";
+                idListoneAttuale = 0; ruoloGiocatoreAttuale = "";
                 document.getElementById("giocatore").textContent = "Nessun giocatore";
                 document.getElementById("logo-giocatore-in-asta").style.display = 'none';
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
-                fineUtcCorrente = null;
+                fineUtcCorrente = null; stopCountdown(); document.getElementById("timer").textContent="-";
+                pausaAttivaClient = false; document.getElementById('pausa-overlay').classList.remove('visible');
                 aggiornaStatoPulsantiBazzer();
-                aggiornaCountdownDaFineUtc();
             });
 
-            connection.on("AggiornaUtente", () => {
-                aggiornaCrediti();
-                caricaListone();
+            // ► Pausa / Ripresa / Stato iniziale
+            connection.on("AstaPausa", (payload)=>{
+                pausaAttivaClient = true;
+                setBidControlsEnabled(false);
+                stopCountdown();
+                const rem = (typeof payload?.remainingSec === 'number') ? payload.remainingSec : (document.getElementById('timer').textContent || '--');
+                document.getElementById('pausa-remaining').textContent = rem;
+                document.getElementById('timer').textContent = rem;
+                document.getElementById('pausa-overlay').classList.add('visible');
             });
 
-            connection.on("AggiornaDurataTimer", (nuoviSecondi) => { timerSecondi = nuoviSecondi; });
+            connection.on("AstaRipresa", ({ fineUtc })=>{
+                pausaAttivaClient = false;
+                document.getElementById('pausa-overlay').classList.remove('visible');
+                if (fineUtc){
+                    fineUtcCorrente = fineUtc;
+                    aggiornaCountdownDaFineUtc();
+                }
+                aggiornaStatoPulsantiBazzer();
+            });
 
+            connection.on("StatoAsta", (stato)=>{
+                if (stato?.pausaAttiva){
+                    pausaAttivaClient = true;
+                    setBidControlsEnabled(false);
+                    document.getElementById('pausa-overlay').classList.add('visible');
+                } else {
+                    pausaAttivaClient = false;
+                    document.getElementById('pausa-overlay').classList.remove('visible');
+                    aggiornaStatoPulsantiBazzer();
+                }
+            });
+
+            connection.on("AggiornaUtente", ()=>{ aggiornaCrediti(); caricaListone(); });
+            connection.on("AggiornaDurataTimer", (nuoviSecondi)=>{ timerSecondi = nuoviSecondi; });
             connection.on("AggiornaRegoleLega", (regole) => {
                 maxPortieri = regole.maxPortieri;
                 maxDifensori = regole.maxDifensori;
@@ -704,20 +831,21 @@
             });
 
             /* =======================
-               CLICK OFFERTE
+               CLICK OFFERTE (guard pausa)
             ======================= */
             document.querySelectorAll(".bazzer").forEach(btn => {
                 btn.addEventListener("click", async () => {
+                    if (pausaAttivaClient){
+                        if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
+                        return;
+                    }
                     const incremento = parseInt(btn.dataset.incremento);
                     const snapshot = offertaAttuale;
                     const nuovaOfferta = snapshot + incremento;
                     const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
                     if (nuovaOfferta > puntataMassima) {
-                        if (typeof mostraMessaggio === 'function') {
-                            mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti per fare questa offerta! La tua puntata massima è " + puntataMassima);
-                        } else {
-                            alert("Offerta non valida", "Non hai abbastanza crediti per fare questa offerta! La tua puntata massima è " + puntataMassima);
-                        }
+                        if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti! Puntata max: " + puntataMassima);
+                        else alert("Offerta non valida");
                         return;
                     }
                     await connection.invoke("InviaOfferta", nickname, nuovaOfferta, snapshot);
@@ -725,25 +853,23 @@
             });
 
             document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
+                if (pausaAttivaClient){
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
+                    return;
+                }
                 const inputOfferta = document.getElementById('offertaPersonalizzataInput');
                 const offertaInserita = parseInt(inputOfferta.value);
                 if (isNaN(offertaInserita) || offertaInserita <= 0) {
-                    if (typeof mostraMessaggio === 'function') { mostraMessaggio("Errore", "Per favore, inserisci un valore numerico valido."); }
-                    else { alert("Errore", "Per favore, inserisci un valore numerico valido."); }
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Errore", "Inserisci un valore numerico valido."); else alert("Errore");
                     return;
                 }
                 if (offertaInserita <= offertaAttuale) {
-                    if (typeof mostraMessaggio === 'function') { mostraMessaggio("Offerta non valida", "La tua offerta deve essere superiore a quella attuale!"); }
-                    else { alert("Offerta non valida", "La tua offerta deve essere superiore a quella attuale!"); }
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Deve essere superiore all'attuale!"); else alert("Offerta non valida");
                     return;
                 }
                 const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
                 if (offertaInserita > puntataMassima) {
-                    if (typeof mostraMessaggio === 'function') {
-                        mostraMessaggio("Offerta non valida", "La tua offerta supera la tua puntata massima disponibile! (" + puntataMassima + ")");
-                    } else {
-                        alert("Offerta non valida", "La tua offerta supera la tua puntata massima disponibile! (" + puntataMassima + ")");
-                    }
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Supera la tua puntata massima (" + puntataMassima + ")"); else alert("Offerta non valida");
                     return;
                 }
                 const snapshot = offertaAttuale;
@@ -755,10 +881,16 @@
                AVVIO
             ======================= */
             connection.start().then(() => {
+                // presenza & ping (per dot lato admin)
+                connection.invoke("RegistratiAllaLega", legaAlias, nickname, false);
+                setInterval(() => connection.invoke("Ping", legaAlias, nickname), 15000);
+
+                // stato attuale aste / timer
                 connection.invoke("RichiediStatoAttuale");
                 aggiornaStatoPulsantiBazzer();
                 caricaListone();
             }).catch(err => console.error("Errore connessione SignalR:", err));
+
         });
     </script>
 }

@@ -150,61 +150,85 @@ namespace AstaLegheFC.Controllers
                 return BadRequest();
 
             var legaModel = await _context.Leghe
+                .AsNoTracking()
                 .FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
 
             if (legaModel == null)
                 return NotFound();
 
+            // Flag globale per la UI (se non hai BazzerService qui, inietta BazzerService nel controller)
+            var mantraAttivo = _bazzerService?.MantraAttivo ?? false;
+
+            // 1) Materializziamo dal DB
             var squadre = await _context.Squadre
+                .AsNoTracking()
                 .Include(s => s.Giocatori)
                 .Where(s => s.LegaId == legaModel.Id)
                 .OrderBy(s => s.Nickname)
                 .ToListAsync();
 
+            // 2) Proiettiamo in memoria (LINQ to Objects) – nessuna funzione locale in query EF
             var payload = new
             {
+                mantraAttivo, // <- usato dalla UI per decidere se mostrare ruoloMantra
                 squads = squadre.Select(s => new
                 {
                     squadraId = s.Id,
                     nickname = s.Nickname,
                     isMe = s.Nickname == nick,
-                    portieri = s.Giocatori.Where(g => g.Ruolo == "P").Select(g => new {
-                        id = g.Id,
-                        nome = g.Nome,
-                        crediti = g.CreditiSpesi ?? 0,
-                        squadraReale = g.SquadraReale,
-                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
-                        ruolo = g.Ruolo,
-                        ruoloMantra = g.RuoloMantra
-                    }),
-                    difensori = s.Giocatori.Where(g => g.Ruolo == "D").Select(g => new {
-                        id = g.Id,
-                        nome = g.Nome,
-                        crediti = g.CreditiSpesi ?? 0,
-                        squadraReale = g.SquadraReale,
-                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
-                        ruolo = g.Ruolo,
-                        ruoloMantra = g.RuoloMantra
-                    }),
-                    centrocampisti = s.Giocatori.Where(g => g.Ruolo == "C").Select(g => new {
-                        id = g.Id,
-                        nome = g.Nome,
-                        crediti = g.CreditiSpesi ?? 0,
-                        squadraReale = g.SquadraReale,
-                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
-                        ruolo = g.Ruolo,
-                        ruoloMantra = g.RuoloMantra
-                    }),
-                    attaccanti = s.Giocatori.Where(g => g.Ruolo == "A").Select(g => new {
-                        id = g.Id,
-                        nome = g.Nome,
-                        crediti = g.CreditiSpesi ?? 0,
-                        squadraReale = g.SquadraReale,
-                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
-                        ruolo = g.Ruolo,
-                        ruoloMantra = g.RuoloMantra
-                    })
-                })
+
+                    portieri = s.Giocatori
+                        .Where(g => g.Ruolo == "P")
+                        .Select(g => new
+                        {
+                            id = g.Id,
+                            nome = g.Nome,
+                            crediti = g.CreditiSpesi ?? 0,
+                            squadraReale = g.SquadraReale,
+                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra
+                        }).ToList(),
+
+                    difensori = s.Giocatori
+                        .Where(g => g.Ruolo == "D")
+                        .Select(g => new
+                        {
+                            id = g.Id,
+                            nome = g.Nome,
+                            crediti = g.CreditiSpesi ?? 0,
+                            squadraReale = g.SquadraReale,
+                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra
+                        }).ToList(),
+
+                    centrocampisti = s.Giocatori
+                        .Where(g => g.Ruolo == "C")
+                        .Select(g => new
+                        {
+                            id = g.Id,
+                            nome = g.Nome,
+                            crediti = g.CreditiSpesi ?? 0,
+                            squadraReale = g.SquadraReale,
+                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra
+                        }).ToList(),
+
+                    attaccanti = s.Giocatori
+                        .Where(g => g.Ruolo == "A")
+                        .Select(g => new
+                        {
+                            id = g.Id,
+                            nome = g.Nome,
+                            crediti = g.CreditiSpesi ?? 0,
+                            squadraReale = g.SquadraReale,
+                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra
+                        }).ToList()
+                }).ToList()
             };
 
             return Json(payload);

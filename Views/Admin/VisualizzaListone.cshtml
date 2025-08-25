@@ -8,104 +8,59 @@
 
 <style>
     #overlay-timer {
-        font-size: 3.5rem; /* Metà dei 7rem dell'offerta */
+        font-size: 3.5rem;
         font-weight: 700;
         line-height: 1;
         margin: 0;
-        transition: color 0.3s ease-in-out; /* Effetto di transizione per il cambio colore */
+        transition: color .3s
     }
 
     .timer-green {
-        color: #2ecc71; /* Verde */
+        color: #2ecc71
     }
 
     .timer-yellow {
-        color: #f1c40f; /* Giallo (lo stesso dell'offerta) */
+        color: #f1c40f
     }
 
     .timer-red {
-        color: #e74c3c; /* Rosso */
+        color: #e74c3c
     }
 
     #asta-overlay {
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.9);
+        inset: 0;
+        background: rgba(0,0,0,.9);
         display: flex;
         justify-content: center;
         align-items: center;
         z-index: 1050;
-        color: white;
+        color: #fff;
         text-align: center;
-        font-family: 'Montserrat', sans-serif;
+        font-family: 'Montserrat',sans-serif;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease;
+        transition: opacity .3s,visibility .3s
     }
 
-    .player-row {
-        display: flex;
-        align-items: center;
-        padding: 6px 0;
-    }
-
-        .player-row:not(:last-child) {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        #asta-overlay.visible {
+            opacity: 1;
+            visibility: visible
         }
 
-    .player-name {
-        text-align: left;
-        margin-right: auto;
-        padding-right: 10px;
-    }
-
-    .player-logo {
-        height: 22px;
-        margin: 0 10px;
-        flex-shrink: 0;
-    }
-
-    .player-credits {
-        text-align: center;
-        min-width: 40px;
-        padding: 0 10px;
-        flex-shrink: 0;
-    }
-
-    .player-action {
-        text-align: right;
-        flex-shrink: 0;
-    }
-
-    .player-mantra {
-        color: #0dcaf0;
-        font-style: italic;
-        font-size: 0.9em;
-        margin-right: 8px;
-        flex-shrink: 0;
-    }
-
-    #asta-overlay.visible {
-        opacity: 1;
-        visibility: visible;
-    }
-
     .asta-box {
-        background: linear-gradient(145deg, #34495e, #2c3e50);
+        background: linear-gradient(145deg,#34495e,#2c3e50);
         padding: 40px;
         border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+        box-shadow: 0 15px 35px rgba(0,0,0,.6);
         border: 1px solid #3498db;
         min-width: 650px;
-        transform: scale(0.95);
-        transition: transform 0.3s ease;
+        transform: scale(.95);
+        transition: transform .3s
     }
 
     #asta-overlay.visible .asta-box {
-        transform: scale(1);
+        transform: scale(1)
     }
 
     .asta-box-header {
@@ -113,12 +68,12 @@
         justify-content: center;
         align-items: center;
         gap: 20px;
-        margin-bottom: 10px;
+        margin-bottom: 10px
     }
 
     #overlay-logo-squadra {
         height: 90px;
-        filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
+        filter: drop-shadow(0 0 10px rgba(255,255,255,.2))
     }
 
     #overlay-nome-giocatore {
@@ -126,14 +81,14 @@
         font-weight: 700;
         text-transform: uppercase;
         margin: 0;
-        text-shadow: 0 0 15px rgba(0,0,0,0.5);
-        color: white;
+        text-shadow: 0 0 15px rgba(0,0,0,.5);
+        color: #fff
     }
 
     #overlay-dettagli-giocatore {
         font-size: 1.5rem;
         color: #95a5a6;
-        margin-top: 0;
+        margin-top: 0
     }
 
     #overlay-offerta {
@@ -141,14 +96,14 @@
         font-weight: 700;
         margin: 20px 0;
         line-height: 1;
-        text-shadow: 0 0 20px rgba(241, 196, 15, 0.5);
-        color: #f1c40f !important;
+        text-shadow: 0 0 20px rgba(241,196,15,.5);
+        color: #f1c40f !important
     }
 
     #overlay-offerente {
         font-size: 2.2rem;
         font-weight: 300;
-        color: white;
+        color: #fff
     }
 
     #overlay-log {
@@ -157,45 +112,83 @@
         overflow-y: auto;
         text-align: left;
         font-family: monospace;
-        background-color: rgba(0,0,0,0.3);
+        background: rgba(0,0,0,.3);
         border-radius: 5px;
-        padding: 10px;
+        padding: 10px
     }
 
         #overlay-log p {
             margin: 2px 0;
             border-bottom: 1px solid #34495e;
-            padding-bottom: 2px;
+            padding-bottom: 2px
         }
 
     .asta-box-footer {
-        margin-top: 30px;
+        margin-top: 30px
+    }
+
+    .status-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: .35rem;
+        vertical-align: middle;
+        border: 1px solid rgba(255,255,255,.2)
+    }
+
+    .dot-online {
+        background: #2ecc71
+    }
+
+    .dot-offline {
+        background: #e74c3c
+    }
+
+    .dot-waiting {
+        background: #f1c40f
+    }
+
+    .auction-bar {
+        background: rgba(44,62,80,.5);
+        border: 1px solid #34495e;
+        border-radius: .5rem;
+        padding: .5rem .75rem
     }
 </style>
 
 <h2 class="mt-3">Listone Calciatori</h2>
 
-@if (riepilogo != null && riepilogo.Any())
+<div class="auction-bar d-flex flex-wrap align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center gap-3">
+        <span class="badge bg-secondary">Durata asta</span>
+        <span id="durata-asta" class="fs-4 fw-bold">00:00</span>
+        <span id="stato-pausa" class="badge bg-warning d-none">In PAUSA</span>
+    </div>
+    <div class="btn-group">
+        <button id="btn-pausa" type="button" class="btn btn-outline-warning btn-sm">Pausa</button>
+        <button id="btn-riprendi" type="button" class="btn btn-outline-success btn-sm" disabled>Riprendi</button>
+        <button id="btn-reset" class="btn btn-outline-danger btn-sm">Reset</button>
+
+    </div>
+</div>
+
+@if (riepilogo.Any())
 {
     <h4 class="mt-4">Riepilogo Squadre</h4>
     <div class="table-responsive mb-4">
         <table class="table table-bordered table-sm text-center align-middle">
             <thead class="table-primary">
-                <tr>
-                    <th>Nickname</th>
-                    <th>Crediti</th>
-                    <th>Puntata Max</th>
-                    <th>P</th>
-                    <th>D</th>
-                    <th>C</th>
-                    <th>A</th>
-                </tr>
+                <tr><th>Nickname</th><th>Crediti</th><th>Puntata Max</th><th>P</th><th>D</th><th>C</th><th>A</th></tr>
             </thead>
             <tbody>
                 @foreach (var s in riepilogo)
                 {
                     <tr>
-                        <td>@s.Nickname</td>
+                        <td>
+                            <span class="status-dot dot-offline" data-nick="@s.Nickname" title="@s.Nickname"></span>
+                            @s.Nickname
+                        </td>
                         <td>@s.CreditiDisponibili</td>
                         <td>@s.PuntataMassima</td>
                         <td>
@@ -203,17 +196,15 @@
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.PortieriAssegnati)
                                 {
-                                    <li class="player-row">
-                                        <span class="player-name">@g.Nome</span>
+                                    <li class="d-flex align-items-center py-1 border-bottom border-secondary">
+                                        <span class="me-auto pe-2">@g.Nome</span>
                                         @if (ViewBag.MantraAttivo)
                                         {
-                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                            <span class="text-info fst-italic small me-2">@g.RuoloMantra</span>
                                         }
-                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
-                                        <span class="player-credits">(@g.CreditiSpesi)</span>
-                                        <span class="player-action">
-                                            <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
-                                        </span>
+                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
+                                        <span class="text-nowrap small">(@g.CreditiSpesi)</span>
+                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
                                     </li>
                                 }
                             </ul>
@@ -223,17 +214,15 @@
                             <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.DifensoriAssegnati)
                                 {
-                                    <li class="player-row">
-                                        <span class="player-name">@g.Nome</span>
+                                    <li class="d-flex align-items-center py-1 border-bottom border-secondary">
+                                        <span class="me-auto pe-2">@g.Nome</span>
                                         @if (ViewBag.MantraAttivo)
                                         {
-                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                            <span class="text-info fst-italic small me-2">@g.RuoloMantra</span>
                                         }
-                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
-                                        <span class="player-credits">(@g.CreditiSpesi)</span>
-                                        <span class="player-action">
-                                            <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
-                                        </span>
+                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
+                                        <span class="text-nowrap small">(@g.CreditiSpesi)</span>
+                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
                                     </li>
                                 }
                             </ul>
@@ -243,17 +232,15 @@
                             <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.CentrocampistiAssegnati)
                                 {
-                                    <li class="player-row">
-                                        <span class="player-name">@g.Nome</span>
+                                    <li class="d-flex align-items-center py-1 border-bottom border-secondary">
+                                        <span class="me-auto pe-2">@g.Nome</span>
                                         @if (ViewBag.MantraAttivo)
                                         {
-                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                            <span class="text-info fst-italic small me-2">@g.RuoloMantra</span>
                                         }
-                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
-                                        <span class="player-credits">(@g.CreditiSpesi)</span>
-                                        <span class="player-action">
-                                            <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
-                                        </span>
+                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
+                                        <span class="text-nowrap small">(@g.CreditiSpesi)</span>
+                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
                                     </li>
                                 }
                             </ul>
@@ -263,17 +250,15 @@
                             <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.AttaccantiAssegnati)
                                 {
-                                    <li class="player-row">
-                                        <span class="player-name">@g.Nome</span>
+                                    <li class="d-flex align-items-center py-1 border-bottom border-secondary">
+                                        <span class="me-auto pe-2">@g.Nome</span>
                                         @if (ViewBag.MantraAttivo)
                                         {
-                                            <span class="player-mantra">@g.RuoloMantra</span>
+                                            <span class="text-info fst-italic small me-2">@g.RuoloMantra</span>
                                         }
-                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" class="player-logo" />
-                                        <span class="player-credits">(@g.CreditiSpesi)</span>
-                                        <span class="player-action">
-                                            <button class="btn btn-danger btn-sm btn-svincola" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
-                                        </span>
+                                        <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
+                                        <span class="text-nowrap small">(@g.CreditiSpesi)</span>
+                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
                                     </li>
                                 }
                             </ul>
@@ -287,12 +272,8 @@
 
 <form id="filtroForm" method="get" asp-action="VisualizzaListone" class="row g-2 mb-4">
     <input type="hidden" name="lega" value="@ViewBag.LegaAlias" />
-    <div class="col-md-4">
-        <input type="text" name="nome" id="nomeFilterInput" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" />
-    </div>
-    <div class="col-md-4">
-        <input type="text" name="squadra" id="squadraFilterInput" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" />
-    </div>
+    <div class="col-md-4"><input type="text" name="nome" id="nomeFilterInput" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" /></div>
+    <div class="col-md-4"><input type="text" name="squadra" id="squadraFilterInput" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" /></div>
     <div class="col-md-4">
         <select name="ruolo" class="form-select" onchange="this.form.submit()">
             <option value="">Tutti i ruoli</option>
@@ -328,12 +309,7 @@
 <div class="table-responsive">
     <table class="table table-striped table-bordered table-hover">
         <thead class="table-dark text-center">
-            <tr>
-                <th>Nome</th>
-                <th>Ruolo</th>
-                <th>Squadra</th>
-                <th>Azioni</th>
-            </tr>
+            <tr><th>Nome</th><th>Ruolo</th><th>Squadra</th><th>Azioni</th></tr>
         </thead>
         <tbody class="text-center">
             @foreach (var c in Model)
@@ -343,13 +319,11 @@
                     <td>@(ViewBag.MantraAttivo? c.RuoloMantra: c.Ruolo)</td>
                     <td class="text-start">@c.Squadra</td>
                     <td>
-                        <form asp-action="AvviaAsta" method="post" style="display:inline;" class="form-avvia-asta">
-                            <input type="hidden" name="id" value="@c.Id" />
-
-                            <input type="hidden" name="mantra" value="@ViewBag.MantraAttivo.ToString().ToLower()" />
-
-                            <button type="submit" class="btn btn-success btn-sm">Asta</button>
-                        </form>
+                        <button class="btn btn-success btn-sm btn-avvia-asta"
+                                data-id="@c.Id"
+                                data-mantra="@ViewBag.MantraAttivo.ToString().ToLower()">
+                            Asta
+                        </button>
                         <button class="btn btn-warning btn-sm btn-assegna"
                                 data-id="@c.Id"
                                 data-nome="@c.Nome">
@@ -362,6 +336,7 @@
     </table>
 </div>
 
+<!-- Modale Assegna -->
 <div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -389,6 +364,7 @@
     </div>
 </div>
 
+<!-- Modale Svincola -->
 <div class="modal fade" id="svincolaModal" tabindex="-1" aria-labelledby="svincolaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -397,7 +373,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <img id="logoGiocatoreSvincola" src="" alt="Logo Squadra" class="d-block mx-auto mb-3" style="height: 70px;" />
+                <img id="logoGiocatoreSvincola" src="" alt="Logo Squadra" class="d-block mx-auto mb-3" style="height:70px" />
                 <p class="mb-0 fs-4" id="nomeGiocatoreSvincolo"></p>
                 <p class="text-muted" id="dettagliGiocatoreSvincolo"></p>
                 <hr />
@@ -415,6 +391,7 @@
     </div>
 </div>
 
+<!-- Overlay Asta -->
 <div id="asta-overlay">
     <div class="asta-box">
         <div class="asta-box-header">
@@ -437,140 +414,203 @@
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 <audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
 <audio id="suono-vittoria" src="~/sounds/gavel.mp3" preload="auto"></audio>
+
 @section Scripts {
     @Html.AntiForgeryToken()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
-
     <script>
-        // ===================================================================================
-        // VARIABILI GLOBALI
-        // ===================================================================================
+        // ====== VAR GLOBALI ======
         let debounceTimer;
         let durataTimer = @ViewBag.DurataTimer;
-
-        // Countdown (visuale) e timeout (colpo di martello) lato ADMIN
         let countdownTimerAdmin = null;
         let closeTimeoutAdmin = null;
-
-        // 🔔 Traccia l'ultima offerta per evitare il suono su sync/avvio
         let lastOffertaAdmin = 0;
 
-        function submitFormDebounced() {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => { document.getElementById("filtroForm").submit(); }, 500);
+        // Durata asta (client) — persistita in localStorage
+        const legaAliasAdmin = "@ViewBag.LegaAlias";
+        const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+        const LS_START = `asta:start:${legaAliasAdmin}`;
+        const LS_PAUSE_ACC = `asta:pauseAcc:${legaAliasAdmin}`;
+        const LS_PAUSE_AT = `asta:pauseAt:${legaAliasAdmin}`;
+        const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
+        let durataInterval = null;
+
+        function fmt(s){
+            s = Math.max(0, Math.floor(s||0));
+            const h = Math.floor(s/3600);
+            const m = Math.floor((s%3600)/60);
+            const ss = s%60;
+            return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
+                       : `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+        }
+        function paintDurata(){
+            const out = document.getElementById('durata-asta');
+            const badge = document.getElementById('stato-pausa');
+            const startIso = localStorage.getItem(LS_START);
+            if (!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
+            const start = new Date(startIso).getTime();
+            const pauseAcc = parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+            const pauseActive = localStorage.getItem(LS_PAUSE_ACTIVE) === "true";
+            const pauseAtIso = localStorage.getItem(LS_PAUSE_AT);
+            const extraPause = (pauseActive && pauseAtIso)
+                ? Math.max(0, Math.floor((Date.now() - new Date(pauseAtIso).getTime())/1000))
+                : 0;
+            const sec = Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extraPause));
+            out.textContent = fmt(sec);
+            if (badge) badge.classList.toggle('d-none', !pauseActive);
+        }
+        function startDurataLoop(){
+            if (durataInterval) clearInterval(durataInterval);
+            paintDurata();
+            durataInterval = setInterval(paintDurata, 1000);
+        }
+        function resetDurataLocal(){
+            // azzera tutte le chiavi e UI
+            localStorage.removeItem(LS_START);
+            localStorage.removeItem(LS_PAUSE_AT);
+            localStorage.setItem(LS_PAUSE_ACC, "0");
+            localStorage.setItem(LS_PAUSE_ACTIVE, "false");
+            if (durataInterval) { clearInterval(durataInterval); durataInterval = null; }
+            const out = document.getElementById('durata-asta');
+            const badge = document.getElementById('stato-pausa');
+            if (out) out.textContent = '00:00';
+            if (badge) badge.classList.add('d-none');
         }
 
-        async function impostaTimer(event) {
-            event.preventDefault();
-            const secondi = document.getElementById('secondiTimer').value;
-            fetch('/Admin/ImpostaTimer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ secondi: parseInt(secondi) })
-            }).then(async response => {
-                if (response.ok) {
-                    durataTimer = parseInt(secondi);
-                    await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
-                } else {
-                    await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
-                }
+        // ====== UTILS ======
+        function submitFormDebounced(){
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(()=>{ document.getElementById("filtroForm").submit(); }, 500);
+        }
+        async function impostaTimer(e){
+            e.preventDefault();
+            const s = parseInt(document.getElementById('secondiTimer').value || "0");
+            fetch('/Admin/ImpostaTimer',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({ secondi:s })
+            }).then(async r=>{
+                if(r.ok){ durataTimer=s; await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a '+s+' secondi!'); }
+                else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
             });
         }
-
-        async function annullaAsta() {
-            if (typeof mostraMessaggio === 'function' && await mostraMessaggio('Annulla Asta', 'Sei sicuro di voler annullare l\'asta in corso per tutti i partecipanti?', true)) {
-                fetch('/Admin/AnnullaAsta', {
-                    method: 'POST',
-                    headers: {
-                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                    }
-                }).then(response => {
-                    if (!response.ok) {
-                        mostraMessaggio("Errore", "Si è verificato un errore durante l'annullamento dell'asta.");
-                    }
+        async function annullaAsta(){
+            if (await mostraMessaggio('Annulla Asta','Sei sicuro?', true)){
+                fetch('/Admin/AnnullaAsta',{
+                    method:'POST',
+                    headers:{ 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
+                }).then(r=>{
+                    if(!r.ok) mostraMessaggio('Errore','Errore annullamento.');
                 });
             }
         }
-
-        async function salvaAssegnazione() {
+        async function salvaAssegnazione(){
             const payload = {
                 giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
                 squadraId: parseInt(document.getElementById('squadraSelect').value),
                 costo: parseInt(document.getElementById('costoInput').value)
             };
-            fetch('/Admin/AssegnaManualmente', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            fetch('/Admin/AssegnaManualmente',{
+                method:'POST',
+                headers:{
+                    'Content-Type':'application/json',
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                 },
                 body: JSON.stringify(payload)
-            }).then(async response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    await mostraMessaggio('Errore', 'Si è verificato un errore durante l\'assegnazione manuale.');
-                }
+            }).then(async r=>{
+                if(r.ok){ location.reload(); }
+                else { await mostraMessaggio('Errore','Errore assegnazione.'); }
             });
         }
-
-        function toggleLista(id) {
-            const lista = document.getElementById(id);
-            if (lista) lista.classList.toggle("d-none");
+        function toggleLista(id){
+            // resta per retrocompatibilità, ma non la usiamo più (vedi binding robusto sotto)
+            const el=document.getElementById(id);
+            if(el) el.classList.toggle('d-none');
+        }
+        function apriModaleSvincolo(btn){
+            const id=btn.dataset.id, nome=btn.dataset.nome, costo=parseInt(btn.dataset.costo)||0, squadra=btn.dataset.squadra, logo=btn.dataset.logo, ruolo=btn.dataset.ruolo;
+            document.getElementById('idGiocatoreSvincola').value=id;
+            document.getElementById('costoOriginaleSvincolo').innerText=costo;
+            const input=document.getElementById('creditiSvincoloInput'); input.min=0; input.max=costo; input.value=costo;
+            document.getElementById('logoGiocatoreSvincola').src=logo;
+            document.getElementById('nomeGiocatoreSvincolo').innerText=nome;
+            document.getElementById('dettagliGiocatoreSvincolo').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
+            new bootstrap.Modal(document.getElementById('svincolaModal')).show();
         }
 
-        function apriModaleSvincolo(btn) {
-            const giocatoreId = btn.dataset.id;
-            const giocatoreNome = btn.dataset.nome;
-            let giocatoreCosto = parseInt(btn.dataset.costo);
-            if (isNaN(giocatoreCosto) || giocatoreCosto < 0) giocatoreCosto = 0;
-            const giocatoreSquadra = btn.dataset.squadra;
-            const logoUrl = btn.dataset.logo;
-            const giocatoreRuolo = btn.dataset.ruolo;
-
-            document.getElementById('idGiocatoreSvincola').value = giocatoreId;
-            document.getElementById('costoOriginaleSvincolo').innerText = giocatoreCosto;
-
-            const input = document.getElementById('creditiSvincoloInput');
-            input.min = 0;
-            input.max = giocatoreCosto;
-            input.value = giocatoreCosto;
-
-            document.getElementById('logoGiocatoreSvincola').src = logoUrl;
-            document.getElementById('nomeGiocatoreSvincolo').innerText = giocatoreNome;
-            document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${giocatoreRuolo} - Squadra: ${giocatoreSquadra}`;
-
-            const svincolaModal = new bootstrap.Modal(document.getElementById('svincolaModal'));
-            svincolaModal.show();
-        }
-
-        // ===================================================================================
-        // DOMContentLoaded: setup
-        // ===================================================================================
-        document.addEventListener('DOMContentLoaded', function () {
+        // ====== DOM READY ======
+        document.addEventListener('DOMContentLoaded', function(){
             const squadre = JSON.parse('@Html.Raw(squadreJson)');
+            const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
             const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-            const legaAliasAdmin = "@ViewBag.LegaAlias";
 
-            // focus filtri
+            // filtri
             const urlParams = new URLSearchParams(window.location.search);
             const nomeFilter = document.getElementById('nomeFilterInput');
-            if (urlParams.has('nome') && urlParams.get('nome') !== '' && nomeFilter) {
-                nomeFilter.focus();
-                const val = nomeFilter.value;
-                nomeFilter.value = '';
-                nomeFilter.value = val;
+            if (urlParams.has('nome') && urlParams.get('nome') !== '' && nomeFilter){
+                nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
             }
-
-            // attiva filtri
             const squadraFilter = document.getElementById('squadraFilterInput');
-            if (nomeFilter) nomeFilter.addEventListener('input', submitFormDebounced);
-            if (squadraFilter) squadraFilter.addEventListener('input', submitFormDebounced);
+            nomeFilter?.addEventListener('input', submitFormDebounced);
+            squadraFilter?.addEventListener('input', submitFormDebounced);
 
-            // ===========================
-            // SIGNALR HANDLERS
-            // ===========================
-            connection.on("MostraGiocatoreInAsta", (giocatore) => {
+            // ====== FIX: toggle liste svincolo robusto (niente ID con nickname) ======
+            document
+                .querySelectorAll('table.table-bordered.table-sm button.btn.btn-sm.btn-secondary')
+                .forEach(btn=>{
+                    // se c'è inline onclick legacy, lo tolgo per evitare doppio toggle
+                    if (btn.getAttribute('onclick')?.includes('toggleLista(')) {
+                        btn.removeAttribute('onclick');
+                    }
+                    btn.addEventListener('click', (ev)=>{
+                        ev.preventDefault();
+                        ev.stopPropagation();
+                        // la <ul> è nella stessa <td>
+                        const td = btn.closest('td');
+                        const ul = td?.querySelector('ul');
+                        if (ul) ul.classList.toggle('d-none');
+                    });
+                });
+
+            // ====== SIGNALR ======
+            connection.on("StatoAsta", (stato)=>{
+                if (stato?.startUtc) {
+                    localStorage.setItem(LS_START, stato.startUtc);
+                } else {
+                    if (!localStorage.getItem(LS_START)) { /* resta 00:00 finché parte qualcosa */ }
+                }
+                if (typeof stato?.pausaAccumulataSec === 'number') {
+                    localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec));
+                } else if (!localStorage.getItem(LS_PAUSE_ACC)) {
+                    localStorage.setItem(LS_PAUSE_ACC, "0");
+                }
+
+                const pauseActive = !!stato?.pausaAttiva;
+                localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
+                if (pauseActive) {
+                    if (!localStorage.getItem(LS_PAUSE_AT)) {
+                        localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
+                    }
+                    document.getElementById('btn-pausa').disabled = true;
+                    document.getElementById('btn-riprendi').disabled = false;
+                } else {
+                    localStorage.removeItem(LS_PAUSE_AT);
+                    document.getElementById('btn-pausa').disabled = false;
+                    document.getElementById('btn-riprendi').disabled = true;
+                }
+
+                startDurataLoop();
+            });
+
+            connection.on("MostraGiocatoreInAsta",(giocatore)=>{
+                if (!localStorage.getItem(LS_START)) {
+                    localStorage.setItem(LS_START, new Date().toISOString());
+                    localStorage.setItem(LS_PAUSE_ACC, "0");
+                    localStorage.setItem(LS_PAUSE_ACTIVE, "false");
+                    localStorage.removeItem(LS_PAUSE_AT);
+                    startDurataLoop();
+                }
+
                 document.getElementById('overlay-nome-giocatore').innerText = giocatore.nome;
                 document.getElementById('overlay-dettagli-giocatore').innerText = `${giocatore.ruolo} - ${giocatore.squadraReale}`;
                 document.getElementById('overlay-logo-squadra').src = giocatore.logoUrl;
@@ -580,68 +620,54 @@
                 document.getElementById('overlay-log').innerHTML = '';
                 const timerEl = document.getElementById('overlay-timer');
                 timerEl.innerText = '--';
-                timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
+                timerEl.classList.remove('timer-green','timer-yellow','timer-red');
                 document.querySelector('.asta-box-footer').style.display = 'block';
                 document.getElementById('asta-overlay').classList.add('visible');
 
-                // reset timers/suono tracker
                 lastOffertaAdmin = 0;
                 clearInterval(countdownTimerAdmin);
                 clearTimeout(closeTimeoutAdmin);
                 closeTimeoutAdmin = null;
             });
 
-            // 🔔 Suona SOLO su rilanci veri; usa fineUtc per countdown + chiusura
-            connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
-                const offerenteEl = document.getElementById('overlay-offerente');
-                if (offerenteEl) offerenteEl.innerText = offerente || '-';
-                const offertaEl = document.getElementById('overlay-offerta');
-                if (offertaEl) offertaEl.innerText = offerta || 0;
+            connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
+                const offerenteEl = document.getElementById('overlay-offerente'); if (offerenteEl) offerenteEl.innerText = offerente || '-';
+                const offertaEl = document.getElementById('overlay-offerta'); if (offertaEl) offertaEl.innerText = offerta || 0;
 
-                // reset displays/timeouts
                 clearInterval(countdownTimerAdmin);
                 clearTimeout(closeTimeoutAdmin);
                 closeTimeoutAdmin = null;
 
                 const timerEl = document.getElementById('overlay-timer');
-
-                // Se non c'è end-time (sync iniziale/nessuna offerta), niente suono/log/timer
-                if (!fineUtc || !offerta || offerta <= 0) {
-                    timerEl.innerText = '--';
-                    timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
-                    lastOffertaAdmin = offerta || 0; // aggiorna stato locale
+                if (!fineUtc || !offerta || offerta <= 0){
+                    timerEl.innerText='--';
+                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                    lastOffertaAdmin = offerta || 0;
                     return;
                 }
 
-                // Suona e logga SOLO se l'offerta è aumentata rispetto all'ultima mostrata
-                const isRealBid = (offerta > (lastOffertaAdmin || 0));
-                if (isRealBid) {
+                const isRealBid = (offerta > (lastOffertaAdmin||0));
+                if (isRealBid){
                     document.getElementById('suono-offerta').play();
                     const logContainer = document.getElementById('overlay-log');
-                    if (logContainer) {
-                        const logEntry = document.createElement('p');
-                        logEntry.innerText = `${offerente} offre ${offerta}`;
-                        logContainer.prepend(logEntry);
-                    }
+                    if (logContainer){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; logContainer.prepend(p); }
                 }
                 lastOffertaAdmin = offerta;
 
-                // Countdown visivo sincronizzato
                 const end = new Date(fineUtc);
-                const paint = (sec) => {
+                const paint = (sec)=>{
                     timerEl.innerText = sec >= 0 ? sec : 0;
-                    timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
-                    if (sec > 5) timerEl.classList.add('timer-green');
-                    else if (sec >= 4) timerEl.classList.add('timer-yellow');
+                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                    if (sec>5) timerEl.classList.add('timer-green');
+                    else if (sec>=4) timerEl.classList.add('timer-yellow');
                     else timerEl.classList.add('timer-red');
                 };
-                const tick = () => {
-                    const sec = Math.ceil((end.getTime() - Date.now()) / 1000);
+                const tick = ()=>{
+                    const sec = Math.ceil((end.getTime() - Date.now())/1000);
                     paint(sec);
-                    if (sec >= 0) {
-                        const beep = document.getElementById('suono-countdown');
-                        beep.currentTime = 0;
-                        beep.play();
+                    if (sec >= 0){
+                        const beep=document.getElementById('suono-countdown');
+                        beep.currentTime=0; beep.play();
                     } else {
                         clearInterval(countdownTimerAdmin);
                     }
@@ -649,124 +675,188 @@
                 tick();
                 countdownTimerAdmin = setInterval(tick, 1000);
 
-                // Pianifica il colpo di martello UNA SOLA VOLTA lato admin
                 const msRemaining = end.getTime() - Date.now();
-                if (msRemaining > 0) {
-                    closeTimeoutAdmin = setTimeout(() => {
-                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-                    }, msRemaining + 50); // piccolo margine
+                if (msRemaining > 0){
+                    closeTimeoutAdmin = setTimeout(()=>{
+                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
+                    }, msRemaining + 50);
                 } else {
-                    // end-time già passato (admin è rientrato tardi): chiudi subito
-                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
                 }
             });
 
-            connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, offerente, offerta) => {
-                // stop timers
+            connection.on("AstaTerminata",()=>{
                 clearInterval(countdownTimerAdmin);
                 clearTimeout(closeTimeoutAdmin);
                 closeTimeoutAdmin = null;
 
                 document.getElementById('suono-vittoria').play();
                 const offerenteEl = document.getElementById('overlay-offerente');
-                if (offerenteEl) {
-                    offerenteEl.innerText = `AGGIUDICATO a ${offerente}!`;
-                    offerenteEl.style.color = '#2ecc71';
+                if (offerenteEl){
+                    offerenteEl.innerText = `AGGIUDICATO!`;
+                    offerenteEl.style.color='#2ecc71';
                 }
-                document.querySelector('.asta-box-footer').style.display = 'none';
+                document.querySelector('.asta-box-footer').style.display='none';
 
-                setTimeout(() => {
+                setTimeout(()=>{
                     document.getElementById('asta-overlay').classList.remove('visible');
-                    setTimeout(() => location.reload(), 300);
+                    setTimeout(()=>location.reload(), 300);
                 }, 4000);
             });
 
-            connection.on("AstaAnnullata", () => {
+            connection.on("AstaAnnullata",()=>{
                 clearInterval(countdownTimerAdmin);
                 clearTimeout(closeTimeoutAdmin);
                 closeTimeoutAdmin = null;
-
                 document.getElementById('asta-overlay').classList.remove('visible');
             });
 
-            connection.on("GiocatoreSuggerito", (giocatore, suggeritore) => {
-                mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito di chiamare: ${giocatore.nome}`);
-                const inputNome = document.querySelector('form#filtroForm input[name="nome"]');
-                if (inputNome) {
-                    inputNome.value = giocatore.nome;
-                    document.getElementById('filtroForm').submit();
+            connection.on("StatoPartecipanti",(p)=>{
+                if(p?.partecipanti) paintPartecipanti(p.partecipanti);
+            });
+
+            // ► PAUSA / RIPRESA
+            connection.on("AstaPausa",()=>{
+                localStorage.setItem(LS_PAUSE_ACTIVE,"true");
+                localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
+                document.getElementById('btn-pausa').disabled = true;
+                document.getElementById('btn-riprendi').disabled = false;
+                paintDurata();
+            });
+            connection.on("AstaRipresa",()=>{
+                const pauseAtIso = localStorage.getItem(LS_PAUSE_AT);
+                const acc = parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+                if (pauseAtIso){
+                    const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
+                    localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
                 }
+                localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+                localStorage.removeItem(LS_PAUSE_AT);
+                document.getElementById('btn-pausa').disabled = false;
+                document.getElementById('btn-riprendi').disabled = true;
+                paintDurata();
             });
 
-            // avvio connessione
-            connection.start().then(() => {
+            // ► RESET (broadcast)
+            connection.on("DurataResettata", ()=>{
+                resetDurataLocal();
+            });
+
+            connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
+                mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
+                const inputNome = document.querySelector('#filtroForm input[name="nome"]');
+                if (inputNome){ inputNome.value = giocatore.nome; document.getElementById('filtroForm').submit(); }
+            });
+
+            // CONNESSIONE
+            connection.start().then(()=>{
+                connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
+                setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
+
                 connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
-                connection.invoke("RichiediStatoAttuale"); // in caso di F5, riprende fineUtc e rischedula
-            }).catch(err => console.error(err.toString()));
+                connection.invoke("RichiediStatoAttuale");
+            }).catch(err=>console.error(err));
 
-            // vari eventi UI
-            document.querySelectorAll('.form-avvia-asta').forEach(form => {
-                form.addEventListener('submit', function (event) {
-                    event.preventDefault();
-                    fetch(this.action, { method: 'POST', body: new URLSearchParams(new FormData(this)) })
-                        .then(response => { if (!response.ok) mostraMessaggio('Errore', 'Errore avvio asta.'); });
-                });
-            });
-
-            document.querySelectorAll('.btn-assegna').forEach(btn => {
-                btn.addEventListener('click', function () {
-                    const giocatoreId = this.dataset.id;
-                    const giocatoreNome = this.dataset.nome;
-                    document.getElementById('idGiocatoreModale').value = giocatoreId;
-                    document.getElementById('nomeGiocatoreModale').innerText = giocatoreNome;
-
-                    const squadraSelect = document.getElementById('squadraSelect');
-                    squadraSelect.innerHTML = '';
-                    squadre.forEach(squadra => {
-                        const option = document.createElement('option');
-                        option.value = squadra.SquadraId;
-                        option.innerText = squadra.Nickname;
-                        squadraSelect.appendChild(option);
+            // UI events
+            const squadreArr = JSON.parse('@Html.Raw(squadreJson)');
+            document.querySelectorAll('.btn-assegna').forEach(btn=>{
+                btn.addEventListener('click', function(){
+                    document.getElementById('idGiocatoreModale').value = this.dataset.id;
+                    document.getElementById('nomeGiocatoreModale').innerText = this.dataset.nome;
+                    const sel = document.getElementById('squadraSelect'); sel.innerHTML='';
+                    squadreArr.forEach(s=>{
+                        const o=document.createElement('option'); o.value=s.SquadraId; o.innerText=s.Nickname; sel.appendChild(o);
                     });
-
-                    const modal = new bootstrap.Modal(document.getElementById('assegnaModal'));
-                    modal.show();
+                    new bootstrap.Modal(document.getElementById('assegnaModal')).show();
                 });
             });
 
-            document.getElementById('btnConfermaSvincolo')?.addEventListener('click', function () {
+            document.getElementById('btnConfermaSvincolo')?.addEventListener('click', function(){
                 const id = parseInt(document.getElementById('idGiocatoreSvincola').value);
                 const costoOriginale = parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
                 let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
-                if (isNaN(crediti) || crediti < 0) crediti = 0;
-                if (!isNaN(costoOriginale) && crediti > costoOriginale) crediti = costoOriginalo;
-                const payload = { id, creditiRestituiti: crediti };
-                fetch('/Admin/SvincolaGiocatore', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                }).then(response => { if (response.ok) { location.reload(); } else { mostraMessaggio("Errore", "Errore durante lo svincolo."); } });
-            });
-
-            document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
-
-            document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function () {
-                const isAttivo = this.checked;
-                fetch('/Admin/ImpostaBloccoPortieri', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ attivo: isAttivo })
-                }).then(async response => {
-                    if (response.ok) await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
-                    else await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.');
+                if (isNaN(crediti)||crediti<0) crediti=0;
+                if (!isNaN(costoOriginale) && crediti > costoOriginale) crediti = costoOriginale;
+                fetch('/Admin/SvincolaGiocatore',{
+                    method:'POST',
+                    headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify({ id, creditiRestituiti: crediti })
+                }).then(r=>{
+                    if(r.ok){ location.reload(); }
+                    else { mostraMessaggio("Errore","Errore durante lo svincolo."); }
                 });
             });
 
-            document.getElementById('mantraSwitch')?.addEventListener('change', function () {
+            document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
+            document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
                 const isAttivo = this.checked;
-                const url = new URL(window.location.href);
-                url.searchParams.set('mantra', isAttivo);
-                window.location.href = url.toString();
+                fetch('/Admin/ImpostaBloccoPortieri',{
+                    method:'POST',
+                    headers:{ 'Content-Type':'application/json' },
+                    body: JSON.stringify({ attivo:isAttivo })
+                }).then(async r=>{
+                    if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
+                    else await mostraMessaggio('Errore','Errore aggiornamento regola.');
+                });
             });
+            document.getElementById('mantraSwitch')?.addEventListener('change', function(){
+                const isAttivo=this.checked;
+                const url=new URL(window.location.href);
+                url.searchParams.set('mantra', isAttivo);
+                window.location.href=url.toString();
+            });
+
+            // Pausa/Riprendi
+            document.getElementById('btn-pausa')?.addEventListener('click', ()=>{
+                connection.invoke("PausaAsta", legaAliasAdmin).catch(()=>{});
+            });
+            document.getElementById('btn-riprendi')?.addEventListener('click', ()=>{
+                connection.invoke("RiprendiAsta", legaAliasAdmin).catch(()=>{});
+            });
+
+            // ✅ Reset timer (locale + broadcast)
+            document.getElementById('btn-reset')?.addEventListener('click', async ()=>{
+                resetDurataLocal(); // effetto immediato locale
+                try { await connection.invoke("ResetDurataAsta", legaAliasAdmin); } catch {}
+            });
+
+            // Avvia Asta (POST esplicita + antiforgery + urlencoded)
+            document.querySelectorAll('.btn-avvia-asta').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const id = btn.dataset.id;
+                    const mantra = btn.dataset.mantra === 'true';
+                    const body = `id=${encodeURIComponent(id)}&mantra=${mantra}`;
+                    fetch('/Admin/AvviaAsta', {
+                        method:'POST',
+                        headers:{
+                            'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+                            'RequestVerificationToken': antiToken
+                        },
+                        body
+                    }).then(async r=>{
+                        if(!r.ok){
+                            const t = await r.text().catch(()=>'-');
+                            console.error('AvviaAsta fallita', r.status, t);
+                            await mostraMessaggio('Errore', 'Errore avvio asta.');
+                        }
+                    });
+                });
+            });
+
+            // helper paint partecipanti
+            window.paintPartecipanti = function(list){
+                list.forEach(p=>{
+                    const nick = (p.nick||p.Nick||'').toString();
+                    const el = document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) ||
+                               document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
+                    if (!el) return;
+                    el.classList.remove('dot-online','dot-offline','dot-waiting');
+                    const stato = (p.stato||p.Stato||'offline').toLowerCase();
+                    if (stato==='waiting') el.classList.add('dot-waiting');
+                    else if (stato==='online') el.classList.add('dot-online');
+                    else el.classList.add('dot-offline');
+                });
+            }
         });
     </script>
 }
-
