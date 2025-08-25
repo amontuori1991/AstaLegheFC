@@ -437,25 +437,28 @@
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 <audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
 <audio id="suono-vittoria" src="~/sounds/gavel.mp3" preload="auto"></audio>
-
 @section Scripts {
     @Html.AntiForgeryToken()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
 
     <script>
         // ===================================================================================
-        // FUNZIONI E VARIABILI GLOBALI
-        // Definite qui per essere accessibili da tutto lo script e dall'HTML (es. onclick)
+        // VARIABILI GLOBALI
         // ===================================================================================
-
         let debounceTimer;
+        let durataTimer = @ViewBag.DurataTimer;
+
+        // Countdown (visuale) e timeout (colpo di martello) lato ADMIN
+        let countdownTimerAdmin = null;
+        let closeTimeoutAdmin = null;
+
+        // 🔔 Traccia l'ultima offerta per evitare il suono su sync/avvio
+        let lastOffertaAdmin = 0;
+
         function submitFormDebounced() {
             clearTimeout(debounceTimer);
             debounceTimer = setTimeout(() => { document.getElementById("filtroForm").submit(); }, 500);
         }
-
-        // Definiamo la durata del timer qui in modo che sia accessibile sia dal DOMContentLoaded che da impostaTimer
-        let durataTimer = @ViewBag.DurataTimer;
 
         async function impostaTimer(event) {
             event.preventDefault();
@@ -466,7 +469,7 @@
                 body: JSON.stringify({ secondi: parseInt(secondi) })
             }).then(async response => {
                 if (response.ok) {
-                    durataTimer = parseInt(secondi); // Aggiorna la variabile globale
+                    durataTimer = parseInt(secondi);
                     await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a ' + secondi + ' secondi!');
                 } else {
                     await mostraMessaggio('Errore', 'Errore aggiornamento timer.');
@@ -479,14 +482,12 @@
                 fetch('/Admin/AnnullaAsta', {
                     method: 'POST',
                     headers: {
-                        // 👇 CORREZIONE CHIAVE: Questo è il nome corretto dell'header di sicurezza 👇
                         'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                     }
                 }).then(response => {
                     if (!response.ok) {
                         mostraMessaggio("Errore", "Si è verificato un errore durante l'annullamento dell'asta.");
                     }
-                    // Non c'è un 'else' perché l'aggiornamento dell'interfaccia avviene tramite SignalR
                 });
             }
         }
@@ -501,7 +502,6 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // 👇 CORREZIONE CHIAVE: Questo è il nome corretto dell'header di sicurezza 👇
                     'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
                 },
                 body: JSON.stringify(payload)
@@ -516,19 +516,14 @@
 
         function toggleLista(id) {
             const lista = document.getElementById(id);
-            if (lista) {
-                lista.classList.toggle("d-none");
-            }
+            if (lista) lista.classList.toggle("d-none");
         }
 
         function apriModaleSvincolo(btn) {
             const giocatoreId = btn.dataset.id;
             const giocatoreNome = btn.dataset.nome;
-
-            // 👇 Harden su costo: gestisci NULL/empty -> 0
             let giocatoreCosto = parseInt(btn.dataset.costo);
             if (isNaN(giocatoreCosto) || giocatoreCosto < 0) giocatoreCosto = 0;
-
             const giocatoreSquadra = btn.dataset.squadra;
             const logoUrl = btn.dataset.logo;
             const giocatoreRuolo = btn.dataset.ruolo;
@@ -538,8 +533,8 @@
 
             const input = document.getElementById('creditiSvincoloInput');
             input.min = 0;
-            input.max = giocatoreCosto;     // 👈 non rimborsare più del costo originale
-            input.value = giocatoreCosto;   // 👈 default: rimborso pieno (anche 0 va bene)
+            input.max = giocatoreCosto;
+            input.value = giocatoreCosto;
 
             document.getElementById('logoGiocatoreSvincola').src = logoUrl;
             document.getElementById('nomeGiocatoreSvincolo').innerText = giocatoreNome;
@@ -549,18 +544,15 @@
             svincolaModal.show();
         }
 
-
         // ===================================================================================
-        // CODICE ESEGUITO DOPO IL CARICAMENTO COMPLETO DELLA PAGINA
+        // DOMContentLoaded: setup
         // ===================================================================================
         document.addEventListener('DOMContentLoaded', function () {
-
             const squadre = JSON.parse('@Html.Raw(squadreJson)');
             const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
             const legaAliasAdmin = "@ViewBag.LegaAlias";
-            let countdownTimerAdmin = null;
 
-            // --- GESTIONE FOCUS ---
+            // focus filtri
             const urlParams = new URLSearchParams(window.location.search);
             const nomeFilter = document.getElementById('nomeFilterInput');
             if (urlParams.has('nome') && urlParams.get('nome') !== '' && nomeFilter) {
@@ -570,16 +562,14 @@
                 nomeFilter.value = val;
             }
 
-            // --- ATTIVAZIONE DEI FILTRI (in modo programmatico) ---
+            // attiva filtri
             const squadraFilter = document.getElementById('squadraFilterInput');
-            if (nomeFilter) {
-                nomeFilter.addEventListener('input', submitFormDebounced);
-            }
-            if (squadraFilter) {
-                squadraFilter.addEventListener('input', submitFormDebounced);
-            }
+            if (nomeFilter) nomeFilter.addEventListener('input', submitFormDebounced);
+            if (squadraFilter) squadraFilter.addEventListener('input', submitFormDebounced);
 
-            // --- GESTIONE SIGNALR ---
+            // ===========================
+            // SIGNALR HANDLERS
+            // ===========================
             connection.on("MostraGiocatoreInAsta", (giocatore) => {
                 document.getElementById('overlay-nome-giocatore').innerText = giocatore.nome;
                 document.getElementById('overlay-dettagli-giocatore').innerText = `${giocatore.ruolo} - ${giocatore.squadraReale}`;
@@ -593,50 +583,90 @@
                 timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
                 document.querySelector('.asta-box-footer').style.display = 'block';
                 document.getElementById('asta-overlay').classList.add('visible');
+
+                // reset timers/suono tracker
+                lastOffertaAdmin = 0;
+                clearInterval(countdownTimerAdmin);
+                clearTimeout(closeTimeoutAdmin);
+                closeTimeoutAdmin = null;
             });
 
-            connection.on("AggiornaOfferta", (offerente, offerta) => {
+            // 🔔 Suona SOLO su rilanci veri; usa fineUtc per countdown + chiusura
+            connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
                 const offerenteEl = document.getElementById('overlay-offerente');
-                if (offerenteEl) offerenteEl.innerText = offerente;
+                if (offerenteEl) offerenteEl.innerText = offerente || '-';
                 const offertaEl = document.getElementById('overlay-offerta');
-                if (offertaEl) offertaEl.innerText = offerta;
-                document.getElementById('suono-offerta').play();
-                const logContainer = document.getElementById('overlay-log');
-                if (logContainer) {
-                    const logEntry = document.createElement('p');
-                    logEntry.innerText = `${offerente} offre ${offerta}`;
-                    logContainer.prepend(logEntry);
-                }
+                if (offertaEl) offertaEl.innerText = offerta || 0;
+
+                // reset displays/timeouts
                 clearInterval(countdownTimerAdmin);
-                let secondiRimanenti = durataTimer;
+                clearTimeout(closeTimeoutAdmin);
+                closeTimeoutAdmin = null;
+
                 const timerEl = document.getElementById('overlay-timer');
-                timerEl.innerText = secondiRimanenti;
-                timerEl.classList.remove('timer-yellow', 'timer-red');
-                timerEl.classList.add('timer-green');
-                countdownTimerAdmin = setInterval(() => {
-                    secondiRimanenti--;
-                    if (secondiRimanenti >= 0) {
-                        timerEl.innerText = secondiRimanenti;
-                        timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
-                        if (secondiRimanenti > 5) {
-                            timerEl.classList.add('timer-green');
-                        } else if (secondiRimanenti >= 4) {
-                            timerEl.classList.add('timer-yellow');
-                        } else {
-                            timerEl.classList.add('timer-red');
-                        }
+
+                // Se non c'è end-time (sync iniziale/nessuna offerta), niente suono/log/timer
+                if (!fineUtc || !offerta || offerta <= 0) {
+                    timerEl.innerText = '--';
+                    timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
+                    lastOffertaAdmin = offerta || 0; // aggiorna stato locale
+                    return;
+                }
+
+                // Suona e logga SOLO se l'offerta è aumentata rispetto all'ultima mostrata
+                const isRealBid = (offerta > (lastOffertaAdmin || 0));
+                if (isRealBid) {
+                    document.getElementById('suono-offerta').play();
+                    const logContainer = document.getElementById('overlay-log');
+                    if (logContainer) {
+                        const logEntry = document.createElement('p');
+                        logEntry.innerText = `${offerente} offre ${offerta}`;
+                        logContainer.prepend(logEntry);
+                    }
+                }
+                lastOffertaAdmin = offerta;
+
+                // Countdown visivo sincronizzato
+                const end = new Date(fineUtc);
+                const paint = (sec) => {
+                    timerEl.innerText = sec >= 0 ? sec : 0;
+                    timerEl.classList.remove('timer-green', 'timer-yellow', 'timer-red');
+                    if (sec > 5) timerEl.classList.add('timer-green');
+                    else if (sec >= 4) timerEl.classList.add('timer-yellow');
+                    else timerEl.classList.add('timer-red');
+                };
+                const tick = () => {
+                    const sec = Math.ceil((end.getTime() - Date.now()) / 1000);
+                    paint(sec);
+                    if (sec >= 0) {
                         const beep = document.getElementById('suono-countdown');
                         beep.currentTime = 0;
                         beep.play();
-                    }
-                    if (secondiRimanenti < -1) {
+                    } else {
                         clearInterval(countdownTimerAdmin);
                     }
-                }, 1000);
+                };
+                tick();
+                countdownTimerAdmin = setInterval(tick, 1000);
+
+                // Pianifica il colpo di martello UNA SOLA VOLTA lato admin
+                const msRemaining = end.getTime() - Date.now();
+                if (msRemaining > 0) {
+                    closeTimeoutAdmin = setTimeout(() => {
+                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+                    }, msRemaining + 50); // piccolo margine
+                } else {
+                    // end-time già passato (admin è rientrato tardi): chiudi subito
+                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+                }
             });
 
             connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, offerente, offerta) => {
+                // stop timers
                 clearInterval(countdownTimerAdmin);
+                clearTimeout(closeTimeoutAdmin);
+                closeTimeoutAdmin = null;
+
                 document.getElementById('suono-vittoria').play();
                 const offerenteEl = document.getElementById('overlay-offerente');
                 if (offerenteEl) {
@@ -644,6 +674,7 @@
                     offerenteEl.style.color = '#2ecc71';
                 }
                 document.querySelector('.asta-box-footer').style.display = 'none';
+
                 setTimeout(() => {
                     document.getElementById('asta-overlay').classList.remove('visible');
                     setTimeout(() => location.reload(), 300);
@@ -652,6 +683,9 @@
 
             connection.on("AstaAnnullata", () => {
                 clearInterval(countdownTimerAdmin);
+                clearTimeout(closeTimeoutAdmin);
+                closeTimeoutAdmin = null;
+
                 document.getElementById('asta-overlay').classList.remove('visible');
             });
 
@@ -664,7 +698,13 @@
                 }
             });
 
-            // --- GESTIONE ALTRI EVENTI ---
+            // avvio connessione
+            connection.start().then(() => {
+                connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
+                connection.invoke("RichiediStatoAttuale"); // in caso di F5, riprende fineUtc e rischedula
+            }).catch(err => console.error(err.toString()));
+
+            // vari eventi UI
             document.querySelectorAll('.form-avvia-asta').forEach(form => {
                 form.addEventListener('submit', function (event) {
                     event.preventDefault();
@@ -679,6 +719,7 @@
                     const giocatoreNome = this.dataset.nome;
                     document.getElementById('idGiocatoreModale').value = giocatoreId;
                     document.getElementById('nomeGiocatoreModale').innerText = giocatoreNome;
+
                     const squadraSelect = document.getElementById('squadraSelect');
                     squadraSelect.innerHTML = '';
                     squadre.forEach(squadra => {
@@ -687,41 +728,36 @@
                         option.innerText = squadra.Nickname;
                         squadraSelect.appendChild(option);
                     });
+
                     const modal = new bootstrap.Modal(document.getElementById('assegnaModal'));
                     modal.show();
                 });
             });
 
-        document.getElementById('btnConfermaSvincolo')?.addEventListener('click', function () {
-            const id = parseInt(document.getElementById('idGiocatoreSvincola').value);
-            const costoOriginale = parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
-            let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
-
-            if (isNaN(crediti) || crediti < 0) crediti = 0;
-            if (!isNaN(costoOriginale) && crediti > costoOriginale) crediti = costoOriginale;
-
-            const payload = { id, creditiRestituiti: crediti };
-
-            fetch('/Admin/SvincolaGiocatore', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(response => {
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    mostraMessaggio("Errore", "Errore durante lo svincolo.");
-                }
+            document.getElementById('btnConfermaSvincolo')?.addEventListener('click', function () {
+                const id = parseInt(document.getElementById('idGiocatoreSvincola').value);
+                const costoOriginale = parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
+                let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
+                if (isNaN(crediti) || crediti < 0) crediti = 0;
+                if (!isNaN(costoOriginale) && crediti > costoOriginale) crediti = costoOriginalo;
+                const payload = { id, creditiRestituiti: crediti };
+                fetch('/Admin/SvincolaGiocatore', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }).then(response => { if (response.ok) { location.reload(); } else { mostraMessaggio("Errore", "Errore durante lo svincolo."); } });
             });
-        });
-
 
             document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
 
             document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function () {
                 const isAttivo = this.checked;
-                fetch('/Admin/ImpostaBloccoPortieri', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ attivo: isAttivo }) })
-                    .then(async response => { if (response.ok) { await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA')); } else { await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.'); } });
+                fetch('/Admin/ImpostaBloccoPortieri', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ attivo: isAttivo })
+                }).then(async response => {
+                    if (response.ok) await mostraMessaggio('Regola Aggiornata', 'Regola Blocco Portieri ' + (isAttivo ? 'ATTIVATA' : 'DISATTIVATA'));
+                    else await mostraMessaggio('Errore', 'Errore durante l\'aggiornamento della regola.');
+                });
             });
 
             document.getElementById('mantraSwitch')?.addEventListener('change', function () {
@@ -730,12 +766,7 @@
                 url.searchParams.set('mantra', isAttivo);
                 window.location.href = url.toString();
             });
-
-            // --- AVVIO CONNESSIONE ---
-            connection.start().then(() => {
-                connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
-            }).catch(err => console.error(err.toString()));
-
-        }); // <-- Fine del DOMContentLoaded
+        });
     </script>
 }
+

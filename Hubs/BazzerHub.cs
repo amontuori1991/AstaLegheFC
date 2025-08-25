@@ -39,13 +39,13 @@ namespace AstaLegheFC.Hubs
         public async Task InviaOfferta(string offerente, int offerta)
         {
             var (offerenteAttuale, offertaAttuale) = _bazzerService.GetOffertaAttuale();
-            if (offerta <= offertaAttuale)
-            {
-                return;
-            }
-            _bazzerService.AggiornaOfferta(offerente, offerta);
-            await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta);
+            if (offerta <= offertaAttuale) return;
+
+            var fineUtc = _bazzerService.AggiornaOfferta(offerente, offerta);
+            await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
         }
+
+
 
         public async Task TerminaAsta(string legaAlias)
         {
@@ -130,6 +130,8 @@ namespace AstaLegheFC.Hubs
         {
             var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
             var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
+            var fineUtc = _bazzerService.GetAstaFineUtc();
+
             if (giocatoreInAsta != null)
             {
                 await Clients.Caller.SendAsync("MostraGiocatoreInAsta", new
@@ -141,7 +143,10 @@ namespace AstaLegheFC.Hubs
                     logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra)
                 });
             }
-            await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta);
+
+            await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
         }
+
+
     }
 }
