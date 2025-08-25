@@ -1,13 +1,21 @@
-﻿// service-worker.js
-
-// Questo service worker è intenzionalmente lasciato vuoto.
-// La sua presenza è sufficiente per rendere l'app installabile (PWA).
-// In futuro, potrà essere usato per gestire la cache e le funzionalità offline.
-
-self.addEventListener('install', (event) => {
-    // console.log('Service Worker: Installazione...');
-});
-
+﻿// Esempio vanilla (senza Workbox)
 self.addEventListener('fetch', (event) => {
-    // Al momento non intercettiamo le richieste
+    // Intercetta SOLO le navigazioni (document)
+    if (event.request.mode === 'navigate') {
+        event.respondWith((async () => {
+            try {
+                // prendi sempre la pagina giusta dalla rete
+                return await fetch(event.request);
+            } catch (err) {
+                // offline fallback opzionale
+                const cache = await caches.open('static-v1');
+                const offline = await cache.match('/offline.html');
+                return offline || new Response('Offline', { status: 503 });
+            }
+        })());
+        return;
+    }
+
+    // per asset statici ok cache-first/smart strategy
+    // (css, js, immagini…)
 });
