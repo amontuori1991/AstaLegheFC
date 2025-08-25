@@ -19,9 +19,8 @@
         font-weight: 300;
     }
 
-    .ricerca-container {
-        margin-top: 2rem;
-        margin-bottom: 2rem;
+    #offerta.display-1 {
+        margin: .25rem 0 .25rem;
     }
 
     #risultati-ricerca {
@@ -49,24 +48,24 @@
         font-size: 16px;
     }
 
-    /* --- Compattazione card offerta --- */
-    .card-body .card-title {
-        margin-bottom: .25rem;
+    /* Pulsante azioni header (non ingombra) */
+    .card-header {
+        position: relative;
     }
 
-    #offerta.display-1 {
-        margin: .25rem 0 .25rem;
+    .header-actions {
+        position: absolute;
+        right: .5rem;
+        top: .5rem;
+        display: flex;
+        gap: .5rem;
     }
 
-    #offerente {
-        margin-top: 0;
-    }
-
-    /* ===== Toast suggerimento (utente) ===== */
+    /* Toast suggerimento */
     .toast-suggerimento {
         position: fixed;
         right: 20px;
-        bottom: 80px; /* sopra la barra crediti */
+        bottom: 80px;
         display: flex;
         gap: 12px;
         align-items: center;
@@ -115,7 +114,7 @@
             cursor: pointer;
         }
 
-    /* ===== Barra crediti in fondo ===== */
+    /* Barra crediti in fondo */
     #crediti-bar {
         position: fixed;
         left: 0;
@@ -142,12 +141,97 @@
             font-size: .95rem;
         }
 
-    /* Spacer per evitare sovrapposizione con la barra */
     .spacer-crediti {
         height: 60px;
     }
 
-    /* ===== Mobile fine-tuning (≤ 576px) ===== */
+    /* Modal/Accordion dark */
+    .modal-content {
+        background-color: #2c3e50;
+        color: #ecf0f1;
+        border: 1px solid #34495e;
+    }
+
+    .modal-header, .modal-footer {
+        border-color: #34495e;
+    }
+
+    .accordion-dark .accordion-item {
+        background-color: #2c3e50;
+        border: 1px solid #34495e;
+    }
+
+    .accordion-dark .accordion-button {
+        background-color: #233041;
+        color: #ecf0f1;
+        border-bottom: 1px solid #34495e;
+    }
+
+        .accordion-dark .accordion-button:not(.collapsed) {
+            color: #fff;
+            background-color: #1f2a39;
+            box-shadow: inset 0 -1px 0 #34495e;
+        }
+
+    .accordion-dark .accordion-body {
+        background-color: #2c3e50;
+    }
+
+    .team-chip {
+        font-weight: 700;
+        color: #5dade2;
+    }
+
+    .my-team {
+        outline: 2px solid #5dade2;
+        border-radius: .5rem;
+    }
+
+    .role-col {
+        min-width: 220px;
+    }
+
+    .role-title {
+        font-weight: 700;
+        color: #a9cce3;
+        margin-bottom: .25rem;
+    }
+
+    .pl-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 4px 0;
+        border-bottom: 1px dashed #34495e;
+    }
+
+    .pl-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 0;
+    }
+
+    .pl-logo {
+        width: 20px;
+        height: 20px;
+        object-fit: contain;
+    }
+
+    .pl-name {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 180px;
+    }
+
+    .pl-cred {
+        font-size: .85rem;
+        opacity: .9;
+    }
+
+    /* Mobile */
     @@media (max-width: 576px) {
         h2#giocatore {
             font-size: 1.05rem;
@@ -188,26 +272,12 @@
             padding: .45rem .65rem;
         }
 
-        .player-row {
-            padding: 4px 0;
+        .role-col {
+            min-width: 100%;
         }
 
-        .player-name {
-            font-size: .95rem;
-        }
-
-        .player-logo {
-            height: 18px;
-            margin: 0 6px;
-        }
-
-        .player-credits {
-            min-width: 34px;
-            font-size: .85rem;
-        }
-
-        .player-mantra {
-            font-size: .8rem;
+        .pl-name {
+            max-width: 60vw;
         }
     }
 </style>
@@ -216,9 +286,14 @@
     <div class="col-md-7 col-lg-8 mb-3 mb-md-0">
         <div class="card text-center shadow-lg h-100">
             <div class="card-header bg-dark text-white">
-                <!-- RIMOSSO: "Calciatore in asta" per guadagnare spazio -->
+                <!-- Azioni header: bottone "Rose" -->
+                <div class="header-actions">
+                    <button id="btnRiepilogo" class="btn btn-outline-info btn-sm">Rose</button>
+                </div>
+
                 <div id="giocatore-info" class="d-flex justify-content-center align-items-center gap-3">
-                    <img id="logo-giocatore-in-asta" src="@Model.LogoSquadra" alt="Logo" style="height: 40px; display: @(string.IsNullOrEmpty(Model.LogoSquadra) ? "none" : "block");" />
+                    <img id="logo-giocatore-in-asta" src="@Model.LogoSquadra" alt="Logo"
+                         style="height: 40px; display: @(string.IsNullOrEmpty(Model.LogoSquadra) ? "none" : "block");" />
                     <h2 id="giocatore" class="mb-0">
                         @if (Model.CalciatoreInAsta != null && !string.IsNullOrEmpty(Model.CalciatoreInAsta.Nome))
                         {
@@ -245,7 +320,6 @@
     </div>
 
     <div class="col-md-5 col-lg-4">
-        <!-- RIMOSSA la card "Crediti Disponibili / Puntata Massima" -->
         <div class="card shadow mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Offri</h5>
@@ -281,7 +355,7 @@
     </div>
 </div>
 
-<!-- ✅ Toast suggerimento -->
+<!-- Toast suggerimento -->
 <div id="toast-suggerimento" class="toast-suggerimento" role="status" aria-live="polite" aria-atomic="true">
     <img id="toast-logo" alt="Logo squadra" />
     <div class="toast-body">
@@ -292,33 +366,46 @@
     <button type="button" class="toast-close" aria-label="Chiudi">&times;</button>
 </div>
 
-<!-- ✅ Barra compatta crediti in basso -->
+<!-- Barra compatta crediti in basso -->
 <div id="crediti-bar" aria-live="polite">
     <span class="chip">Disp.: <strong id="crediti-bottom">@Model.CreditiDisponibili</strong></span>
     <span class="chip">Max: <strong id="puntata-bottom">@Model.PuntataMassima</strong></span>
 </div>
 <div class="spacer-crediti"></div>
 
+<!-- Modal riepilogo rose -->
+<div class="modal fade" id="modalRiepilogo" tabindex="-1" aria-labelledby="modalRiepilogoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalRiepilogoLabel">Riepilogo rose</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <div id="riepilogo-loading" class="text-center my-3" style="display:none;">Caricamento…</div>
+                <div id="riepilogoContainer" class="accordion accordion-dark"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Chiudi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
 
-            // --- VARIABILI DI STATO E REGOLE ---
+            // --- VARIABILI DI STATO ---
             let listoneCompleto = [];
             const nickname = "@Model.Nickname";
             const legaAlias = new URLSearchParams(window.location.search).get('lega');
             let offertaAttuale = parseInt("@Model.OffertaAttuale") || 0;
             let idListoneAttuale = parseInt("@(Model.CalciatoreInAsta?.IdListone ?? 0)");
             let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
-
-            // (rimane per compat ma NON usato per far ripartire il countdown)
             let timerSecondi = @Model.TimerAsta;
-
-            // end-time inviato dal server (ISO string)
             let fineUtcCorrente = null;
-
-            // unico interval per il countdown
             let countdownTimerUtente = null;
 
             let maxPortieri = @Model.MaxPortieri;
@@ -332,7 +419,9 @@
 
             const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
 
-            // --- FUNZIONI DI UTILITY ---
+            /* =======================
+               UTILS
+            ======================= */
             function aggiornaStatoPulsantiBazzer() {
                 const avvisoDiv = document.getElementById('avviso-ruolo-completo');
                 let abilitato = idListoneAttuale > 0;
@@ -352,42 +441,29 @@
                 if (!abilitato && messaggio) { avvisoDiv.innerText = messaggio; avvisoDiv.style.display = 'block'; } else { avvisoDiv.style.display = 'none'; }
             }
 
-            // countdown sincronizzato sull'end-time del server
             function aggiornaCountdownDaFineUtc() {
                 const timerEl = document.getElementById("timer");
                 clearInterval(countdownTimerUtente);
-
-                if (!idListoneAttuale || !fineUtcCorrente) {
-                    if (timerEl) timerEl.textContent = "-";
-                    return;
-                }
-
-                const end = new Date(fineUtcCorrente); // ISO -> Date
-
+                if (!idListoneAttuale || !fineUtcCorrente) { if (timerEl) timerEl.textContent = "-"; return; }
+                const end = new Date(fineUtcCorrente);
                 const tick = () => {
                     const sec = Math.ceil((end.getTime() - Date.now()) / 1000);
                     timerEl.textContent = sec >= 0 ? sec : 0;
-                    if (sec <= -1) {
-                        clearInterval(countdownTimerUtente);
-                    }
+                    if (sec <= -1) { clearInterval(countdownTimerUtente); }
                 };
-
-                tick(); // disegna subito
+                tick();
                 countdownTimerUtente = setInterval(tick, 1000);
             }
 
             async function aggiornaCrediti() {
                 try {
-                    const response = await fetch(`/utente/crediti?nick=${nickname}&lega=${legaAlias}`);
-                    if (!response.ok) return;
-                    const data = await response.json();
-
-                    // aggiorna barra in basso
+                    const res = await fetch(`/utente/crediti?nick=${nickname}&lega=${legaAlias}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
                     const elCred = document.getElementById("crediti-bottom");
-                    const elMax = document.getElementById("puntata-bottom");
+                    const elMax  = document.getElementById("puntata-bottom");
                     if (elCred) elCred.textContent = data.creditiDisponibili;
-                    if (elMax) elMax.textContent = data.puntataMassima;
-
+                    if (elMax)  elMax.textContent  = data.puntataMassima;
                     portieriAttuali = data.portieri;
                     difensoriAttuali = data.difensori;
                     centrocampistiAttuali = data.centrocampisti;
@@ -398,13 +474,106 @@
 
             async function caricaListone() {
                 try {
-                    const response = await fetch(`/Utente/GetListoneDisponibile?lega=${legaAlias}`);
-                    if (response.ok) { listoneCompleto = await response.json(); }
+                    const res = await fetch(`/Utente/GetListoneDisponibile?lega=${legaAlias}`);
+                    if (res.ok) listoneCompleto = await res.json();
                 } catch (e) { console.error("Errore nel caricamento del listone:", e); }
             }
 
+            /* =======================
+               RIEPILOGO ROSE (MODAL)
+            ======================= */
+            const modalEl = document.getElementById('modalRiepilogo');
+            const riepilogoContainer = document.getElementById('riepilogoContainer');
+            const riepilogoLoading = document.getElementById('riepilogo-loading');
+
+            function renderListaGiocatori(titolo, arr) {
+                const items = (arr || []).map(p => `
+                  <div class="pl-item">
+                    <div class="pl-left">
+                      <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
+                      <span class="pl-name">${p.nome}</span>
+                    </div>
+                    <span class="pl-cred">(${p.crediti})</span>
+                  </div>
+                `).join('') || `<div class="text-muted small">Nessuno</div>`;
+                return `
+                  <div class="role-col">
+                    <div class="role-title">${titolo}</div>
+                    ${items}
+                  </div>
+                `;
+            }
+
+            function renderAccordionSquadre(data) {
+                const squads = (data && data.squads) ? data.squads : [];
+                const accId = 'acc-riepilogo';
+                const html = squads.map((s, idx) => {
+                    const collapseId = `collapse-${s.squadraId}`;
+                    const headingId = `heading-${s.squadraId}`;
+                    const show = s.isMe ? 'show' : '';
+                    const myTeamClass = s.isMe ? 'my-team' : '';
+                    const counts = {
+                        P: (s.portieri || []).length,
+                        D: (s.difensori || []).length,
+                        C: (s.centrocampisti || []).length,
+                        A: (s.attaccanti || []).length
+                    };
+                    return `
+                      <div class="accordion-item ${myTeamClass}">
+                        <h2 class="accordion-header" id="${headingId}">
+                          <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
+                                  data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                                  aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
+                            <span class="team-chip">${s.nickname}</span>
+                            <span class="ms-3 small text-muted">P:${counts.P} D:${counts.D} C:${counts.C} A:${counts.A}</span>
+                            ${s.isMe ? '<span class="badge bg-info ms-2">La tua</span>' : ''}
+                          </button>
+                        </h2>
+                        <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
+                          <div class="accordion-body">
+                            <div class="d-flex flex-wrap gap-3">
+                              ${renderListaGiocatori('Portieri', s.portieri)}
+                              ${renderListaGiocatori('Difensori', s.difensori)}
+                              ${renderListaGiocatori('Centrocampisti', s.centrocampisti)}
+                              ${renderListaGiocatori('Attaccanti', s.attaccanti)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                }).join('');
+
+                return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
+            }
+
+            async function apriRiepilogo() {
+                try {
+                    riepilogoLoading.style.display = 'block';
+                    riepilogoContainer.innerHTML = '';
+                    const res = await fetch(`/utente/riepilogo?lega=${legaAlias}&nick=${encodeURIComponent(nickname)}`);
+                    if (!res.ok) { riepilogoContainer.innerHTML = '<div class="text-danger">Errore nel caricamento del riepilogo.</div>'; return; }
+                    const data = await res.json();
+                    riepilogoContainer.innerHTML = renderAccordionSquadre(data);
+                } catch (e) {
+                    console.error(e);
+                    riepilogoContainer.innerHTML = '<div class="text-danger">Errore inatteso.</div>';
+                } finally {
+                    riepilogoLoading.style.display = 'none';
+                }
+            }
+
+            document.getElementById('btnRiepilogo').addEventListener('click', () => {
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+                apriRiepilogo();
+            });
+
+            /* =======================
+               SUGGERIMENTO
+            ======================= */
             const inputRicerca = document.getElementById('input-ricerca-giocatore');
             const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
+
             inputRicerca.addEventListener('input', () => {
                 const testo = inputRicerca.value.toLowerCase();
                 risultatiRicercaDiv.innerHTML = '';
@@ -435,14 +604,11 @@
                     .catch(err => console.error("Errore nell'invio del suggerimento:", err));
             }
 
-            // toast robusto
             function mostraToastSuggerimento(giocatore) {
                 const el = document.getElementById('toast-suggerimento');
                 const logo = document.getElementById('toast-logo');
                 const nome = document.getElementById('toast-nome');
                 const dettagli = document.getElementById('toast-dettagli');
-
-                if (!el || !logo || !nome || !dettagli) return;
 
                 const teamSlug = (giocatore.squadra || '').toLowerCase().replace(/\s+/g, '-');
                 const logoUrl = `https://content.fantacalcio.it/web/img/team/${teamSlug}.png`;
@@ -454,15 +620,15 @@
                 dettagli.textContent = `${giocatore.ruolo || ''} - ${giocatore.squadra || ''}`;
 
                 el.classList.add('show');
-
                 const hide = () => el.classList.remove('show');
                 const closeBtn = el.querySelector('.toast-close');
                 if (closeBtn) closeBtn.onclick = hide;
-
                 setTimeout(hide, 4000);
             }
 
-            // --- SIGNALR ---
+            /* =======================
+               SIGNALR
+            ======================= */
             connection.on("MostraGiocatoreInAsta", (giocatore) => {
                 const logoImg = document.getElementById("logo-giocatore-in-asta");
                 idListoneAttuale = giocatore.id;
@@ -470,22 +636,18 @@
                 document.getElementById("giocatore").textContent = `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
                 if (giocatore.logoUrl) { logoImg.src = giocatore.logoUrl; logoImg.style.display = 'block'; }
                 else { logoImg.style.display = 'none'; }
-
                 document.getElementById("offerente").textContent = "NESSUNO";
                 document.getElementById("offerta").textContent = "0";
                 offertaAttuale = 0;
-
                 fineUtcCorrente = null;
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
             });
 
-            // ora arriva anche fineUtc dal server
             connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
                 document.getElementById("offerente").textContent = offerente || "-";
                 document.getElementById("offerta").textContent = offerta || 0;
                 offertaAttuale = offerta || 0;
-
                 fineUtcCorrente = fineUtc || null;
                 aggiornaCountdownDaFineUtc();
             });
@@ -502,7 +664,6 @@
                 document.getElementById("logo-giocatore-in-asta").style.display = 'none';
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
-
                 fineUtcCorrente = null;
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
@@ -522,7 +683,6 @@
                 document.getElementById("logo-giocatore-in-asta").style.display = 'none';
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
-
                 fineUtcCorrente = null;
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
@@ -543,11 +703,13 @@
                 aggiornaStatoPulsantiBazzer();
             });
 
-            // --- CLICK OFFERTE ---
+            /* =======================
+               CLICK OFFERTE
+            ======================= */
             document.querySelectorAll(".bazzer").forEach(btn => {
                 btn.addEventListener("click", async () => {
                     const incremento = parseInt(btn.dataset.incremento);
-                    const snapshot = offertaAttuale;                 // prezzo visto al click
+                    const snapshot = offertaAttuale;
                     const nuovaOfferta = snapshot + incremento;
                     const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
                     if (nuovaOfferta > puntataMassima) {
@@ -584,18 +746,19 @@
                     }
                     return;
                 }
-                const snapshot = offertaAttuale; // prezzo visto al click
+                const snapshot = offertaAttuale;
                 await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
                 inputOfferta.value = "";
             });
 
-            // --- AVVIO CONNESSIONE ---
+            /* =======================
+               AVVIO
+            ======================= */
             connection.start().then(() => {
                 connection.invoke("RichiediStatoAttuale");
                 aggiornaStatoPulsantiBazzer();
                 caricaListone();
             }).catch(err => console.error("Errore connessione SignalR:", err));
-
         });
     </script>
 }

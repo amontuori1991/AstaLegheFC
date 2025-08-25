@@ -143,6 +143,73 @@ namespace AstaLegheFC.Controllers
 
             return Json(listoneDisponibile);
         }
+        [HttpGet("/utente/riepilogo")]
+        public async Task<IActionResult> Riepilogo(string lega, string nick)
+        {
+            if (string.IsNullOrWhiteSpace(lega))
+                return BadRequest();
+
+            var legaModel = await _context.Leghe
+                .FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
+
+            if (legaModel == null)
+                return NotFound();
+
+            var squadre = await _context.Squadre
+                .Include(s => s.Giocatori)
+                .Where(s => s.LegaId == legaModel.Id)
+                .OrderBy(s => s.Nickname)
+                .ToListAsync();
+
+            var payload = new
+            {
+                squads = squadre.Select(s => new
+                {
+                    squadraId = s.Id,
+                    nickname = s.Nickname,
+                    isMe = s.Nickname == nick,
+                    portieri = s.Giocatori.Where(g => g.Ruolo == "P").Select(g => new {
+                        id = g.Id,
+                        nome = g.Nome,
+                        crediti = g.CreditiSpesi ?? 0,
+                        squadraReale = g.SquadraReale,
+                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                        ruolo = g.Ruolo,
+                        ruoloMantra = g.RuoloMantra
+                    }),
+                    difensori = s.Giocatori.Where(g => g.Ruolo == "D").Select(g => new {
+                        id = g.Id,
+                        nome = g.Nome,
+                        crediti = g.CreditiSpesi ?? 0,
+                        squadraReale = g.SquadraReale,
+                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                        ruolo = g.Ruolo,
+                        ruoloMantra = g.RuoloMantra
+                    }),
+                    centrocampisti = s.Giocatori.Where(g => g.Ruolo == "C").Select(g => new {
+                        id = g.Id,
+                        nome = g.Nome,
+                        crediti = g.CreditiSpesi ?? 0,
+                        squadraReale = g.SquadraReale,
+                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                        ruolo = g.Ruolo,
+                        ruoloMantra = g.RuoloMantra
+                    }),
+                    attaccanti = s.Giocatori.Where(g => g.Ruolo == "A").Select(g => new {
+                        id = g.Id,
+                        nome = g.Nome,
+                        crediti = g.CreditiSpesi ?? 0,
+                        squadraReale = g.SquadraReale,
+                        logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
+                        ruolo = g.Ruolo,
+                        ruoloMantra = g.RuoloMantra
+                    })
+                })
+            };
+
+            return Json(payload);
+        }
+
     }
 }
     
