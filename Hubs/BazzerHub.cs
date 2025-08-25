@@ -3,8 +3,6 @@ using AstaLegheFC.Models;
 using AstaLegheFC.Services;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace AstaLegheFC.Hubs
 {
@@ -19,33 +17,37 @@ namespace AstaLegheFC.Hubs
             _context = context;
         }
 
-        // ✅ AGGIUNTO: Metodo per l'admin per unirsi a un gruppo privato
         public async Task AggiungiAdminAlGruppo(string legaAlias)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, $"admin_{legaAlias}");
         }
 
-        // ✅ AGGIUNTO: Metodo per ricevere un suggerimento e inoltrarlo all'admin
         public async Task SuggerisciGiocatore(int giocatoreId, string suggeritore, string legaAlias)
         {
             var giocatore = await _context.ListoneCalciatori.FindAsync(giocatoreId);
             if (giocatore != null)
             {
-                // Invia il messaggio solo al gruppo degli admin di quella lega
                 await Clients.Group($"admin_{legaAlias}").SendAsync("GiocatoreSuggerito", giocatore, suggeritore);
             }
         }
 
-        public async Task InviaOfferta(string offerente, int offerta)
+        // ✅ ora riceve anche expectedPrevOfferta per la CAS
+        public async Task InviaOfferta(string offerente, int offerta, int expectedPrevOfferta)
         {
-            var (offerenteAttuale, offertaAttuale) = _bazzerService.GetOffertaAttuale();
-            if (offerta <= offertaAttuale) return;
-
-            var fineUtc = _bazzerService.AggiornaOfferta(offerente, offerta);
-            await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
+            // tenta di accettare atomicamente l'offerta
+            if (_bazzerService.TryAggiornaOffertaCAS(offerente, offerta, expectedPrevOfferta, out var fineUtc))
+            {
+                // broadcast con fineUtc per sincronizzare i timer
+                await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc.ToString("o"));
+            }
+            else
+            {
+                // rifiutata: rimanda al chiamante lo stato attuale (così vede il prezzo aggiornato)
+                var (offerenteAttuale, offertaAttuale) = _bazzerService.GetOffertaAttuale();
+                var fine = _bazzerService.GetFineUtc();
+                await Clients.Caller.SendAsync("AggiornaOfferta", offerenteAttuale, offertaAttuale, fine?.ToString("o"));
+            }
         }
-
-
 
         public async Task TerminaAsta(string legaAlias)
         {
@@ -78,7 +80,7 @@ namespace AstaLegheFC.Hubs
                     if (_bazzerService.BloccoPortieriAttivo && giocatoreInAsta.Ruolo == "P")
                     {
                         var idGiocatoriAcquistatiLega = await _context.Giocatori
-                            .Where(g => g.Squadra.LegaId == squadraVincitrice.LegaId)
+                            .Where(g => g.Squadra.LegaId == squadraVincitrice.Lega.Id)
                             .Select(g => g.IdListone)
                             .ToListAsync();
 
@@ -96,12 +98,10 @@ namespace AstaLegheFC.Hubs
                                 IdListone = portiere.IdListone,
                                 Nome = portiere.Nome,
                                 Ruolo = portiere.Ruolo,
-                                RuoloMantra = portiere.RuoloMantra,   // 👈 aggiunto
                                 SquadraReale = portiere.Squadra,
                                 SquadraId = squadraVincitrice.Id,
                                 CreditiSpesi = 0
                             };
-
                             _context.Giocatori.Add(portiereCollegato);
                         }
                     }
@@ -110,13 +110,9 @@ namespace AstaLegheFC.Hubs
                     _bazzerService.SegnaAstaConclusa();
 
                     await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
-                    _bazzerService.AnnullaAstaCorrente();
 
-                    // L'aggiornamento di Utente e Admin ora è gestito tramite AstaTerminata e Svincolo/Assegnazione.
-                    // Per evitare chiamate ridondanti, possiamo commentarle qui e affidarci a location.reload() lato admin
-                    // e alla funzione aggiornaCrediti() lato utente, già innescate da AstaTerminata.
-                    // await Clients.Group(legaAlias.ToLower()).SendAsync("AggiornaUtente");
-                    // await Clients.Group($"admin_{legaAlias}").SendAsync("AggiornaAdmin");
+                    // 👇 fondamentale per non “riproporre” l’asta al refresh/sync
+                    _bazzerService.AnnullaAstaCorrente();
                 }
             }
             catch (Exception ex)
@@ -126,11 +122,12 @@ namespace AstaLegheFC.Hubs
             }
         }
 
+
         public async Task RichiediStatoAttuale()
         {
             var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
             var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
-            var fineUtc = _bazzerService.GetAstaFineUtc();
+            var fine = _bazzerService.GetFineUtc();
 
             if (giocatoreInAsta != null)
             {
@@ -144,9 +141,8 @@ namespace AstaLegheFC.Hubs
                 });
             }
 
-            await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
+            // include sempre fineUtc per riallineare i timer lato client
+            await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta, fine?.ToString("o"));
         }
-
-
     }
 }

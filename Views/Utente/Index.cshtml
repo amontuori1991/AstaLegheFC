@@ -449,6 +449,7 @@
             document.querySelectorAll(".bazzer").forEach(btn => {
                 btn.addEventListener("click", async () => {
                     const incremento = parseInt(btn.dataset.incremento);
+                    const snapshot = offertaAttuale;
                     const nuovaOfferta = offertaAttuale + incremento;
                     const puntataMassima = parseInt(document.getElementById('puntata').textContent);
                     if (nuovaOfferta > puntataMassima) {
@@ -459,13 +460,14 @@
                         }
                         return;
                     }
-                    await connection.invoke("InviaOfferta", nickname, nuovaOfferta);
+                    await connection.invoke("InviaOfferta", nickname, nuovaOfferta, snapshot);
                 });
             });
 
             document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
                 const inputOfferta = document.getElementById('offertaPersonalizzataInput');
                 const offertaInserita = parseInt(inputOfferta.value);
+                const snapshot = offertaAttuale;
                 if (isNaN(offertaInserita) || offertaInserita <= 0) {
                     if (typeof mostraMessaggio === 'function') { mostraMessaggio("Errore", "Per favore, inserisci un valore numerico valido."); }
                     else { alert("Errore", "Per favore, inserisci un valore numerico valido."); }
@@ -485,7 +487,7 @@
                     }
                     return;
                 }
-                await connection.invoke("InviaOfferta", nickname, offertaInserita);
+                await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
                 inputOfferta.value = "";
             });
 
