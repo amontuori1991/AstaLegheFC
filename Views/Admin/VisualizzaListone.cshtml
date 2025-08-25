@@ -685,24 +685,50 @@
                 }
             });
 
-            connection.on("AstaTerminata",()=>{
-                clearInterval(countdownTimerAdmin);
-                clearTimeout(closeTimeoutAdmin);
-                closeTimeoutAdmin = null;
+                    // PRIMA:
+        // connection.on("AstaTerminata",()=>{ ... });
 
-                document.getElementById('suono-vittoria').play();
-                const offerenteEl = document.getElementById('overlay-offerente');
-                if (offerenteEl){
-                    offerenteEl.innerText = `AGGIUDICATO!`;
-                    offerenteEl.style.color='#2ecc71';
-                }
-                document.querySelector('.asta-box-footer').style.display='none';
+        // DOPO:
+        connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, vincitore, prezzo) => {
+            // stop timers
+            clearInterval(countdownTimerAdmin);
+            clearTimeout(closeTimeoutAdmin);
+            closeTimeoutAdmin = null;
 
-                setTimeout(()=>{
-                    document.getElementById('asta-overlay').classList.remove('visible');
-                    setTimeout(()=>location.reload(), 300);
-                }, 4000);
-            });
+            // suono "gavel"
+            document.getElementById('suono-vittoria').play();
+
+            // scritta grande sotto l’importo
+            const offerenteEl = document.getElementById('overlay-offerente');
+            if (offerenteEl) {
+                offerenteEl.innerText = `AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`;
+                offerenteEl.style.color = '#2ecc71';
+            }
+
+            // mostra anche il prezzo finale grande (per sicurezza)
+            const offertaEl = document.getElementById('overlay-offerta');
+            if (offertaEl) offertaEl.innerText = prezzo || 0;
+
+            // aggiungi riga nel log overlay
+            const logContainer = document.getElementById('overlay-log');
+            if (logContainer) {
+                const ts = new Date().toLocaleTimeString();
+                const row = document.createElement('p');
+                row.innerText = `[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`;
+                logContainer.prepend(row);
+            }
+
+            // nascondi il bottone "Annulla Asta"
+            const footer = document.querySelector('.asta-box-footer');
+            if (footer) footer.style.display = 'none';
+
+            // chiudi overlay dopo un attimo e ricarica
+            setTimeout(() => {
+                document.getElementById('asta-overlay').classList.remove('visible');
+                setTimeout(() => location.reload(), 300);
+            }, 4000);
+        });
+
 
             connection.on("AstaAnnullata",()=>{
                 clearInterval(countdownTimerAdmin);

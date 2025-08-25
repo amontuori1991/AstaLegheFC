@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AstaLegheFC</title>
 
-    <link rel="manifest" href="/manifest.json">
+    <!-- PWA Utente -->
+    <link rel="manifest" href="/manifest-utente.json">
     <meta name="theme-color" content="#2c3e50" />
-
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Fantabazzer">
@@ -26,6 +26,7 @@
         </main>
     </div>
 
+    <!-- Modal messaggi riutilizzabile -->
     <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-white" style="background-color: #2c3e50; border: 1px solid #3498db;">
@@ -48,19 +49,28 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registrato con successo.');
-                    })
-                    .catch(err => {
-                        console.error('Registrazione del Service Worker fallita: ', err);
-                    });
-            });
-        }
-    </script>
 
+    <!-- SW UTENTE (scope /Utente/) + “ultima pagina” -->
+    <script>
+        (function () {
+          if ('serviceWorker' in navigator) {
+            // Registra il SW dell'UTENTE con scope limitato
+            navigator.serviceWorker.register('/sw-utente.js', { scope: '/Utente/' })
+              .catch(err => console.error('SW utente - errore registrazione:', err));
+          }
+
+          // Ricorda l’ultima URL utente visitata (per icona Home senza query)
+          try {
+            const path = location.pathname.toLowerCase();
+            if (path.startsWith('/utente')) {
+              localStorage.setItem('utente:lastUrl', location.href);
+            }
+            if ((path === '/utente' || path === '/utente/') && !location.search.includes('lega=')) {
+              const last = localStorage.getItem('utente:lastUrl');
+              if (last && last !== location.href) location.replace(last);
+            }
+          } catch (e) { /* ignora */ }
+        })();
+    </script>
 </body>
 </html>
