@@ -96,10 +96,12 @@ namespace AstaLegheFC.Hubs
                                 IdListone = portiere.IdListone,
                                 Nome = portiere.Nome,
                                 Ruolo = portiere.Ruolo,
+                                RuoloMantra = portiere.RuoloMantra,   // 👈 aggiunto
                                 SquadraReale = portiere.Squadra,
                                 SquadraId = squadraVincitrice.Id,
                                 CreditiSpesi = 0
                             };
+
                             _context.Giocatori.Add(portiereCollegato);
                         }
                     }

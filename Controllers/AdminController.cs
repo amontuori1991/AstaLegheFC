@@ -243,10 +243,15 @@ namespace AstaLegheFC.Controllers
         [HttpPost]
         public async Task<IActionResult> SvincolaGiocatore([FromBody] SvincolaRequest request)
         {
-            if (request.Id <= 0 || request.CreditiRestituiti < 0) return BadRequest("Dati non validi.");
+            if (request.Id <= 0) return BadRequest("Dati non validi.");
+
+            // 👇 clamp difensivo (il service farà un ulteriore clamp usando il costo originale)
+            if (request.CreditiRestituiti < 0) request.CreditiRestituiti = 0;
+
             await _legaService.SvincolaGiocatoreAsync(request.Id, request.CreditiRestituiti);
             return Ok();
         }
+
 
         [HttpPost]
         public async Task<IActionResult> AssegnaManualmente([FromBody] AssegnaRequest request)

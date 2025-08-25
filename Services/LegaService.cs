@@ -23,30 +23,45 @@ namespace AstaLegheFC.Services
 
         public async Task SvincolaGiocatoreAsync(int id, int creditiDaRestituire)
         {
+            // transazione per consistenza crediti/rosa
+            using var tx = await _context.Database.BeginTransactionAsync();
+
             var giocatore = await _context.Giocatori
                 .Include(g => g.Squadra)
                 .FirstOrDefaultAsync(g => g.Id == id);
 
-            if (giocatore != null && giocatore.Squadra != null)
+            if (giocatore == null)
             {
-                // Calcola la "penale" (o il "malus") dello svincolo
-                int costoOriginale = giocatore.CreditiSpesi ?? 0;
-                int malus = costoOriginale - creditiDaRestituire;
-
-                // Applica il malus direttamente ai crediti iniziali della squadra.
-                // In questo modo, quando la vista ricalcolerà i crediti disponibili,
-                // il rimborso risulterà corretto.
-                giocatore.Squadra.Crediti -= malus;
-
-                // Rimuovi il giocatore dalla rosa
-                _context.Giocatori.Remove(giocatore);
-
-                await _context.SaveChangesAsync();
-
-                // Notifica tutti gli utenti dell'aggiornamento
-                await _hubContext.Clients.All.SendAsync("AggiornaUtente");
+                await tx.RollbackAsync();
+                return; // Nessun giocatore trovato: esci silenziosamente
             }
+
+            // costo originale: tratta NULL come 0
+            int costoOriginale = giocatore.CreditiSpesi ?? 0;
+
+            // clamp rimborso
+            if (creditiDaRestituire < 0) creditiDaRestituire = 0;
+            if (creditiDaRestituire > costoOriginale) creditiDaRestituire = costoOriginale;
+
+            // malus = quanto NON restituisci
+            int malus = costoOriginale - creditiDaRestituire;
+
+            if (giocatore.Squadra != null)
+            {
+                // aggiorna crediti in base al malus (se rimborso pieno, malus=0; se rimborso 0, malus=costoOriginale)
+                giocatore.Squadra.Crediti -= malus;
+            }
+
+            // rimuovi dalla rosa
+            _context.Giocatori.Remove(giocatore);
+
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            // broadcast
+            await _hubContext.Clients.All.SendAsync("AggiornaUtente");
         }
+
 
         // In Services/LegaService.cs
 
