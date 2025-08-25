@@ -49,11 +49,24 @@
         font-size: 16px;
     }
 
+    /* --- Compattazione card offerta --- */
+    .card-body .card-title {
+        margin-bottom: .25rem;
+    }
+
+    #offerta.display-1 {
+        margin: .25rem 0 .25rem;
+    }
+
+    #offerente {
+        margin-top: 0;
+    }
+
     /* ===== Toast suggerimento (utente) ===== */
     .toast-suggerimento {
         position: fixed;
         right: 20px;
-        bottom: 20px;
+        bottom: 80px; /* sopra la barra crediti */
         display: flex;
         gap: 12px;
         align-items: center;
@@ -101,14 +114,110 @@
             line-height: 1;
             cursor: pointer;
         }
+
+    /* ===== Barra crediti in fondo ===== */
+    #crediti-bar {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        justify-content: center;
+        gap: 18px;
+        align-items: center;
+        background: #2c3e50;
+        border-top: 1px solid #34495e;
+        padding: 10px 14px env(safe-area-inset-bottom);
+        box-shadow: 0 -6px 16px rgba(0,0,0,0.35);
+        z-index: 1900;
+    }
+
+        #crediti-bar .chip {
+            background: #1a2533;
+            border: 1px solid #34495e;
+            color: #fff;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-weight: 600;
+            font-size: .95rem;
+        }
+
+    /* Spacer per evitare sovrapposizione con la barra */
+    .spacer-crediti {
+        height: 60px;
+    }
+
+    /* ===== Mobile fine-tuning (≤ 576px) ===== */
+    @@media (max-width: 576px) {
+        h2#giocatore {
+            font-size: 1.05rem;
+            line-height: 1.2;
+        }
+
+        #offerente {
+            font-size: 1rem;
+        }
+
+        #offerta.display-1 {
+            font-size: 2.75rem;
+        }
+
+        .card .card-body {
+            padding: .75rem .75rem;
+        }
+
+        .card .card-header, .card .card-footer {
+            padding: .5rem .75rem;
+        }
+
+        .pulsanti-offerta-container {
+            gap: .35rem;
+        }
+
+            .pulsanti-offerta-container .btn {
+                padding: .35rem .25rem;
+                font-size: .9rem;
+                flex: 0 0 calc(33.333% - .35rem);
+            }
+
+        #offertaPersonalizzataInput {
+            font-size: .95rem;
+        }
+
+        #btnOffertaPersonalizzata {
+            padding: .45rem .65rem;
+        }
+
+        .player-row {
+            padding: 4px 0;
+        }
+
+        .player-name {
+            font-size: .95rem;
+        }
+
+        .player-logo {
+            height: 18px;
+            margin: 0 6px;
+        }
+
+        .player-credits {
+            min-width: 34px;
+            font-size: .85rem;
+        }
+
+        .player-mantra {
+            font-size: .8rem;
+        }
+    }
 </style>
 
 <div class="row mt-md-4">
     <div class="col-md-7 col-lg-8 mb-3 mb-md-0">
         <div class="card text-center shadow-lg h-100">
             <div class="card-header bg-dark text-white">
-                <p class="mb-0">Calciatore in asta:</p>
-                <div id="giocatore-info" class="d-flex justify-content-center align-items-center gap-3 mt-1">
+                <!-- RIMOSSO: "Calciatore in asta" per guadagnare spazio -->
+                <div id="giocatore-info" class="d-flex justify-content-center align-items-center gap-3">
                     <img id="logo-giocatore-in-asta" src="@Model.LogoSquadra" alt="Logo" style="height: 40px; display: @(string.IsNullOrEmpty(Model.LogoSquadra) ? "none" : "block");" />
                     <h2 id="giocatore" class="mb-0">
                         @if (Model.CalciatoreInAsta != null && !string.IsNullOrEmpty(Model.CalciatoreInAsta.Nome))
@@ -136,19 +245,7 @@
     </div>
 
     <div class="col-md-5 col-lg-4">
-        <div class="card shadow mb-4">
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Crediti Disponibili
-                    <span id="crediti" class="badge bg-success rounded-pill fs-6">@Model.CreditiDisponibili</span>
-                </li>
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    Puntata Massima
-                    <span id="puntata" class="badge bg-primary rounded-pill fs-6">@Model.PuntataMassima</span>
-                </li>
-            </ul>
-        </div>
-
+        <!-- RIMOSSA la card "Crediti Disponibili / Puntata Massima" -->
         <div class="card shadow mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Offri</h5>
@@ -181,7 +278,6 @@
                 <div id="risultati-ricerca" class="mt-2"></div>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -195,6 +291,13 @@
     </div>
     <button type="button" class="toast-close" aria-label="Chiudi">&times;</button>
 </div>
+
+<!-- ✅ Barra compatta crediti in basso -->
+<div id="crediti-bar" aria-live="polite">
+    <span class="chip">Disp.: <strong id="crediti-bottom">@Model.CreditiDisponibili</strong></span>
+    <span class="chip">Max: <strong id="puntata-bottom">@Model.PuntataMassima</strong></span>
+</div>
+<div class="spacer-crediti"></div>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
@@ -212,10 +315,10 @@
             // (rimane per compat ma NON usato per far ripartire il countdown)
             let timerSecondi = @Model.TimerAsta;
 
-            // ✅ nuovo: end-time inviato dal server (ISO string)
+            // end-time inviato dal server (ISO string)
             let fineUtcCorrente = null;
 
-            // ✅ unico interval per il countdown
+            // unico interval per il countdown
             let countdownTimerUtente = null;
 
             let maxPortieri = @Model.MaxPortieri;
@@ -249,7 +352,7 @@
                 if (!abilitato && messaggio) { avvisoDiv.innerText = messaggio; avvisoDiv.style.display = 'block'; } else { avvisoDiv.style.display = 'none'; }
             }
 
-            // ✅ NUOVO: countdown sincronizzato sull'end-time del server
+            // countdown sincronizzato sull'end-time del server
             function aggiornaCountdownDaFineUtc() {
                 const timerEl = document.getElementById("timer");
                 clearInterval(countdownTimerUtente);
@@ -278,8 +381,13 @@
                     const response = await fetch(`/utente/crediti?nick=${nickname}&lega=${legaAlias}`);
                     if (!response.ok) return;
                     const data = await response.json();
-                    document.getElementById("crediti").textContent = data.creditiDisponibili;
-                    document.getElementById("puntata").textContent = data.puntataMassima;
+
+                    // aggiorna barra in basso
+                    const elCred = document.getElementById("crediti-bottom");
+                    const elMax = document.getElementById("puntata-bottom");
+                    if (elCred) elCred.textContent = data.creditiDisponibili;
+                    if (elMax) elMax.textContent = data.puntataMassima;
+
                     portieriAttuali = data.portieri;
                     difensoriAttuali = data.difensori;
                     centrocampistiAttuali = data.centrocampisti;
@@ -327,7 +435,7 @@
                     .catch(err => console.error("Errore nell'invio del suggerimento:", err));
             }
 
-            // ✅ Funzione toast robusta (logo, nome, dettagli, auto-hide)
+            // toast robusto
             function mostraToastSuggerimento(giocatore) {
                 const el = document.getElementById('toast-suggerimento');
                 const logo = document.getElementById('toast-logo');
@@ -354,7 +462,7 @@
                 setTimeout(hide, 4000);
             }
 
-            // --- GESTIONE EVENTI SIGNALR ---
+            // --- SIGNALR ---
             connection.on("MostraGiocatoreInAsta", (giocatore) => {
                 const logoImg = document.getElementById("logo-giocatore-in-asta");
                 idListoneAttuale = giocatore.id;
@@ -367,23 +475,18 @@
                 document.getElementById("offerta").textContent = "0";
                 offertaAttuale = 0;
 
-                // reset end-time finché non arriva una nuova offerta
                 fineUtcCorrente = null;
-
                 aggiornaStatoPulsantiBazzer();
-                aggiornaCountdownDaFineUtc(); // mostrerà '-'
+                aggiornaCountdownDaFineUtc();
             });
 
-            // 🔁 ORA arriva anche fineUtc dal server
+            // ora arriva anche fineUtc dal server
             connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
                 document.getElementById("offerente").textContent = offerente || "-";
                 document.getElementById("offerta").textContent = offerta || 0;
                 offertaAttuale = offerta || 0;
 
-                // memorizza end-time autorevole
                 fineUtcCorrente = fineUtc || null;
-
-                // countdown sincronizzato
                 aggiornaCountdownDaFineUtc();
             });
 
@@ -400,9 +503,7 @@
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
 
-                // stop & reset end-time
                 fineUtcCorrente = null;
-
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
                 aggiornaCrediti();
@@ -422,9 +523,7 @@
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
 
-                // stop & reset end-time
                 fineUtcCorrente = null;
-
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
             });
@@ -434,7 +533,6 @@
                 caricaListone();
             });
 
-            // (opzionale: non usato per countdown, ma lo teniamo)
             connection.on("AggiornaDurataTimer", (nuoviSecondi) => { timerSecondi = nuoviSecondi; });
 
             connection.on("AggiornaRegoleLega", (regole) => {
@@ -449,9 +547,9 @@
             document.querySelectorAll(".bazzer").forEach(btn => {
                 btn.addEventListener("click", async () => {
                     const incremento = parseInt(btn.dataset.incremento);
-                    const snapshot = offertaAttuale;
-                    const nuovaOfferta = offertaAttuale + incremento;
-                    const puntataMassima = parseInt(document.getElementById('puntata').textContent);
+                    const snapshot = offertaAttuale;                 // prezzo visto al click
+                    const nuovaOfferta = snapshot + incremento;
+                    const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
                     if (nuovaOfferta > puntataMassima) {
                         if (typeof mostraMessaggio === 'function') {
                             mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti per fare questa offerta! La tua puntata massima è " + puntataMassima);
@@ -467,7 +565,6 @@
             document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
                 const inputOfferta = document.getElementById('offertaPersonalizzataInput');
                 const offertaInserita = parseInt(inputOfferta.value);
-                const snapshot = offertaAttuale;
                 if (isNaN(offertaInserita) || offertaInserita <= 0) {
                     if (typeof mostraMessaggio === 'function') { mostraMessaggio("Errore", "Per favore, inserisci un valore numerico valido."); }
                     else { alert("Errore", "Per favore, inserisci un valore numerico valido."); }
@@ -478,7 +575,7 @@
                     else { alert("Offerta non valida", "La tua offerta deve essere superiore a quella attuale!"); }
                     return;
                 }
-                const puntataMassima = parseInt(document.getElementById('puntata').textContent);
+                const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
                 if (offertaInserita > puntataMassima) {
                     if (typeof mostraMessaggio === 'function') {
                         mostraMessaggio("Offerta non valida", "La tua offerta supera la tua puntata massima disponibile! (" + puntataMassima + ")");
@@ -487,13 +584,13 @@
                     }
                     return;
                 }
+                const snapshot = offertaAttuale; // prezzo visto al click
                 await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
                 inputOfferta.value = "";
             });
 
             // --- AVVIO CONNESSIONE ---
             connection.start().then(() => {
-                // importantissimo dopo F5: chiede offerta + fineUtc correnti
                 connection.invoke("RichiediStatoAttuale");
                 aggiornaStatoPulsantiBazzer();
                 caricaListone();
