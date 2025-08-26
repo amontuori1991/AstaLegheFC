@@ -892,5 +892,21 @@
             }).catch(err => console.error("Errore connessione SignalR:", err));
 
         });
+
+              (function(){
+          try {
+            var isUtente = /^\/utente(?:\/)?(?:\?|$)/i.test(location.pathname);
+            var qs = new URLSearchParams(location.search);
+            var lega = qs.get('lega');
+            var nick = qs.get('nick');
+            if (isUtente && lega && nick) {
+              // (opzionale) tieni solo lega e nick nell’URL salvata
+              var keep = new URLSearchParams();
+              keep.set('lega', lega);
+              keep.set('nick', nick);
+              localStorage.setItem('fb:lastUtenteUrl', '/utente?' + keep.toString());
+            }
+          } catch(e){}
+        })();
     </script>
 }

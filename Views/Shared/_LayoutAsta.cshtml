@@ -1,13 +1,16 @@
-﻿<!DOCTYPE html>
+﻿@*
+  Layout Asta (utente)
+*@
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - AstaLegheFC</title>
 
-    <!-- PWA Utente -->
-    <link rel="manifest" href="/manifest-utente.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2c3e50" />
+
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="Fantabazzer">
@@ -26,7 +29,7 @@
         </main>
     </div>
 
-    <!-- Modal messaggi riutilizzabile -->
+    <!-- Modal messaggi riuso -->
     <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-white" style="background-color: #2c3e50; border: 1px solid #3498db;">
@@ -34,9 +37,7 @@
                     <h5 class="modal-title" id="messaggioModaleTitolo">Messaggio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <p id="messaggioModaleCorpo"></p>
-                </div>
+                <div class="modal-body"><p id="messaggioModaleCorpo"></p></div>
                 <div class="modal-footer" style="border-top-color: #34495e;">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="messaggioModaleBtnAnnulla">Annulla</button>
                     <button type="button" class="btn btn-primary" id="messaggioModaleBtnOk">OK</button>
@@ -50,27 +51,31 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <!-- SW UTENTE (scope /Utente/) + “ultima pagina” -->
+    <!-- 🔒 Guard PWA: se avviata da icona senza parametri, manda all'ultima URL utente salvata -->
     <script>
-        (function () {
-          if ('serviceWorker' in navigator) {
-            // Registra il SW dell'UTENTE con scope limitato
-            navigator.serviceWorker.register('/sw-utente.js', { scope: '/Utente/' })
-              .catch(err => console.error('SW utente - errore registrazione:', err));
+        (function(){
+          var inStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+          if (!inStandalone) return;
+          var p = location.pathname.toLowerCase();
+          var qs = new URLSearchParams(location.search);
+          var missingParams = (p === '/utente' && (!qs.get('lega') || !qs.get('nick')));
+          if (p === '/' || missingParams) {
+            var last = localStorage.getItem('fb:lastUtenteUrl');
+            if (last) location.replace(last);
+            else location.replace('/app-launch.html');
           }
-
-          // Ricorda l’ultima URL utente visitata (per icona Home senza query)
-          try {
-            const path = location.pathname.toLowerCase();
-            if (path.startsWith('/utente')) {
-              localStorage.setItem('utente:lastUrl', location.href);
-            }
-            if ((path === '/utente' || path === '/utente/') && !location.search.includes('lega=')) {
-              const last = localStorage.getItem('utente:lastUrl');
-              if (last && last !== location.href) location.replace(last);
-            }
-          } catch (e) { /* ignora */ }
         })();
+    </script>
+
+    <!-- Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+              .then(() => console.log('Service Worker registrato.'))
+              .catch(err => console.error('SW registration fail:', err));
+          });
+        }
     </script>
 </body>
 </html>

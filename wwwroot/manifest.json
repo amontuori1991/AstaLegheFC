@@ -1,7 +1,8 @@
 ﻿{
     "name": "Fantabazzer Asta",
     "short_name": "Fantabazzer",
-    "start_url": "/",
+    "start_url": "/app-launch.html",
+    "scope": "/",
     "display": "standalone",
     "background_color": "#2c3e50",
     "theme_color": "#2c3e50",
