@@ -1,21 +1,17 @@
-﻿@*
-  Layout Asta (utente)
-*@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- 👇 importante: viewport-fit=cover per safe area su iOS -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>@ViewData["Title"] - AstaLegheFC</title>
 
-
-    <link rel="manifest" href="/pwa/manifest-utente">
-
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2c3e50" />
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="Fantabuzzer">
+    <meta name="apple-mobile-web-app-title" content="Fantabazzer">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
 
@@ -24,14 +20,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="~/png/logo_bazzer.png" />
 </head>
-<body>
+<!-- 👇 spazio extra in fondo pagina che tiene conto della safe area -->
+<body class="pwa-add-bottom-space">
     <div class="container-fluid">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Modal messaggi riuso -->
+    <!-- Modale messaggi globale -->
     <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-white" style="background-color: #2c3e50; border: 1px solid #3498db;">
@@ -39,7 +36,9 @@
                     <h5 class="modal-title" id="messaggioModaleTitolo">Messaggio</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body"><p id="messaggioModaleCorpo"></p></div>
+                <div class="modal-body">
+                    <p id="messaggioModaleCorpo"></p>
+                </div>
                 <div class="modal-footer" style="border-top-color: #34495e;">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="messaggioModaleBtnAnnulla">Annulla</button>
                     <button type="button" class="btn btn-primary" id="messaggioModaleBtnOk">OK</button>
@@ -53,52 +52,13 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <!-- 🔒 Guard PWA: se avviata da icona senza parametri, manda all'ultima URL utente salvata -->
-    <script>
-        (function(){
-          var inStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-          if (!inStandalone) return;
-          var p = location.pathname.toLowerCase();
-          var qs = new URLSearchParams(location.search);
-          var missingParams = (p === '/utente' && (!qs.get('lega') || !qs.get('nick')));
-          if (p === '/' || missingParams) {
-            var last = localStorage.getItem('fb:lastUtenteUrl');
-            if (last) location.replace(last);
-            else location.replace('/app-launch.html');
-          }
-        })();
-    </script>
-
-    <!-- Service Worker -->
     <script>
         if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-              .then(() => console.log('Service Worker registrato.'))
-              .catch(err => console.error('SW registration fail:', err));
-          });
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .catch(err => console.error('SW registration failed:', err));
+            });
         }
     </script>
-    <script>
-        (function () {
-          // salva lega/nick quando si arriva con i parametri, sia in localStorage che in cookie
-          function setCookie(name, value, days){
-            const maxAge = days ? `; max-age=${days*24*60*60}` : '';
-            document.cookie = `${name}=${encodeURIComponent(value)}; path=/${maxAge}`;
-          }
-          try {
-            const u = new URL(location.href);
-            const lega = u.searchParams.get('lega');
-            const nick = u.searchParams.get('nick');
-            if (lega && nick) {
-              try { localStorage.setItem('pwa:lega', lega); localStorage.setItem('pwa:nick', nick); } catch {}
-              setCookie('pwa_lega', lega, 365);
-              setCookie('pwa_nick', nick, 365);
-            }
-          } catch {}
-        })();
-    </script>
-
-
 </body>
 </html>

@@ -462,3 +462,22 @@ header .navbar {
         height: 32px; /* Riduci la dimensione per i dispositivi mobili */
     }
 }
+/* ==== iOS PWA safe-area / gesture bar support ==== */
+
+/* Aggiunge spazio extra in basso a tutta la pagina (utile quando il footer NON è fixed) */
+.pwa-add-bottom-space {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Se hai una barra/badge fissata in basso, questa la solleva sopra la gesture bar */
+.fixed-bottom,
+footer.fixed-bottom,
+.user-footer.fixed,
+.credits-footer.fixed {
+    bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Padding aggiuntivo dentro la barra fissata in basso (se la usi) */
+.pwa-safe-bottom {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+}
