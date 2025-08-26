@@ -80,19 +80,25 @@
         }
     </script>
     <script>
-        // Salva lega/nick ogni volta che l’utente apre la pagina corretta dal browser
         (function () {
+          // salva lega/nick quando si arriva con i parametri, sia in localStorage che in cookie
+          function setCookie(name, value, days){
+            const maxAge = days ? `; max-age=${days*24*60*60}` : '';
+            document.cookie = `${name}=${encodeURIComponent(value)}; path=/${maxAge}`;
+          }
           try {
             const u = new URL(location.href);
             const lega = u.searchParams.get('lega');
             const nick = u.searchParams.get('nick');
             if (lega && nick) {
-              localStorage.setItem('pwa:lega', lega);
-              localStorage.setItem('pwa:nick', nick);
+              try { localStorage.setItem('pwa:lega', lega); localStorage.setItem('pwa:nick', nick); } catch {}
+              setCookie('pwa_lega', lega, 365);
+              setCookie('pwa_nick', nick, 365);
             }
           } catch {}
         })();
     </script>
+
 
 </body>
 </html>
