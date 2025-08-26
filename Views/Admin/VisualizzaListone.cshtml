@@ -368,9 +368,13 @@
                         </button>
                         <button class="btn btn-warning btn-sm btn-assegna"
                                 data-id="@c.Id"
-                                data-nome="@c.Nome">
+                                data-nome="@c.Nome"
+                                data-ruolo="@(ViewBag.MantraAttivo? c.RuoloMantra: c.Ruolo)"
+                                data-squadra="@c.Squadra"
+                                data-logo="@AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(c.Squadra)">
                             Assegna
                         </button>
+
                     </td>
                 </tr>
             }
@@ -386,18 +390,23 @@
                 <h5 class="modal-title" id="assegnaModalLabel">Assegna Giocatore</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Stai assegnando: <strong id="nomeGiocatoreModale"></strong></p>
+            <div class="modal-body text-center">
+                <img id="logoGiocatoreAssegna" src="" alt="Logo Squadra" class="d-block mx-auto mb-3" style="height:70px" />
+                <p class="mb-0 fs-4" id="nomeGiocatoreModale"></p>
+                <p class="text-muted" id="dettagliGiocatoreAssegna"></p>
+                <hr />
                 <input type="hidden" id="idGiocatoreModale" />
-                <div class="mb-3">
+
+                <div class="mb-3 text-start">
                     <label for="squadraSelect" class="form-label">Assegna a:</label>
                     <select id="squadraSelect" class="form-select"></select>
                 </div>
-                <div class="mb-3">
+                <div class="mb-3 text-start">
                     <label for="costoInput" class="form-label">Costo:</label>
                     <input type="number" id="costoInput" class="form-control" value="1" min="1" />
                 </div>
             </div>
+
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                 <button type="button" class="btn btn-primary" id="btnSalvaAssegnazione">Salva Assegnazione</button>
@@ -633,17 +642,37 @@
                     });
                 });
 
-                document.querySelectorAll('.btn-assegna').forEach(btn=>{
-                    btn.addEventListener('click', function(){
-                        document.getElementById('idGiocatoreModale').value=this.dataset.id;
-                        document.getElementById('nomeGiocatoreModale').innerText=this.dataset.nome;
-                        const sel=document.getElementById('squadraSelect'); sel.innerHTML='';
-                        squadreArr.forEach(s=>{
-                            const o=document.createElement('option'); o.value=s.SquadraId; o.innerText=s.Nickname; sel.appendChild(o);
-                        });
-                        new bootstrap.Modal(document.getElementById('assegnaModal')).show();
-                    });
-                });
+                       document.querySelectorAll('.btn-assegna').forEach(btn => {
+          btn.addEventListener('click', function () {
+            // dati dal bottone
+            const id = this.dataset.id;
+            const nome = this.dataset.nome || '';
+            const ruolo = this.dataset.ruolo || '';
+            const squadra = this.dataset.squadra || '';
+            const logo = this.dataset.logo || '';
+
+            // campi modale
+            document.getElementById('idGiocatoreModale').value = id;
+            document.getElementById('nomeGiocatoreModale').innerText = nome;
+            document.getElementById('dettagliGiocatoreAssegna').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+            const img = document.getElementById('logoGiocatoreAssegna');
+            if (img) img.src = logo;
+
+            // riempi select squadre
+            const sel = document.getElementById('squadraSelect');
+            sel.innerHTML = '';
+            squadreArr.forEach(s => {
+              const o = document.createElement('option');
+              o.value = s.SquadraId;
+              o.innerText = s.Nickname;
+              sel.appendChild(o);
+            });
+
+            // apri modale
+            new bootstrap.Modal(document.getElementById('assegnaModal')).show();
+          });
+        });
+
 
                 document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', ()=>{
                     const payload={
