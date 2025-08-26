@@ -16,7 +16,10 @@
 
     <link rel="icon" type="image/png" href="~/png/logo_bazzer.png" />
     <link rel="apple-touch-icon" href="~/png/logo_bazzer.png" />
+
+    <!-- Manifest ADMIN: avvio su Home -->
     <link rel="manifest" href="/manifest.json">
+
     <meta name="theme-color" content="#2c3e50" />
 
     <style>
@@ -33,11 +36,7 @@
         }
 
         }
-
-        /* Evita che il contenuto vada sotto la status bar su iPhone con notch */
-        body {
-            padding-top: env(safe-area-inset-top, 0px);
-        }
+        /* NON mettere padding-top globale al body (evita spazi eccessivi su iPhone) */
     </style>
 </head>
 <body>
@@ -45,7 +44,8 @@
     <div id="loader-overlay"><div class="loader-spinner"></div></div>
 
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3"
+             style="padding-top: env(safe-area-inset-top, 0px);">
             <div class="container-fluid">
                 <a class="navbar-brand link-caricamento d-flex align-items-center"
                    asp-area="" asp-controller="Home" asp-action="Index">
@@ -87,7 +87,7 @@
         </div>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="border-top footer text-muted" style="padding-bottom: env(safe-area-inset-bottom, 0px);">
         <div class="container">&copy; 2025 - AstaLegheFC - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a></div>
     </footer>
 
@@ -96,49 +96,27 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <!-- SW: in prod sì, in localhost unregister -->
+    <!-- Service Worker:
+         - in localhost: UNREGISTER TUTTO (così non interferisce con F5)
+         - in prod: registra /service-worker.js (nessun redirect)
+    -->
     <script>
         (function(){
           var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
 
-          if (!isLocalhost && 'serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-              navigator.serviceWorker.register('/service-worker.js').catch(function(){});
-            });
-          } else {
-            if ('serviceWorker' in navigator) {
+          if ('serviceWorker' in navigator) {
+            if (isLocalhost) {
               navigator.serviceWorker.getRegistrations().then(function(regs){
                 regs.forEach(function(r){ r.unregister(); });
               });
+            } else {
+              window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/service-worker.js?v=7').then(function(reg){
+                  // prova a forzare update
+                  if (reg && reg.active) reg.active.postMessage && reg.active.postMessage('SKIP_WAITING');
+                }).catch(function(){});
+              });
             }
-          }
-        })();
-    </script>
-
-    <!-- Routing PWA: SOLO in standalone e NON in localhost -->
-    <script>
-        (function () {
-          var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
-                             || window.navigator.standalone === true; // iOS legacy
-          var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
-          if (!isStandalone || isLocalhost) return;
-
-          var path = location.pathname.toLowerCase();
-
-          // Home → pagina di bootstrap della PWA
-          if (path === '/' || path === '/index' || path === '/home' || path === '/home/index') {
-            location.replace('/app-start.html?v=6');
-            return;
-          }
-
-          // /utente senza parametri → ultimo URL salvato, altrimenti bootstrap
-          var qs = new URLSearchParams(location.search);
-          if (path === '/utente' && (!qs.get('lega') || !qs.get('nick'))) {
-            try {
-              var last = localStorage.getItem('fb:lastUtenteUrl');
-              if (last) { location.replace(last); return; }
-            } catch(e) {}
-            location.replace('/app-start.html?v=6');
           }
         })();
     </script>

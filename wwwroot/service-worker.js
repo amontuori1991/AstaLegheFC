@@ -1,27 +1,33 @@
-﻿// --- Service Worker Fantabazzer (v6)
-// Nessun redirect: la root non viene più riscritta dal SW.
-// L'app-start resta gestita dal layout quando l'app è in standalone.
+﻿// --- Service Worker Fantabazzer (v7) ---
+// Minimal: nessun redirect, nessuna riscrittura URL, niente cache aggressive.
 
-const SW_VERSION = 'v6';
+const SW_VERSION = 'v7';
 
-// Attiva subito il nuovo SW
-self.addEventListener('install', (event) => { self.skipWaiting(); });
+self.addEventListener('install', (event) => {
+    // attiva subito il nuovo SW
+    self.skipWaiting();
+});
 
-// Prendi controllo subito
 self.addEventListener('activate', (event) => {
+    // prendi subito il controllo delle pagine
     event.waitUntil(self.clients.claim());
 });
 
-// Consenti "SKIP_WAITING" da pagina
+// opzionale: consenti forzare l'update da pagina
 self.addEventListener('message', (event) => {
-    if (event && event.data === 'SKIP_WAITING') self.skipWaiting();
+    if (event && event.data === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
 
-// Navigazioni: passa in rete, con fallback minimale offline
+// Lascia passare tutto alla rete; fallback offline minimo
 self.addEventListener('fetch', (event) => {
-    if (event.request.mode !== 'navigate') return; // lascia passare altri tipi
+    if (event.request.mode !== 'navigate') return;
     event.respondWith((async () => {
-        try { return await fetch(event.request); }
-        catch { return new Response('Offline', { status: 503, statusText: 'Offline' }); }
+        try {
+            return await fetch(event.request);
+        } catch {
+            return new Response('Offline', { status: 503, statusText: 'Offline' });
+        }
     })());
 });

@@ -1,12 +1,12 @@
 ﻿{
-    "name": "Fantabazzer Asta",
+    "name": "Fantabazzer Asta (Admin)",
     "short_name": "Fantabazzer",
-    "start_url": "/app-start.html?v=6",
+    "start_url": "/Home/Index",
     "scope": "/",
     "display": "standalone",
     "background_color": "#2c3e50",
     "theme_color": "#2c3e50",
-    "description": "App per l'asta del Fantabazzer.",
+    "description": "App per la gestione aste (Admin).",
     "icons": [
         {
             "src": "/images/icons/icon-192x192.png",

@@ -273,7 +273,7 @@
     }
 
     #modalRiepilogo .modal-content {
-        padding-top: env(safe-area-inset-top, 0px);
+       
         padding-bottom: env(safe-area-inset-bottom, 0px);
     }
 
@@ -390,10 +390,40 @@
         margin-bottom: calc(var(--safe-bottom) + 84px) !important; /* 84 = 64px spacer + un filo */
     }
 
-    /* opzionale: un filo di padding-top per il contenuto sotto al notch */
+    /* iPhone notch: niente spazio extra globale */
     body {
-        padding-top: calc(var(--safe-top) + 6px);
+        padding-top: 0 !important;
     }
+
+    /* Header (card-header) protetto dal notch ma senza esagerare */
+    .card-header {
+        padding-top: max(.5rem, env(safe-area-inset-top, 0px));
+    }
+
+    /* Modale "Rose": scendi un filo per non andare sotto la fotocamera,
+       e rispetta la barra crediti in basso */
+    .modal-dialog {
+        margin-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+        margin-bottom: calc(10px + env(safe-area-inset-bottom, 0px) + 64px) !important; /* 64px ~ altezza barra crediti */
+    }
+
+    /* Contenuto modale scrollabile senza finire sotto la credit bar */
+    .modal-body {
+        max-height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 140px); /* testata+footer modale */
+        overflow: auto;
+    }
+
+    /* Barra crediti: già regolata, lasciamo safe-area in basso */
+    #crediti-bar {
+        bottom: env(safe-area-inset-bottom, 0px);
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Spazio di rientro contenuto per non andare sotto la credit bar */
+    .spacer-crediti {
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
+    }
+
 
 </style>
 

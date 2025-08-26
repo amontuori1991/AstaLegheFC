@@ -33,6 +33,34 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// --- FIX LOCALHOST: normalizza "//", forza root su Home/Index (solo in Development) ---
+if (app.Environment.IsDevelopment())
+{
+    app.Use(async (ctx, next) =>
+    {
+        var orig = ctx.Request.Path.Value ?? "/";
+        // 1) comprime più slash consecutivi in uno solo
+        var normalized = System.Text.RegularExpressions.Regex.Replace(orig, "/{2,}", "/");
+
+        if (!string.Equals(orig, normalized, StringComparison.Ordinal))
+        {
+            ctx.Response.Redirect(normalized + ctx.Request.QueryString, permanent: false);
+            return;
+        }
+
+        // 2) root o /Home -> /Home/Index
+        if (string.Equals(normalized, "/", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(normalized, "/home", StringComparison.OrdinalIgnoreCase))
+        {
+            ctx.Response.Redirect("/Home/Index" + ctx.Request.QueryString, permanent: false);
+            return;
+        }
+
+        await next();
+    });
+}
+
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 

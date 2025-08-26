@@ -13,14 +13,13 @@
 
         body {
             margin: 0;
-            padding-top: calc(var(--safe-top));
+            padding-top: var(--safe-top);
             font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
             background: #1f2a39;
             color: #fff;
-            display: flex;
             min-height: 100vh;
-            align-items: center;
-            justify-content: center;
+            display: grid;
+            place-items: center;
         }
 
         .box {
@@ -31,11 +30,6 @@
             max-width: 520px;
             width: 92%;
             box-shadow: 0 10px 30px rgba(0,0,0,.45)
-        }
-
-        h1 {
-            margin: .25rem 0 1rem 0;
-            font-size: 1.15rem
         }
 
         .row {
@@ -114,37 +108,36 @@
                 if (N && nick) N.value = nick;
             }
             function go(url) {
-                try { localStorage.setItem(KEY_URL, url); } catch (e) { }
+                try { localStorage.setItem(KEY_URL, url); } catch { }
                 location.replace(url);
             }
 
-            // 1) Se arriviamo con query ?lega=&nick= → salva e vai
+            // 1) Query string -> salva e vai
             try {
                 const qs = new URLSearchParams(location.search);
                 const legaQS = qs.get('lega'); const nickQS = qs.get('nick');
                 if (legaQS && nickQS) {
-                    try { localStorage.setItem(KEY_LEGA, legaQS); } catch (e) { }
-                    try { localStorage.setItem(KEY_NICK, nickQS); } catch (e) { }
+                    try { localStorage.setItem(KEY_LEGA, legaQS); localStorage.setItem(KEY_NICK, nickQS); } catch { }
                     return go(buildUtenteUrl(legaQS, nickQS));
                 }
-            } catch (e) { }
+            } catch { }
 
-            // 2) Se ho l'URL completo salvato → vai
+            // 2) URL completo salvato -> vai
             try {
                 const last = localStorage.getItem(KEY_URL);
                 if (last) return go(last);
-            } catch (e) { }
+            } catch { }
 
             // 3) Mostra UI e PRECOMPILA dai singoli valori salvati
             const ui = document.getElementById('ui'); ui.hidden = false;
-            try { setInputs(localStorage.getItem(KEY_LEGA) || '', localStorage.getItem(KEY_NICK) || ''); } catch (e) { }
+            try { setInputs(localStorage.getItem(KEY_LEGA) || '', localStorage.getItem(KEY_NICK) || ''); } catch { }
 
-            // 4) Salvataggio live dei singoli campi (così al prossimo avvio li trovi già nei campi)
+            // 4) Salvataggio live dei singoli campi
             document.getElementById('lega')?.addEventListener('input', ev => {
-                try { localStorage.setItem(KEY_LEGA, (ev.target.value || '').trim()); } catch (e) { }
+                try { localStorage.setItem(KEY_LEGA, (ev.target.value || '').trim()); } catch { }
             });
             document.getElementById('nick')?.addEventListener('input', ev => {
-                try { localStorage.setItem(KEY_NICK, (ev.target.value || '').trim()); } catch (e) { }
+                try { localStorage.setItem(KEY_NICK, (ev.target.value || '').trim()); } catch { }
             });
 
             // 5) Invio
@@ -152,7 +145,7 @@
                 const lega = (document.getElementById('lega').value || '').trim();
                 const nick = (document.getElementById('nick').value || '').trim();
                 if (!lega || !nick) { alert('Inserisci sia alias lega che nickname'); return; }
-                try { localStorage.setItem(KEY_LEGA, lega); localStorage.setItem(KEY_NICK, nick); } catch (e) { }
+                try { localStorage.setItem(KEY_LEGA, lega); localStorage.setItem(KEY_NICK, nick); } catch { }
                 go(buildUtenteUrl(lega, nick));
             }
             document.getElementById('goBtn')?.addEventListener('click', submit);
