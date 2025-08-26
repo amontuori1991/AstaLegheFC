@@ -2,19 +2,25 @@
 <html lang="it">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- viewport-fit per iPhone con notch -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Avvio Fantabazzer</title>
     <meta name="theme-color" content="#2c3e50">
     <style>
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
         body {
             margin: 0;
+            padding-top: calc(var(--safe-top));
             font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
             background: #1f2a39;
             color: #fff;
             display: flex;
             min-height: 100vh;
             align-items: center;
-            justify-content: center
+            justify-content: center;
         }
 
         .box {
@@ -95,29 +101,63 @@
 
     <script>
         (function () {
-            const KEY = 'fb:lastUtenteUrl';
+            const KEY_URL = 'fb:lastUtenteUrl';
+            const KEY_LEGA = 'fb:lega';
+            const KEY_NICK = 'fb:nick';
+
+            function buildUtenteUrl(lega, nick) {
+                return '/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick);
+            }
+            function setInputs(lega, nick) {
+                const L = document.getElementById('lega'); const N = document.getElementById('nick');
+                if (L && lega) L.value = lega;
+                if (N && nick) N.value = nick;
+            }
             function go(url) {
-                try { localStorage.setItem(KEY, url); } catch (e) { }
+                try { localStorage.setItem(KEY_URL, url); } catch (e) { }
                 location.replace(url);
             }
-            const qs = new URLSearchParams(location.search);
-            const lega = qs.get('lega');
-            const nick = qs.get('nick');
-            if (lega && nick) {
-                return go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
-            }
+
+            // 1) Se arriviamo con query ?lega=&nick= → salva e vai
             try {
-                const last = localStorage.getItem(KEY);
+                const qs = new URLSearchParams(location.search);
+                const legaQS = qs.get('lega'); const nickQS = qs.get('nick');
+                if (legaQS && nickQS) {
+                    try { localStorage.setItem(KEY_LEGA, legaQS); } catch (e) { }
+                    try { localStorage.setItem(KEY_NICK, nickQS); } catch (e) { }
+                    return go(buildUtenteUrl(legaQS, nickQS));
+                }
+            } catch (e) { }
+
+            // 2) Se ho l'URL completo salvato → vai
+            try {
+                const last = localStorage.getItem(KEY_URL);
                 if (last) return go(last);
             } catch (e) { }
-            const ui = document.getElementById('ui');
-            ui.hidden = false;
-            document.getElementById('goBtn').addEventListener('click', function () {
-                const lega = document.getElementById('lega').value.trim();
-                const nick = document.getElementById('nick').value.trim();
-                if (!lega || !nick) { alert('Inserisci sia alias lega che nickname'); return; }
-                go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
+
+            // 3) Mostra UI e PRECOMPILA dai singoli valori salvati
+            const ui = document.getElementById('ui'); ui.hidden = false;
+            try { setInputs(localStorage.getItem(KEY_LEGA) || '', localStorage.getItem(KEY_NICK) || ''); } catch (e) { }
+
+            // 4) Salvataggio live dei singoli campi (così al prossimo avvio li trovi già nei campi)
+            document.getElementById('lega')?.addEventListener('input', ev => {
+                try { localStorage.setItem(KEY_LEGA, (ev.target.value || '').trim()); } catch (e) { }
             });
+            document.getElementById('nick')?.addEventListener('input', ev => {
+                try { localStorage.setItem(KEY_NICK, (ev.target.value || '').trim()); } catch (e) { }
+            });
+
+            // 5) Invio
+            function submit() {
+                const lega = (document.getElementById('lega').value || '').trim();
+                const nick = (document.getElementById('nick').value || '').trim();
+                if (!lega || !nick) { alert('Inserisci sia alias lega che nickname'); return; }
+                try { localStorage.setItem(KEY_LEGA, lega); localStorage.setItem(KEY_NICK, nick); } catch (e) { }
+                go(buildUtenteUrl(lega, nick));
+            }
+            document.getElementById('goBtn')?.addEventListener('click', submit);
+            document.getElementById('lega')?.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+            document.getElementById('nick')?.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
         })();
     </script>
 </body>

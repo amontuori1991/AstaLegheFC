@@ -2,12 +2,17 @@
 <html lang="it">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Fantabuzzer — Avvio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Fantabazzer — Avvio</title>
     <meta name="theme-color" content="#2c3e50">
     <style>
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
         body {
             margin: 0;
+            padding-top: calc(var(--safe-top));
             font-family: system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
             background: #2c3e50;
             color: #ecf0f1;
@@ -55,9 +60,8 @@
 </head>
 <body>
     <div class="box">
-        <h2>Avvio Fantabuzzer</h2>
+        <h2>Avvio Fantabazzer</h2>
         <p>Sto aprendo l’ultima asta visitata…</p>
-
         <div id="manual" style="display:none">
             <p><small>Non ho trovato un’asta salvata. Inserisci i dati e salverò questa scelta per i prossimi avvii.</small></p>
             <div class="row"><input id="lega" placeholder="Alias lega (es. serie-a)" autocomplete="off"></div>
@@ -67,24 +71,44 @@
     </div>
 
     <script>
-    (function(){
-      // 1) Prova ad aprire l’ultima pagina utente salvata
-      var last = localStorage.getItem('fb:lastUtenteUrl');
-      if (last && /^\/utente(\?|$)/i.test(last)) {
-        location.replace(last);
-        return;
-      }
-      // 2) Altrimenti mostra form manuale
-      document.getElementById('manual').style.display = 'block';
-      document.getElementById('go').addEventListener('click', function(){
-        var lega = document.getElementById('lega').value.trim();
-        var nick = document.getElementById('nick').value.trim();
-        if (!lega || !nick) { alert('Inserisci sia lega che nick'); return; }
-        var url = '/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick);
-        localStorage.setItem('fb:lastUtenteUrl', url);
-        location.replace(url);
-      });
-    })();
+        const KEY_URL = 'fb:lastUtenteUrl', KEY_LEGA = 'fb:lega', KEY_NICK = 'fb:nick';
+        function buildUrl(L, N) { return '/utente?lega=' + encodeURIComponent(L) + '&nick=' + encodeURIComponent(N); }
+
+        (function () {
+            // 0) Query -> salva e vai
+            try {
+                const qs = new URLSearchParams(location.search);
+                const qL = qs.get('lega'), qN = qs.get('nick');
+                if (qL && qN) {
+                    try { localStorage.setItem(KEY_LEGA, qL); localStorage.setItem(KEY_NICK, qN); localStorage.setItem(KEY_URL, buildUrl(qL, qN)); } catch (e) { }
+                    location.replace(buildUrl(qL, qN)); return;
+                }
+            } catch (e) { }
+
+            // 1) Prova URL completo salvato
+            var last = localStorage.getItem(KEY_URL);
+            if (last && /^\/utente(\?|$)/i.test(last)) { location.replace(last); return; }
+
+            // 2) Prova alias/nick salvati
+            const L = localStorage.getItem(KEY_LEGA);
+            const N = localStorage.getItem(KEY_NICK);
+            if (L && N) { const u = buildUrl(L, N); try { localStorage.setItem(KEY_URL, u); } catch (e) { } location.replace(u); return; }
+
+            // 3) Form manuale
+            const box = document.getElementById('manual');
+            box.style.display = 'block';
+            const go = () => {
+                var lega = document.getElementById('lega').value.trim();
+                var nick = document.getElementById('nick').value.trim();
+                if (!lega || !nick) { alert('Inserisci sia lega che nick'); return; }
+                const url = buildUrl(lega, nick);
+                try { localStorage.setItem(KEY_LEGA, lega); localStorage.setItem(KEY_NICK, nick); localStorage.setItem(KEY_URL, url); } catch (e) { }
+                location.replace(url);
+            };
+            document.getElementById('go').addEventListener('click', go);
+            document.getElementById('lega').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+            document.getElementById('nick').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+        })();
     </script>
 </body>
 </html>

@@ -5,7 +5,8 @@
 <html lang="it">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <!-- aggiungi viewport-fit -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Avvio…</title>
 
     <!-- PWA -->
@@ -19,12 +20,17 @@
     <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
 
     <style>
+        :root {
+            --safe-top: env(safe-area-inset-top, 0px);
+        }
+
         html, body {
             height: 100%
         }
 
         body {
             margin: 0;
+            padding-top: calc(var(--safe-top));
             display: flex;
             align-items: center;
             justify-content: center;
@@ -67,84 +73,64 @@
     <div id="app" class="box">Avvio asta…</div>
 
     <script>
-        // ---- helper cookie ----
-        function setCookie(name, value, days){
+        // chiavi unificate
+        const KEY_URL='fb:lastUtenteUrl', KEY_LEGA='fb:lega', KEY_NICK='fb:nick';
+
+        function buildUrl(lega,nick){ return `/Utente?lega=${encodeURIComponent(lega)}&nick=${encodeURIComponent(nick)}`; }
+
+        // cookie helper (fallback)
+        function setCookie(name,value,days){
           const maxAge = days ? `; max-age=${days*24*60*60}` : '';
           document.cookie = `${name}=${encodeURIComponent(value)}; path=/${maxAge}`;
         }
         function getCookie(name){
-          const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[-./*+?^${}()|[\]\\]/g,'\\$&') + '=([^;]*)'));
+          const m = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/[-./*+?^${}()|[\\]\\\\]/g,'\\$&') + '=([^;]*)'));
           return m ? decodeURIComponent(m[1]) : null;
         }
 
-        function saveCreds(lega, nick){
-          try{ localStorage.setItem('pwa:lega', lega); localStorage.setItem('pwa:nick', nick); }catch{}
-          setCookie('pwa_lega', lega, 365);
-          setCookie('pwa_nick', nick, 365);
+        function saveAll(lega,nick){
+          try{ localStorage.setItem(KEY_LEGA,lega); localStorage.setItem(KEY_NICK,nick); localStorage.setItem(KEY_URL, buildUrl(lega,nick)); }catch{}
+          setCookie('pwa_lega',lega,365); setCookie('pwa_nick',nick,365);
         }
-        function readCreds(){
-          // 1) query
+
+        (function(){
           try{
+            // 1) Query: salva e vai
             const u = new URL(location.href);
-            const legaQ = u.searchParams.get('lega');
-            const nickQ = u.searchParams.get('nick');
-            if (legaQ && nickQ) return {lega:legaQ, nick:nickQ};
-          }catch{}
-          // 2) localStorage
-          try{
-            const legaL = localStorage.getItem('pwa:lega');
-            const nickL = localStorage.getItem('pwa:nick');
-            if (legaL && nickL) return {lega:legaL, nick:nickL};
-          }catch{}
-          // 3) cookie
-          const legaC = getCookie('pwa_lega');
-          const nickC = getCookie('pwa_nick');
-          if (legaC && nickC) return {lega:legaC, nick:nickC};
-          return null;
-        }
+            const qL = u.searchParams.get('lega');
+            const qN = u.searchParams.get('nick');
+            if (qL && qN){ saveAll(qL,qN); location.replace(buildUrl(qL,qN)); return; }
 
-        (function () {
-          try {
-            const credsFromQuery = (()=>{
-              try{
-                const u = new URL(location.href);
-                const legaQ = u.searchParams.get('lega');
-                const nickQ = u.searchParams.get('nick');
-                return (legaQ && nickQ) ? {lega:legaQ, nick:nickQ} : null;
-              }catch{ return null; }
-            })();
+            // 2) URL completo salvato
+            const last = localStorage.getItem(KEY_URL);
+            if (last) { location.replace(last); return; }
 
-            if (credsFromQuery){
-              // Se arriviamo con query, salviamo subito e rediriggiamo
-              saveCreds(credsFromQuery.lega, credsFromQuery.nick);
-              location.replace(`/Utente?lega=${encodeURIComponent(credsFromQuery.lega)}&nick=${encodeURIComponent(credsFromQuery.nick)}`);
-              return;
-            }
+            // 3) alias/nick salvati (LS o cookie)
+            const l = localStorage.getItem(KEY_LEGA) || getCookie('pwa_lega');
+            const n = localStorage.getItem(KEY_NICK) || getCookie('pwa_nick');
+            if (l && n){ saveAll(l,n); location.replace(buildUrl(l,n)); return; }
 
-            const creds = readCreds();
-            if (creds && creds.lega && creds.nick){
-              location.replace(`/Utente?lega=${encodeURIComponent(creds.lega)}&nick=${encodeURIComponent(creds.nick)}`);
-              return;
-            }
-
-            // Fallback: chiedi una sola volta
+            // 4) Fallback: form (precompila se trovi cookie/LS)
             document.getElementById('app').innerHTML = `
               <div class="stack">
                 <h2>Completa i dati</h2>
-                <input id="lega" class="fld" placeholder="Alias lega" autocomplete="off" />
-                <input id="nick" class="fld" placeholder="Nickname" autocomplete="off" />
+                <input id="lega" class="fld" placeholder="Alias lega" autocomplete="off" value="${l||''}" />
+                <input id="nick" class="fld" placeholder="Nickname" autocomplete="off" value="${n||''}" />
                 <button id="go" class="btn">Entra</button>
               </div>`;
-            document.getElementById('go').onclick = function () {
-              const l = document.getElementById('lega').value.trim();
-              const n = document.getElementById('nick').value.trim();
-              if (!l || !n) { alert('Inserisci lega e nick'); return; }
-              saveCreds(l, n);
-              location.assign(`/Utente?lega=${encodeURIComponent(l)}&nick=${encodeURIComponent(n)}`);
+            const go = ()=> {
+              const L = document.getElementById('lega').value.trim();
+              const N = document.getElementById('nick').value.trim();
+              if(!L||!N){ alert('Inserisci lega e nick'); return; }
+              saveAll(L,N);
+              location.assign(buildUrl(L,N));
             };
-          } catch (e) {
+            document.getElementById('go').onclick = go;
+            document.getElementById('lega').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
+            document.getElementById('nick').addEventListener('keydown', e=>{ if(e.key==='Enter') go(); });
+          }catch(e){
             console.error(e);
-            document.getElementById('app').textContent = 'Errore di avvio. Apri dal browser e aggiungi di nuovo alla Home.';
+            document.getElementById('app').textContent='Errore di avvio. Apri dal browser e aggiungi di nuovo alla Home.';
           }
         })();
     </script>

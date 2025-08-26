@@ -268,6 +268,15 @@
         white-space: nowrap;
     }
 
+    .modal-open #crediti-bar {
+        display: none;
+    }
+
+    #modalRiepilogo .modal-content {
+        padding-top: env(safe-area-inset-top, 0px);
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
     /* Overlay Pausa */
     #pausa-overlay {
         position: fixed;
@@ -308,6 +317,7 @@
     #pausa-remaining {
         font-weight: 700;
     }
+
 
     /* Mobile */
     @@media (max-width:576px) {
@@ -358,6 +368,33 @@
             max-width: 60vw;
         }
     }
+
+    /* Safe-area iOS + Modale sopra la barra crediti */
+    :root {
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* alza la modale sopra #crediti-bar (che ha z-index 1900) */
+    .modal {
+        z-index: 2050;
+    }
+
+    .modal-backdrop {
+        z-index: 2000;
+    }
+
+    /* evita che la modale inizi sotto al notch e che finisca dietro la barra crediti */
+    .modal-dialog {
+        margin-top: calc(var(--safe-top) + 16px) !important;
+        margin-bottom: calc(var(--safe-bottom) + 84px) !important; /* 84 = 64px spacer + un filo */
+    }
+
+    /* opzionale: un filo di padding-top per il contenuto sotto al notch */
+    body {
+        padding-top: calc(var(--safe-top) + 6px);
+    }
+
 </style>
 
 <div class="row mt-md-4">
@@ -897,20 +934,21 @@
 
         });
 
-              (function(){
+                     (function(){
           try {
             var isUtente = /^\/utente(?:\/)?(?:\?|$)/i.test(location.pathname);
             var qs = new URLSearchParams(location.search);
             var lega = qs.get('lega');
             var nick = qs.get('nick');
             if (isUtente && lega && nick) {
-              // (opzionale) tieni solo lega e nick nell’URL salvata
-              var keep = new URLSearchParams();
-              keep.set('lega', lega);
-              keep.set('nick', nick);
-              localStorage.setItem('fb:lastUtenteUrl', '/utente?' + keep.toString());
+              var url = '/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick);
+              localStorage.setItem('fb:lastUtenteUrl', url);
+              localStorage.setItem('fb:lega', lega);
+              localStorage.setItem('fb:nick', nick);
             }
           } catch(e){}
-        })() ;
+        })();
+
+
     </script>
 }

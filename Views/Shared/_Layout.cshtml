@@ -2,19 +2,43 @@
   Layout principale (Admin / sito)
 *@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- viewport-fit per gestire i notch -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>@ViewData["Title"] - AstaLegheFC</title>
+
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/AstaLegheFC.styles.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
     <link rel="icon" type="image/png" href="~/png/logo_bazzer.png" />
     <link rel="apple-touch-icon" href="~/png/logo_bazzer.png" />
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#2c3e50" />
+
+    <style>
+        /* Logo navbar */
+        .navbar-brand .brand-logo {
+            height: 40px;
+            width: auto;
+        }
+        @@media (max-width: 768px) {
+            .navbar-brand .brand-logo
+
+        {
+            height: 32px;
+        }
+
+        }
+
+        /* Evita che contenuto vada sotto la status bar su iPhone con notch */
+        body {
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+    </style>
 </head>
 <body>
     @* Loader opzionale *@
@@ -28,8 +52,8 @@
                     <img src="~/png/logo_bazzer.png" class="brand-logo" alt="Fantabazzer" />
                     <span class="brand-text d-none d-md-inline ms-2">AstaLegheFC</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
+                        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
@@ -72,42 +96,52 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <!-- 🔒 Guard PWA: valido solo in standalone; rimanda alla URL utente salvata se serve -->
+    <!-- Registrazione / Unregister Service Worker: produzione sì, localhost no -->
     <script>
         (function(){
-          var inStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-          if (!inStandalone) return;
-          var p = location.pathname.toLowerCase();
-          var qs = new URLSearchParams(location.search);
-          var missingParams = (p === '/utente' && (!qs.get('lega') || !qs.get('nick')));
-          if (p === '/' || missingParams) {
-            var last = localStorage.getItem('fb:lastUtenteUrl');
-            if (last) location.replace(last);
-            else location.replace('/app-launch.html');
-          }
-        })();
-    </script>
+          var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
 
-    <!-- (opzionale) Registrazione SW anche qui -->
-    <script>
-        if ('serviceWorker' in navigator) {
-          window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-          });
-        }
-    </script>
-    <script>
-        (function(){
-          var isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
-                             || window.navigator.standalone === true; // iOS legacy
-          if (isStandalone) {
-            var p = location.pathname.toLowerCase();
-            if (p === '/' || p === '/index' || p === '/home' || p === '/home/index') {
-              location.replace('/app-start.html?v=3');
+          if (!isLocalhost && 'serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+              navigator.serviceWorker.register('/service-worker.js').catch(function(){});
+            });
+          } else {
+            // Sviluppo: assicurati di non avere SW attivi
+            if ('serviceWorker' in navigator) {
+              navigator.serviceWorker.getRegistrations().then(function(regs){
+                regs.forEach(function(r){ r.unregister(); });
+              });
             }
           }
         })();
     </script>
 
+    <!-- PWA routing helper: attivo solo in standalone E non in localhost -->
+    <script>
+        (function () {
+          var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                             || window.navigator.standalone === true; // iOS
+          var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
+          if (!isStandalone || isLocalhost) return;
+
+          var path = location.pathname.toLowerCase();
+
+          // Se aprono la home in PWA (produzione), vai alla pagina di avvio
+          if (path === '/' || path === '/index' || path === '/home' || path === '/home/index') {
+            location.replace('app-start.html?v=4'); // relativo per evitare "//"
+            return;
+          }
+
+          // Se aprono /utente senza parametri in PWA (produzione), prova ultimo URL salvato o start
+          var qs = new URLSearchParams(location.search);
+          if (path === '/utente' && (!qs.get('lega') || !qs.get('nick'))) {
+            try {
+              var last = localStorage.getItem('fb:lastUtenteUrl');
+              if (last) { location.replace(last); return; }
+            } catch(e) {}
+            location.replace('app-start.html?v=4');
+          }
+        })();
+    </script>
 </body>
 </html>
