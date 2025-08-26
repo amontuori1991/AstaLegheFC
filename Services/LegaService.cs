@@ -21,45 +21,57 @@ namespace AstaLegheFC.Services
             _bazzerService = bazzerService;
         }
 
-        public async Task SvincolaGiocatoreAsync(int id, int creditiDaRestituire)
+        public async Task SvincolaGiocatoreAsync(int giocatoreId, int creditiRestituiti)
         {
-            // transazione per consistenza crediti/rosa
-            using var tx = await _context.Database.BeginTransactionAsync();
+            // Transazione: niente stati parziali
+            await using var tx = await _context.Database.BeginTransactionAsync();
 
-            var giocatore = await _context.Giocatori
-                .Include(g => g.Squadra)
-                .FirstOrDefaultAsync(g => g.Id == id);
+            var g = await _context.Giocatori
+                .Include(x => x.Squadra)
+                .FirstOrDefaultAsync(x => x.Id == giocatoreId);
 
-            if (giocatore == null)
+            if (g == null)
             {
                 await tx.RollbackAsync();
-                return; // Nessun giocatore trovato: esci silenziosamente
+                return;
             }
 
-            // costo originale: tratta NULL come 0
-            int costoOriginale = giocatore.CreditiSpesi ?? 0;
+            var squadra = g.Squadra ?? await _context.Squadre.FirstAsync(s => s.Id == g.SquadraId);
 
-            // clamp rimborso
-            if (creditiDaRestituire < 0) creditiDaRestituire = 0;
-            if (creditiDaRestituire > costoOriginale) creditiDaRestituire = costoOriginale;
+            // Clamp rimborso a [0 .. costoOriginale]
+            var costoOriginale = g.CreditiSpesi ?? 0;
+            var rimborso = Math.Max(0, Math.Min(creditiRestituiti, costoOriginale));
 
-            // malus = quanto NON restituisci
-            int malus = costoOriginale - creditiDaRestituire;
-
-            if (giocatore.Squadra != null)
+            // Se è un portiere acquistato con blocco: rimuovi anche i portieri collegati (stessa squadra reale, costo 0)
+            if (string.Equals(g.Ruolo, "P", System.StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(g.SquadraReale))
             {
-                // aggiorna crediti in base al malus (se rimborso pieno, malus=0; se rimborso 0, malus=costoOriginale)
-                giocatore.Squadra.Crediti -= malus;
+                var collegatiCostoZero = await _context.Giocatori
+                    .Where(x => x.SquadraId == g.SquadraId
+                                && x.Id != g.Id
+                                && x.Ruolo == "P"
+                                && x.SquadraReale == g.SquadraReale
+                                && (x.CreditiSpesi ?? 0) == 0)
+                    .ToListAsync();
+
+                if (collegatiCostoZero.Count > 0)
+                    _context.Giocatori.RemoveRange(collegatiCostoZero);
             }
 
-            // rimuovi dalla rosa
-            _context.Giocatori.Remove(giocatore);
+            // Rimuovi il principale
+            _context.Giocatori.Remove(g);
+
+            // 🔧 Aggiusta il budget base: delta = rimborso - costoOriginale
+            // (così il totale disponibile diventa: S + delta - Σ(senza il giocatore) = +rimborso rispetto a prima)
+            var delta = rimborso - costoOriginale;
+            if (delta != 0)
+            {
+                squadra.Crediti += delta; // può essere negativo
+                _context.Squadre.Update(squadra);
+            }
 
             await _context.SaveChangesAsync();
             await tx.CommitAsync();
-
-            // broadcast
-            await _hubContext.Clients.All.SendAsync("AggiornaUtente");
         }
 
 
