@@ -21,9 +21,13 @@
     <div id="loader-overlay"><div class="loader-spinner"></div></div>
 
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand link-caricamento" asp-area="" asp-controller="Home" asp-action="Index">AstaLegheFC</a>
+                <a class="navbar-brand link-caricamento d-flex align-items-center"
+                   asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/png/logo_bazzer.png" class="brand-logo" alt="Fantabazzer" />
+                    <span class="brand-text d-none d-md-inline ms-2">AstaLegheFC</span>
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>

@@ -398,3 +398,67 @@ h1, h2, h3, h4, h5 {
 .form-floating > .form-select ~ label {
     color: #adb5bd;
 }
+
+/* ==== LOGO APP (dimensioni consistenti ovunque) ==== */
+/* ===== HERO LOGO (solo dove lo mettiamo noi) ===== */
+:root {
+    --logo-size-xl: 120px; /* tablet/desktop */
+    --logo-size-lg: 96px; /* mobile */
+}
+
+.hero-logo {
+    height: var(--logo-size-lg);
+    width: auto;
+    display: inline-block;
+}
+
+@media (min-width: 768px) {
+    .hero-logo {
+        height: var(--logo-size-xl);
+    }
+}
+
+.hero-header {
+    padding: 0.75rem 0 0.25rem;
+}
+
+/* ===== Hero logo XXL (Admin Home) ===== */
+.hero-logo-xxl {
+    height: clamp(200px, 28vw, 380px); /* mobile -> desktop */
+    width: auto;
+    max-width: 95vw; /* evita overflow su schermi piccoli */
+    display: inline-block;
+}
+/* ===== NAVBAR FIX ===== */
+header .navbar {
+    position: sticky; /* sempre visibile quando scrolli */
+    top: 0;
+    z-index: 1030; /* sopra a tutto */
+}
+
+    /* Se vuoi navbar chiara su sfondo bianco */
+    header .navbar.bg-white {
+        background-color: #ffffff !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    }
+
+        header .navbar.bg-white .navbar-brand,
+        header .navbar.bg-white .nav-link {
+            color: #212529 !important;
+        }
+
+            header .navbar.bg-white .nav-link:hover,
+            header .navbar.bg-white .nav-link:focus {
+                color: #0a58ca !important;
+            }
+/* ==== Logo sulla navbar (dimensioni consistenti) ==== */
+.navbar-brand .brand-logo {
+    height: 40px; /* Imposta l'altezza desiderata per il logo nella navbar */
+    width: auto; /* Mantieni le proporzioni originali */
+}
+
+@media (max-width: 768px) {
+    .navbar-brand .brand-logo {
+        height: 32px; /* Riduci la dimensione per i dispositivi mobili */
+    }
+}
