@@ -164,22 +164,22 @@
         border-radius: .375rem;
         font-weight: 600;
         line-height: 1;
-        cursor: pointer;
+        cursor: pointer
     }
 
         .letters-bar .letter-chip:hover {
-            background: rgba(255,255,255,.06);
+            background: rgba(255,255,255,.06)
         }
 
     .letters-bar .letter-selected {
         border-color: #0d6efd !important;
         background: #0d6efd !important;
-        color: #fff !important;
+        color: #fff !important
     }
 
     .letters-bar .letter-archived {
         opacity: .45;
-        text-decoration: line-through;
+        text-decoration: line-through
     }
 </style>
 
@@ -195,22 +195,16 @@
         <button id="btn-pausa" type="button" class="btn btn-outline-warning btn-sm">Pausa</button>
         <button id="btn-riprendi" type="button" class="btn btn-outline-success btn-sm" disabled>Riprendi</button>
         <button id="btn-reset" class="btn btn-outline-danger btn-sm">Reset</button>
-
     </div>
+
     @if (ViewBag.SorteggioLetteraAttivo)
     {
         <div class="letters-bar d-flex align-items-center gap-2 flex-wrap mb-2">
-            <button id="btnSorteggiaLettera" type="button" class="btn btn-outline-primary btn-sm">
-                Sorteggia lettera
-            </button>
-            <button id="btnResetLettere" type="button" class="btn btn-outline-secondary btn-sm">
-                Reset lettere
-            </button>
+            <button id="btnSorteggiaLettera" type="button" class="btn btn-outline-primary btn-sm">Sorteggia lettera</button>
+            <button id="btnResetLettere" type="button" class="btn btn-outline-secondary btn-sm">Reset lettere</button>
             <div id="lettersChips" class="d-flex flex-wrap gap-1 ms-1"></div>
         </div>
     }
-
-
 </div>
 
 @if (riepilogo.Any())
@@ -314,8 +308,6 @@
     <input type="hidden" name="lega" value="@ViewBag.LegaAlias" />
     <input type="hidden" name="iniziale" id="inizialeInput" value="@(ViewBag.Iniziale ?? "")" />
     <input type="hidden" name="sorteggio" id="sorteggioInput" value="@(ViewBag.SorteggioLetteraAttivo ? "true" : "false")" />
-    <input type="hidden" name="bp" id="bpInput" value="@(ViewBag.BloccoPortieriAttivo ? "true" : "false")" />
-
     <div class="col-md-4"><input type="text" name="nome" id="nomeFilterInput" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" /></div>
     <div class="col-md-4"><input type="text" name="squadra" id="squadraFilterInput" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" /></div>
     <div class="col-md-4">
@@ -331,7 +323,7 @@
 
 <div class="row mb-3 align-items-center">
     <div class="col-auto">
-        <form id="formTimer" class="d-flex" onsubmit="impostaTimer(event)">
+        <form id="formTimer" class="d-flex" onsubmit="return false;">
             <input type="number" class="form-control me-2" id="secondiTimer" value="5" min="2" placeholder="Secondi Timer" />
             <button type="submit" class="btn btn-secondary">Imposta Timer</button>
         </form>
@@ -354,7 +346,6 @@
             <label class="form-check-label" for="sorteggioSwitch">Sorteggio lettera</label>
         </div>
     </div>
-
 </div>
 
 <div class="table-responsive">
@@ -409,7 +400,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-primary" onclick="salvaAssegnazione()">Salva Assegnazione</button>
+                <button type="button" class="btn btn-primary" id="btnSalvaAssegnazione">Salva Assegnazione</button>
             </div>
         </div>
     </div>
@@ -457,7 +448,7 @@
         <h3 id="overlay-offerente">In attesa di offerte...</h3>
         <div id="overlay-log"></div>
         <div class="asta-box-footer">
-            <button class="btn btn-danger" onclick="annullaAsta()">Annulla Asta</button>
+            <button class="btn btn-danger" id="btnAnnullaAsta">Annulla Asta</button>
         </div>
     </div>
 </div>
@@ -470,580 +461,411 @@
     @Html.AntiForgeryToken()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
-        // ====== VAR GLOBALI ======
-        let debounceTimer;
-        let durataTimer = @ViewBag.DurataTimer;
-        let countdownTimerAdmin = null;
-        let closeTimeoutAdmin = null;
-        let lastOffertaAdmin = 0;
+        (function(){
+            // ====== VAR GLOBALI ======
+            let debounceTimer;
+            let durataTimer = @ViewBag.DurataTimer;
+            let countdownTimerAdmin = null;
+            let closeTimeoutAdmin = null;
+            let lastOffertaAdmin = 0;
 
-        // Durata asta (client) — persistita in localStorage
-        const legaAliasAdmin = "@ViewBag.LegaAlias";
-        const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
-        const LS_START = `asta:start:${legaAliasAdmin}`;
-        const LS_PAUSE_ACC = `asta:pauseAcc:${legaAliasAdmin}`;
-        const LS_PAUSE_AT = `asta:pauseAt:${legaAliasAdmin}`;
-        const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
-        const sorteggioInput = document.getElementById('sorteggioInput');
+            const legaAliasAdmin = "@ViewBag.LegaAlias";
+            const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+            const LS_START = `asta:start:${legaAliasAdmin}`;
+            const LS_PAUSE_ACC = `asta:pauseAcc:${legaAliasAdmin}`;
+            const LS_PAUSE_AT = `asta:pauseAt:${legaAliasAdmin}`;
+            const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
 
-        let durataInterval = null;
+            const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
 
-        // ====== LETTERE (state per lega) — spostate qui in globale ======
-        const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-        const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
-        function getArchivedLetters() {
-            try { return JSON.parse(localStorage.getItem(LS_LETTERS) || '[]'); }
-            catch { return []; }
-        }
-        function setArchivedLetters(arr) {
-            localStorage.setItem(LS_LETTERS, JSON.stringify(arr));
-            renderLettersChips(); // ridisegna UI
-        }
-                function clearInitialFilterAndSubmit(){
-            const inizialeInput = document.getElementById('inizialeInput');
-            if (inizialeInput) inizialeInput.value = '';
-            document.getElementById('filtroForm').submit();
-        }
+            // ====== UTILS ======
+            function getArchivedLetters(){ try{ return JSON.parse(localStorage.getItem(LS_LETTERS)||'[]'); }catch{ return []; } }
+            function setArchivedLetters(arr){ localStorage.setItem(LS_LETTERS, JSON.stringify(arr)); renderLettersChips(); }
+            function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+            function submitFormDebounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>document.getElementById("filtroForm").submit(),500); }
+            function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
+            window.toggleLista = toggleLista; // usato in onclick
 
-
-        function fmt(s){
-            s = Math.max(0, Math.floor(s||0));
-            const h = Math.floor(s/3600);
-            const m = Math.floor((s%3600)/60);
-            const ss = s%60;
-            return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
-                       : `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
-        }
-        function paintDurata(){
-            const out = document.getElementById('durata-asta');
-            const badge = document.getElementById('stato-pausa');
-            const startIso = localStorage.getItem(LS_START);
-            if (!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
-            const start = new Date(startIso).getTime();
-            const pauseAcc = parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-            const pauseActive = localStorage.getItem(LS_PAUSE_ACTIVE) === "true";
-            const pauseAtIso = localStorage.getItem(LS_PAUSE_AT);
-            const extraPause = (pauseActive && pauseAtIso)
-                ? Math.max(0, Math.floor((Date.now() - new Date(pauseAtIso).getTime())/1000))
-                : 0;
-            const sec = Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extraPause));
-            out.textContent = fmt(sec);
-            if (badge) badge.classList.toggle('d-none', !pauseActive);
-        }
-        function startDurataLoop(){
-            if (durataInterval) clearInterval(durataInterval);
-            paintDurata();
-            durataInterval = setInterval(paintDurata, 1000);
-        }
-        function resetDurataLocal(){
-            // azzera tutte le chiavi e UI
-            localStorage.removeItem(LS_START);
-            localStorage.removeItem(LS_PAUSE_AT);
-            localStorage.setItem(LS_PAUSE_ACC, "0");
-            localStorage.setItem(LS_PAUSE_ACTIVE, "false");
-            if (durataInterval) { clearInterval(durataInterval); durataInterval = null; }
-            const out = document.getElementById('durata-asta');
-            const badge = document.getElementById('stato-pausa');
-            if (out) out.textContent = '00:00';
-            if (badge) badge.classList.add('d-none');
-        }
-
-        // ====== UTILS ======
-        function submitFormDebounced(){
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(()=>{ document.getElementById("filtroForm").submit(); }, 500);
-        }
-        async function impostaTimer(e){
-            e.preventDefault();
-            const s = parseInt(document.getElementById('secondiTimer').value || "0");
-            fetch('/Admin/ImpostaTimer',{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({ secondi:s })
-            }).then(async r=>{
-                if(r.ok){ durataTimer=s; await mostraMessaggio('Timer Aggiornato', 'Timer aggiornato a '+s+' secondi!'); }
-                else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
-            });
-        }
-        async function annullaAsta(){
-            if (await mostraMessaggio('Annulla Asta','Sei sicuro?', true)){
-                fetch('/Admin/AnnullaAsta',{
-                    method:'POST',
-                    headers:{ 'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value }
-                }).then(r=>{
-                    if(!r.ok) mostraMessaggio('Errore','Errore annullamento.');
-                });
-            }
-        }
-        async function salvaAssegnazione(){
-            const payload = {
-                giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
-                squadraId: parseInt(document.getElementById('squadraSelect').value),
-                costo: parseInt(document.getElementById('costoInput').value)
-            };
-            fetch('/Admin/AssegnaManualmente',{
-                method:'POST',
-                headers:{
-                    'Content-Type':'application/json',
-                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
-                },
-                body: JSON.stringify(payload)
-            }).then(async r=>{
-                if(r.ok){ location.reload(); }
-                else { await mostraMessaggio('Errore','Errore assegnazione.'); }
-            });
-        }
-        function toggleLista(id){
-            const el=document.getElementById(id);
-            if(el) el.classList.toggle('d-none');
-        }
+                    // --- aggiungi questo blocco nel tuo script (dentro l'IIFE), ad es. vicino a toggleLista ---
         function apriModaleSvincolo(btn){
-            const id=btn.dataset.id, nome=btn.dataset.nome, costo=parseInt(btn.dataset.costo)||0, squadra=btn.dataset.squadra, logo=btn.dataset.logo, ruolo=btn.dataset.ruolo;
-            document.getElementById('idGiocatoreSvincola').value=id;
-            document.getElementById('costoOriginaleSvincolo').innerText=costo;
-            const input=document.getElementById('creditiSvincoloInput'); input.min=0; input.max=costo; input.value=costo;
-            document.getElementById('logoGiocatoreSvincola').src=logo;
-            document.getElementById('nomeGiocatoreSvincolo').innerText=nome;
-            document.getElementById('dettagliGiocatoreSvincolo').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
-            new bootstrap.Modal(document.getElementById('svincolaModal')).show();
-        }
+          const id = btn.dataset.id;
+          const nome = btn.dataset.nome;
+          const costo = parseInt(btn.dataset.costo) || 0;
+          const squadra = btn.dataset.squadra;
+          const logo = btn.dataset.logo;
+          const ruolo = btn.dataset.ruolo;
 
-        // ====== LETTERE: funzioni UI globali ======
-        function applyInitialFilter(letter) {
-          const inizialeInput = document.getElementById('inizialeInput');
-          const nomeInput = document.getElementById('nomeFilterInput');
-          const squadraInput = document.getElementById('squadraFilterInput');
+          document.getElementById('idGiocatoreSvincola').value = id;
+          document.getElementById('costoOriginaleSvincolo').innerText = costo;
 
-          if (sorteggioInput) sorteggioInput.value = 'true'; // ← preserva lo switch ON
-          if (inizialeInput) inizialeInput.value = letter || '';
-          if (nomeInput) nomeInput.value = '';
-          if (squadraInput) squadraInput.value = '';
-
-          document.getElementById('filtroForm').submit();
-        }
-
-        function renderLettersChips() {
-            const cont = document.getElementById('lettersChips');
-            if (!cont) return;
-            const archived = getArchivedLetters();
-            const selected = (new URLSearchParams(window.location.search).get('iniziale') || '').toUpperCase();
-
-            cont.innerHTML = '';
-            ALPH.forEach(l => {
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.className = 'letter-chip btn btn-sm';
-                if (archived.includes(l)) btn.classList.add('letter-archived');
-                if (selected === l) btn.classList.add('letter-selected');
-                btn.textContent = l;
-                btn.title = archived.includes(l)
-                    ? 'Lettera estratta (clic per renderla disponibile)'
-                    : 'Filtra per ' + l;
-
-                btn.addEventListener('click', () => {
-                    if (archived.includes(l)) {
-                        setArchivedLetters(archived.filter(x => x !== l));
-                    }
-                    applyInitialFilter(l);
-                });
-
-                cont.appendChild(btn);
-            });
-        }
-
-        // ====== DOM READY ======
-        document.addEventListener('DOMContentLoaded', function(){
-            const squadre = JSON.parse('@Html.Raw(squadreJson)');
-            const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-
-            // filtri
-            const urlParams = new URLSearchParams(window.location.search);
-            const nomeFilter = document.getElementById('nomeFilterInput');
-            if (urlParams.has('nome') && urlParams.get('nome') !== '' && nomeFilter){
-                nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
-            }
-            const squadraFilter = document.getElementById('squadraFilterInput');
-
-            // quando si digita nei campi, azzera "iniziale" per evitare conflitti
-            nomeFilter?.addEventListener('input', () => {
-                const inizialeInput = document.getElementById('inizialeInput');
-                if (inizialeInput) inizialeInput.value = '';
-                submitFormDebounced();
-            });
-            squadraFilter?.addEventListener('input', () => {
-                const inizialeInput = document.getElementById('inizialeInput');
-                if (inizialeInput) inizialeInput.value = '';
-                submitFormDebounced();
-            });
-
-            // ====== FIX: toggle liste svincolo robusto (niente ID con nickname) ======
-            document
-                .querySelectorAll('table.table-bordered.table-sm button.btn.btn-sm.btn-secondary')
-                .forEach(btn=>{
-                    if (btn.getAttribute('onclick')?.includes('toggleLista(')) {
-                        btn.removeAttribute('onclick');
-                    }
-                    btn.addEventListener('click', (ev)=>{
-                        ev.preventDefault();
-                        ev.stopPropagation();
-                        const td = btn.closest('td');
-                        const ul = td?.querySelector('ul');
-                        if (ul) ul.classList.toggle('d-none');
-                    });
-                });
-
-                        // Avvia Asta (POST esplicita + antiforgery + urlencoded)
-        document.querySelectorAll('.btn-avvia-asta').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const id = btn.dataset.id;
-            const mantra = btn.dataset.mantra === 'true';
-            const body = `id=${encodeURIComponent(id)}&mantra=${mantra}`;
-            fetch('/Admin/AvviaAsta', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
-              },
-              body
-            }).then(async r => {
-              if (!r.ok) {
-                const t = await r.text().catch(() => '-');
-                console.error('AvviaAsta fallita', r.status, t);
-                await mostraMessaggio('Errore', 'Errore avvio asta.');
-              }
-              // Se il server emette subito MostraGiocatoreInAsta non serve altro qui.
-            }).catch(err => {
-              console.error('AvviaAsta errore:', err);
-              mostraMessaggio('Errore', 'Impossibile avviare l’asta.');
-            });
-          });
-        });
-
-
-            // ====== LETTERE: UI & actions ======
-            renderLettersChips();
-
-            document.getElementById('btnSorteggiaLettera')?.addEventListener('click', () => {
-                const archived = getArchivedLetters();
-                const pool = ALPH.filter(l => !archived.includes(l));
-                if (pool.length === 0) {
-                    mostraMessaggio('Sorteggio lettera', 'Tutte le lettere sono già state estratte. Premi "Reset lettere" o riabilita una singola lettera cliccando il chip barrato.');
-                    return;
-                }
-                const letter = pool[Math.floor(Math.random() * pool.length)];
-                setArchivedLetters([...archived, letter]);   // archivia quella estratta
-                applyInitialFilter(letter);                  // filtra subito
-            });
-
-        document.getElementById('btnResetLettere')?.addEventListener('click', () => {
-          setArchivedLetters([]);
-          const inizialeInput = document.getElementById('inizialeInput');
-          if (inizialeInput) inizialeInput.value = '';
-          // NON tocchiamo sorteggioInput: resta com’è (se era ON, resta ON)
-          document.getElementById('filtroForm').submit();
-        });
-
-
-
-            // ====== SIGNALR ======
-            connection.on("StatoAsta", (stato)=>{
-                if (stato?.startUtc) {
-                    localStorage.setItem(LS_START, stato.startUtc);
-                } else {
-                    if (!localStorage.getItem(LS_START)) { /* resta 00:00 finché parte qualcosa */ }
-                }
-                if (typeof stato?.pausaAccumulataSec === 'number') {
-                    localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec));
-                } else if (!localStorage.getItem(LS_PAUSE_ACC)) {
-                    localStorage.setItem(LS_PAUSE_ACC, "0");
-                }
-
-                const pauseActive = !!stato?.pausaAttiva;
-                localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
-                if (pauseActive) {
-                    if (!localStorage.getItem(LS_PAUSE_AT)) {
-                        localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
-                    }
-                    document.getElementById('btn-pausa').disabled = true;
-                    document.getElementById('btn-riprendi').disabled = false;
-                } else {
-                    localStorage.removeItem(LS_PAUSE_AT);
-                    document.getElementById('btn-pausa').disabled = false;
-                    document.getElementById('btn-riprendi').disabled = true;
-                }
-
-                startDurataLoop();
-            });
-
-            connection.on("MostraGiocatoreInAsta",(giocatore)=>{
-                if (!localStorage.getItem(LS_START)) {
-                    localStorage.setItem(LS_START, new Date().toISOString());
-                    localStorage.setItem(LS_PAUSE_ACC, "0");
-                    localStorage.setItem(LS_PAUSE_ACTIVE, "false");
-                    localStorage.removeItem(LS_PAUSE_AT);
-                    startDurataLoop();
-                }
-
-                document.getElementById('overlay-nome-giocatore').innerText = giocatore.nome;
-                document.getElementById('overlay-dettagli-giocatore').innerText = `${giocatore.ruolo} - ${giocatore.squadraReale}`;
-                document.getElementById('overlay-logo-squadra').src = giocatore.logoUrl;
-                document.getElementById('overlay-offerta').innerText = '0';
-                document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
-                document.getElementById('overlay-offerente').style.color = '';
-                document.getElementById('overlay-log').innerHTML = '';
-                const timerEl = document.getElementById('overlay-timer');
-                timerEl.innerText = '--';
-                timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-                document.querySelector('.asta-box-footer').style.display = 'block';
-                document.getElementById('asta-overlay').classList.add('visible');
-
-                lastOffertaAdmin = 0;
-                clearInterval(countdownTimerAdmin);
-                clearTimeout(closeTimeoutAdmin);
-                closeTimeoutAdmin = null;
-            });
-
-            connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
-                const offerenteEl = document.getElementById('overlay-offerente'); if (offerenteEl) offerenteEl.innerText = offerente || '-';
-                const offertaEl = document.getElementById('overlay-offerta'); if (offertaEl) offertaEl.innerText = offerta || 0;
-
-                clearInterval(countdownTimerAdmin);
-                clearTimeout(closeTimeoutAdmin);
-                closeTimeoutAdmin = null;
-
-                const timerEl = document.getElementById('overlay-timer');
-                if (!fineUtc || !offerta || offerta <= 0){
-                    timerEl.innerText='--';
-                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-                    lastOffertaAdmin = offerta || 0;
-                    return;
-                }
-
-                const isRealBid = (offerta > (lastOffertaAdmin||0));
-                if (isRealBid){
-                    document.getElementById('suono-offerta').play();
-                    const logContainer = document.getElementById('overlay-log');
-                    if (logContainer){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; logContainer.prepend(p); }
-                }
-                lastOffertaAdmin = offerta;
-
-                const end = new Date(fineUtc);
-                const paint = (sec)=>{
-                    timerEl.innerText = sec >= 0 ? sec : 0;
-                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-                    if (sec>5) timerEl.classList.add('timer-green');
-                    else if (sec>=4) timerEl.classList.add('timer-yellow');
-                    else timerEl.classList.add('timer-red');
-                };
-                const tick = ()=>{
-                    const sec = Math.ceil((end.getTime() - Date.now())/1000);
-                    paint(sec);
-                    if (sec >= 0){
-                        const beep=document.getElementById('suono-countdown');
-                        beep.currentTime=0; beep.play();
-                    } else {
-                        clearInterval(countdownTimerAdmin);
-                    }
-                };
-                tick();
-                countdownTimerAdmin = setInterval(tick, 1000);
-
-                const msRemaining = end.getTime() - Date.now();
-                if (msRemaining > 0){
-                    closeTimeoutAdmin = setTimeout(()=>{
-                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
-                    }, msRemaining + 50);
-                } else {
-                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
-                }
-            });
-
-            connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, vincitore, prezzo) => {
-                clearInterval(countdownTimerAdmin);
-                clearTimeout(closeTimeoutAdmin);
-                closeTimeoutAdmin = null;
-
-                document.getElementById('suono-vittoria').play();
-
-                const offerenteEl = document.getElementById('overlay-offerente');
-                if (offerenteEl) {
-                    offerenteEl.innerText = `AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`;
-                    offerenteEl.style.color = '#2ecc71';
-                }
-
-                const offertaEl = document.getElementById('overlay-offerta');
-                if (offertaEl) offertaEl.innerText = prezzo || 0;
-
-                const logContainer = document.getElementById('overlay-log');
-                if (logContainer) {
-                    const ts = new Date().toLocaleTimeString();
-                    const row = document.createElement('p');
-                    row.innerText = `[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`;
-                    logContainer.prepend(row);
-                }
-
-                const footer = document.querySelector('.asta-box-footer');
-                if (footer) footer.style.display = 'none';
-
-                setTimeout(() => {
-                    document.getElementById('asta-overlay').classList.remove('visible');
-                    setTimeout(() => location.reload(), 300);
-                }, 4000);
-            });
-
-            connection.on("AstaAnnullata",()=>{
-                clearInterval(countdownTimerAdmin);
-                clearTimeout(closeTimeoutAdmin);
-                closeTimeoutAdmin = null;
-                document.getElementById('asta-overlay').classList.remove('visible');
-            });
-
-            connection.on("StatoPartecipanti",(p)=>{
-                if(p?.partecipanti) paintPartecipanti(p.partecipanti);
-            });
-
-            // ► PAUSA / RIPRESA
-            connection.on("AstaPausa",()=>{
-                localStorage.setItem(LS_PAUSE_ACTIVE,"true");
-                localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
-                document.getElementById('btn-pausa').disabled = true;
-                document.getElementById('btn-riprendi').disabled = false;
-                paintDurata();
-            });
-            connection.on("AstaRipresa",()=>{
-                const pauseAtIso = localStorage.getItem(LS_PAUSE_AT);
-                const acc = parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-                if (pauseAtIso){
-                    const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
-                    localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
-                }
-                localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-                localStorage.removeItem(LS_PAUSE_AT);
-                document.getElementById('btn-pausa').disabled = false;
-                document.getElementById('btn-riprendi').disabled = true;
-                paintDurata();
-            });
-
-            // ► RESET (broadcast)
-            connection.on("DurataResettata", ()=>{
-                resetDurataLocal();
-            });
-
-            connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
-                mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
-                const inputNome = document.querySelector('#filtroForm input[name="nome"]');
-                if (inputNome){ inputNome.value = giocatore.nome; document.getElementById('filtroForm').submit(); }
-            });
-
-            // CONNESSIONE
-            connection.start().then(()=>{
-                connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
-                setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
-
-                connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
-                connection.invoke("RichiediStatoAttuale");
-            }).catch(err=>console.error(err));
-
-            // UI events
-            const squadreArr = JSON.parse('@Html.Raw(squadreJson)');
-            document.querySelectorAll('.btn-assegna').forEach(btn=>{
-                btn.addEventListener('click', function(){
-                    document.getElementById('idGiocatoreModale').value = this.dataset.id;
-                    document.getElementById('nomeGiocatoreModale').innerText = this.dataset.nome;
-                    const sel = document.getElementById('squadraSelect'); sel.innerHTML='';
-                    squadreArr.forEach(s=>{
-                        const o=document.createElement('option'); o.value=s.SquadraId; o.innerText=s.Nickname; sel.appendChild(o);
-                    });
-                    new bootstrap.Modal(document.getElementById('assegnaModal')).show();
-                });
-            });
-
-            document.getElementById('btnConfermaSvincolo')?.addEventListener('click', function(){
-                const id = parseInt(document.getElementById('idGiocatoreSvincola').value);
-                const costoOriginale = parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
-                let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
-                if (isNaN(crediti)||crediti<0) crediti=0;
-                if (!isNaN(costoOriginale) && crediti > costoOriginale) crediti = costoOriginale;
-                fetch('/Admin/SvincolaGiocatore',{
-                    method:'POST',
-                    headers:{ 'Content-Type':'application/json' },
-                    body: JSON.stringify({ id, creditiRestituiti: crediti })
-                }).then(r=>{
-                    if(r.ok){ location.reload(); }
-                    else { mostraMessaggio("Errore","Errore durante lo svincolo."); }
-                });
-            });
-
-            document.getElementById('formTimer')?.addEventListener('submit', impostaTimer);
-                    document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
-            const isAttivo = this.checked;
-
-            // 👉 Aggiorna l'hidden così i futuri submit dei filtri portano lo stato
-            const bpHidden = document.getElementById('bpInput');
-            if (bpHidden) bpHidden.value = isAttivo ? 'true' : 'false';
-
-            // Mantieni anche la chiamata lato server (così gli utenti live ricevono lo stato aggiornato)
-            fetch('/Admin/ImpostaBloccoPortieri', {
-                method:'POST',
-                headers:{ 'Content-Type':'application/json' },
-                body: JSON.stringify({ attivo:isAttivo })
-            }).then(async r=>{
-                if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri ' + (isAttivo ? 'ATTIVATO' : 'DISATTIVATO'));
-                else await mostraMessaggio('Errore','Errore aggiornamento regola.');
-            });
-        });
-
-            document.getElementById('mantraSwitch')?.addEventListener('change', function(){
-                const isAttivo=this.checked;
-                const url=new URL(window.location.href);
-                url.searchParams.set('mantra', isAttivo);
-                window.location.href=url.toString();
-            });
-
-        document.getElementById('sorteggioSwitch')?.addEventListener('change', function () {
-          const isAttivo = this.checked;
-          if (sorteggioInput) sorteggioInput.value = isAttivo ? 'true' : 'false';
-
-          const url = new URL(window.location.href);
-          url.searchParams.set('sorteggio', isAttivo);
-          if (!isAttivo) {
-            // se lo disattivo tolgo anche l’eventuale filtro lettera
-            url.searchParams.delete('iniziale');
+          const input = document.getElementById('creditiSvincoloInput');
+          if (input) {
+            input.min = 0;
+            input.max = String(costo);
+            input.value = String(costo);
           }
-          window.location.href = url.toString();
-        });
+
+          document.getElementById('logoGiocatoreSvincola').src = logo || '';
+          document.getElementById('nomeGiocatoreSvincolo').innerText = nome || '';
+          document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+
+          const modalEl = document.getElementById('svincolaModal');
+          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+          modal.show();
+        }
+        // esporta per l'onclick inline dei bottoni
+        window.apriModaleSvincolo = apriModaleSvincolo;
 
 
+            function paintDurata(){
+                const out=document.getElementById('durata-asta');
+                const badge=document.getElementById('stato-pausa');
+                const startIso=localStorage.getItem(LS_START);
+                if(!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
+                const start=new Date(startIso).getTime();
+                const pauseAcc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+                const pauseActive=localStorage.getItem(LS_PAUSE_ACTIVE)==="true";
+                const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
+                const extra=pauseActive && pauseAtIso ? Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)) : 0;
+                const sec=Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extra));
+                out.textContent=fmt(sec);
+                badge?.classList.toggle('d-none', !pauseActive);
+            }
+            let durataInterval=null;
+            function startDurataLoop(){ if(durataInterval) clearInterval(durataInterval); paintDurata(); durataInterval=setInterval(paintDurata,1000); }
+            function resetDurataLocal(){
+                localStorage.removeItem(LS_START);
+                localStorage.removeItem(LS_PAUSE_AT);
+                localStorage.setItem(LS_PAUSE_ACC,"0");
+                localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+                if(durataInterval){ clearInterval(durataInterval); durataInterval=null; }
+                const out=document.getElementById('durata-asta'); const badge=document.getElementById('stato-pausa');
+                if(out) out.textContent='00:00'; if(badge) badge.classList.add('d-none');
+            }
 
-            // Pausa/Riprendi
-            document.getElementById('btn-pausa')?.addEventListener('click', ()=>{
-                connection.invoke("PausaAsta", legaAliasAdmin).catch(()=>{});
-            });
-            document.getElementById('btn-riprendi')?.addEventListener('click', ()=>{
-                connection.invoke("RiprendiAsta", legaAliasAdmin).catch(()=>{});
-            });
+            function applyInitialFilter(letter){
+                const inizialeInput=document.getElementById('inizialeInput');
+                const nomeInput=document.getElementById('nomeFilterInput');
+                const squadraInput=document.getElementById('squadraFilterInput');
+                const sorteggioInput=document.getElementById('sorteggioInput');
 
-            // ✅ Reset timer (locale + broadcast)
-            document.getElementById('btn-reset')?.addEventListener('click', async ()=>{
-                resetDurataLocal(); // effetto immediato locale
-                try { await connection.invoke("ResetDurataAsta", legaAliasAdmin); } catch {}
-            });
+                if (sorteggioInput) sorteggioInput.value='true';
+                if (inizialeInput) inizialeInput.value=letter||'';
+                if (nomeInput) nomeInput.value='';
+                if (squadraInput) squadraInput.value='';
+                document.getElementById('filtroForm').submit();
+            }
 
-            // helper paint partecipanti
-            window.paintPartecipanti = function(list){
-                list.forEach(p=>{
-                    const nick = (p.nick||p.Nick||'').toString();
-                    const el = document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) ||
-                               document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
-                    if (!el) return;
-                    el.classList.remove('dot-online','dot-offline','dot-waiting');
-                    const stato = (p.stato||p.Stato||'offline').toLowerCase();
-                    if (stato==='waiting') el.classList.add('dot-waiting');
-                    else if (stato==='online') el.classList.add('dot-online');
-                    else el.classList.add('dot-offline');
+            function renderLettersChips(){
+                const cont=document.getElementById('lettersChips');
+                if(!cont) return;
+                const archived=getArchivedLetters();
+                const selected=(new URLSearchParams(window.location.search).get('iniziale')||'').toUpperCase();
+                cont.innerHTML='';
+                ALPH.forEach(l=>{
+                    const btn=document.createElement('button');
+                    btn.type='button'; btn.className='letter-chip btn btn-sm';
+                    if(archived.includes(l)) btn.classList.add('letter-archived');
+                    if(selected===l) btn.classList.add('letter-selected');
+                    btn.textContent=l;
+                    btn.title=archived.includes(l)?'Lettera estratta (clic per renderla disponibile)':'Filtra per '+l;
+                    btn.addEventListener('click', ()=>{
+                        if(archived.includes(l)) setArchivedLetters(archived.filter(x=>x!==l));
+                        applyInitialFilter(l);
+                    });
+                    cont.appendChild(btn);
                 });
             }
-        });
+
+            document.addEventListener('DOMContentLoaded', function(){
+                // pulizia eventuale ?bp= nell’URL (vecchi link)
+                try{
+                    const url=new URL(window.location.href);
+                    if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); }
+                }catch{}
+
+                const squadreArr = JSON.parse('@Html.Raw(squadreJson)');
+                const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+                // ====== FILTRI (digita → debounce submit)
+                const urlParams=new URLSearchParams(window.location.search);
+                const nomeFilter=document.getElementById('nomeFilterInput');
+                if (urlParams.has('nome') && urlParams.get('nome')!=='' && nomeFilter){
+                    nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
+                }
+                const squadraFilter=document.getElementById('squadraFilterInput');
+                nomeFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
+                squadraFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
+
+                // Toggle liste nel riepilogo (senza ID col nickname)
+                document.querySelectorAll('table.table-bordered.table-sm button.btn.btn-sm.btn-secondary').forEach(btn=>{
+                    if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
+                    btn.addEventListener('click', (ev)=>{
+                        ev.preventDefault(); ev.stopPropagation();
+                        const td=btn.closest('td'); const ul=td?.querySelector('ul'); if(ul) ul.classList.toggle('d-none');
+                    });
+                });
+
+                // ====== PULSANTI "ASTA" / "ASSEGNA"
+                document.querySelectorAll('.btn-avvia-asta').forEach(btn=>{
+                    btn.addEventListener('click', ()=>{
+                        const id=btn.dataset.id;
+                        const mantra=btn.dataset.mantra==='true';
+                        const body=`id=${encodeURIComponent(id)}&mantra=${mantra}`;
+                        fetch('/Admin/AvviaAsta', {
+                            method:'POST',
+                            headers:{
+                                'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
+                                'RequestVerificationToken': antiToken
+                            },
+                            body
+                        }).then(async r=>{
+                            if(!r.ok){
+                                const t=await r.text().catch(()=>'-');
+                                console.error('AvviaAsta fallita', r.status, t);
+                                await mostraMessaggio('Errore','Errore avvio asta.');
+                            }
+                        }).catch(err=>{
+                            console.error('AvviaAsta errore:', err);
+                            mostraMessaggio('Errore','Impossibile avviare l’asta.');
+                        });
+                    });
+                });
+
+                document.querySelectorAll('.btn-assegna').forEach(btn=>{
+                    btn.addEventListener('click', function(){
+                        document.getElementById('idGiocatoreModale').value=this.dataset.id;
+                        document.getElementById('nomeGiocatoreModale').innerText=this.dataset.nome;
+                        const sel=document.getElementById('squadraSelect'); sel.innerHTML='';
+                        squadreArr.forEach(s=>{
+                            const o=document.createElement('option'); o.value=s.SquadraId; o.innerText=s.Nickname; sel.appendChild(o);
+                        });
+                        new bootstrap.Modal(document.getElementById('assegnaModal')).show();
+                    });
+                });
+
+                document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', ()=>{
+                    const payload={
+                        giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
+                        squadraId: parseInt(document.getElementById('squadraSelect').value),
+                        costo: parseInt(document.getElementById('costoInput').value)
+                    };
+                    fetch('/Admin/AssegnaManualmente',{
+                        method:'POST',
+                        headers:{ 'Content-Type':'application/json', 'RequestVerificationToken': antiToken },
+                        body: JSON.stringify(payload)
+                    }).then(async r=>{
+                        if(r.ok){ location.reload(); }
+                        else{ await mostraMessaggio('Errore','Errore assegnazione.'); }
+                    });
+                });
+
+                // ====== MODALE SVINCOLO
+                document.getElementById('btnConfermaSvincolo')?.addEventListener('click', ()=>{
+                    const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
+                    const costoOriginale=parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
+                    let crediti=parseInt(document.getElementById('creditiSvincoloInput').value);
+                    if(isNaN(crediti)||crediti<0) crediti=0;
+                    if(!isNaN(costoOriginale)&&crediti>costoOriginale) crediti=costoOriginale;
+                    fetch('/Admin/SvincolaGiocatore',{
+                        method:'POST',
+                        headers:{ 'Content-Type':'application/json' },
+                        body: JSON.stringify({ id, creditiRestituiti: crediti })
+                    }).then(r=>{
+                        if(r.ok){ location.reload(); }
+                        else { mostraMessaggio("Errore","Errore durante lo svincolo."); }
+                    });
+                });
+
+                // ====== TIMER / SWITCHES
+                document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
+                    e.preventDefault();
+                    const s=parseInt(document.getElementById('secondiTimer').value||"0");
+                    const r = await fetch('/Admin/ImpostaTimer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ secondi:s }) });
+                    if (r.ok){ durataTimer=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
+                    else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
+                });
+
+                document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
+                    try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
+                    const isAttivo=this.checked;
+                    const r=await fetch('/Admin/ImpostaBloccoPortieri',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attivo:isAttivo }) });
+                    if (r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri ' + (isAttivo ? 'ATTIVATO' : 'DISATTIVATO'));
+                    else await mostraMessaggio('Errore','Errore aggiornamento regola.');
+                });
+
+                document.getElementById('mantraSwitch')?.addEventListener('change', function(){
+                    const url=new URL(window.location.href); url.searchParams.set('mantra', this.checked); window.location.href=url.toString();
+                });
+
+                document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
+                    const sorteggioInput=document.getElementById('sorteggioInput');
+                    const isAttivo=this.checked;
+                    if (sorteggioInput) sorteggioInput.value=isAttivo?'true':'false';
+                    const url=new URL(window.location.href);
+                    url.searchParams.set('sorteggio', isAttivo);
+                    if(!isAttivo) url.searchParams.delete('iniziale');
+                    window.location.href=url.toString();
+                });
+
+                document.getElementById('btnAnnullaAsta')?.addEventListener('click', async ()=>{
+                    if(await mostraMessaggio('Annulla Asta','Sei sicuro?', true)){
+                        const r=await fetch('/Admin/AnnullaAsta',{ method:'POST', headers:{ 'RequestVerificationToken': antiToken } });
+                        if(!r.ok) await mostraMessaggio('Errore','Errore annullamento.');
+                    }
+                });
+
+                // ====== LETTERE
+                renderLettersChips();
+                document.getElementById('btnSorteggiaLettera')?.addEventListener('click', ()=>{
+                    const archived=getArchivedLetters(); const pool=ALPH.filter(l=>!archived.includes(l));
+                    if(pool.length===0){ mostraMessaggio('Sorteggio lettera','Tutte le lettere sono già state estratte. Premi "Reset lettere" o riabilita un singolo chip.'); return; }
+                    const letter=pool[Math.floor(Math.random()*pool.length)];
+                    setArchivedLetters([...archived, letter]);
+                    applyInitialFilter(letter);
+                });
+                document.getElementById('btnResetLettere')?.addEventListener('click', ()=>{
+                    setArchivedLetters([]);
+                    const inizialeInput=document.getElementById('inizialeInput'); if (inizialeInput) inizialeInput.value='';
+                    document.getElementById('filtroForm').submit();
+                });
+
+                // ====== SIGNALR
+                const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+
+                connection.on("StatoAsta",(stato)=>{
+                    if(stato?.startUtc){ localStorage.setItem(LS_START, stato.startUtc); }
+                    if(typeof stato?.pausaAccumulataSec==='number'){ localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec)); }
+                    else if(!localStorage.getItem(LS_PAUSE_ACC)){ localStorage.setItem(LS_PAUSE_ACC, "0"); }
+
+                    const pauseActive=!!stato?.pausaAttiva;
+                    localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
+                    if(pauseActive){
+                        if(!localStorage.getItem(LS_PAUSE_AT)){ localStorage.setItem(LS_PAUSE_AT, new Date().toISOString()); }
+                        document.getElementById('btn-pausa').disabled=true;
+                        document.getElementById('btn-riprendi').disabled=false;
+                    }else{
+                        localStorage.removeItem(LS_PAUSE_AT);
+                        document.getElementById('btn-pausa').disabled=false;
+                        document.getElementById('btn-riprendi').disabled=true;
+                    }
+                    startDurataLoop();
+                });
+
+                connection.on("MostraGiocatoreInAsta",(giocatore)=>{
+                    if(!localStorage.getItem(LS_START)){
+                        localStorage.setItem(LS_START, new Date().toISOString());
+                        localStorage.setItem(LS_PAUSE_ACC,"0");
+                        localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+                        localStorage.removeItem(LS_PAUSE_AT);
+                        startDurataLoop();
+                    }
+                    document.getElementById('overlay-nome-giocatore').innerText=giocatore.nome;
+                    document.getElementById('overlay-dettagli-giocatore').innerText=`${giocatore.ruolo} - ${giocatore.squadraReale}`;
+                    document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
+                    document.getElementById('overlay-offerta').innerText='0';
+                    const offEl=document.getElementById('overlay-offerente'); offEl.innerText='In attesa di offerte...'; offEl.style.color='';
+                    document.getElementById('overlay-log').innerHTML='';
+                    const timerEl=document.getElementById('overlay-timer');
+                    timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                    document.querySelector('.asta-box-footer').style.display='block';
+                    document.getElementById('asta-overlay').classList.add('visible');
+
+                    lastOffertaAdmin=0;
+                    clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
+                });
+
+                connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
+                    document.getElementById('overlay-offerente').innerText = offerente || '-';
+                    document.getElementById('overlay-offerta').innerText = offerta || 0;
+
+                    clearInterval(countdownTimerAdmin);
+                    clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
+
+                    const timerEl=document.getElementById('overlay-timer');
+                    if(!fineUtc || !offerta || offerta<=0){
+                        timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); lastOffertaAdmin=offerta||0; return;
+                    }
+
+                    const isRealBid = (offerta > (lastOffertaAdmin||0));
+                    if(isRealBid){
+                        document.getElementById('suono-offerta').play();
+                        const log=document.getElementById('overlay-log'); if(log){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; log.prepend(p); }
+                    }
+                    lastOffertaAdmin=offerta;
+
+                    const end=new Date(fineUtc);
+                    const paint=(sec)=>{ timerEl.innerText = sec >= 0 ? sec : 0; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); if(sec>5) timerEl.classList.add('timer-green'); else if(sec>=4) timerEl.classList.add('timer-yellow'); else timerEl.classList.add('timer-red'); };
+                    const tick=()=>{
+                        const sec=Math.max(0, Math.floor((end.getTime()-Date.now())/1000));
+                        paint(sec);
+                        if(sec>=0){ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play(); }
+                        else{ clearInterval(countdownTimerAdmin); }
+                    };
+                    tick(); countdownTimerAdmin=setInterval(tick,1000);
+
+                    const msRemaining=end.getTime()-Date.now();
+                    if(msRemaining>0){
+                        closeTimeoutAdmin=setTimeout(()=>{ connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString())); }, msRemaining+50);
+                    }else{
+                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
+                    }
+                });
+
+                connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
+                    clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
+                    document.getElementById('suono-vittoria').play();
+                    const offEl=document.getElementById('overlay-offerente'); offEl.innerText=`AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color='#2ecc71';
+                    document.getElementById('overlay-offerta').innerText=prezzo||0;
+                    const log=document.getElementById('overlay-log'); if(log){ const ts=new Date().toLocaleTimeString(); const row=document.createElement('p'); row.innerText=`[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`; log.prepend(row); }
+                    document.querySelector('.asta-box-footer').style.display='none';
+                    setTimeout(()=>{ document.getElementById('asta-overlay').classList.remove('visible'); setTimeout(()=>location.reload(),300); },4000);
+                });
+
+                connection.on("AstaAnnullata",()=>{ clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null; document.getElementById('asta-overlay').classList.remove('visible'); });
+
+                connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
+                connection.on("AstaPausa",()=>{ localStorage.setItem(LS_PAUSE_ACTIVE,"true"); localStorage.setItem(LS_PAUSE_AT,new Date().toISOString()); document.getElementById('btn-pausa').disabled=true; document.getElementById('btn-riprendi').disabled=false; paintDurata(); });
+                connection.on("AstaRipresa",()=>{
+                    const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
+                    const acc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+                    if(pauseAtIso){ const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)); localStorage.setItem(LS_PAUSE_ACC, String(acc+delta)); }
+                    localStorage.setItem(LS_PAUSE_ACTIVE,"false"); localStorage.removeItem(LS_PAUSE_AT);
+                    document.getElementById('btn-pausa').disabled=false; document.getElementById('btn-riprendi').disabled=true; paintDurata();
+                });
+                connection.on("DurataResettata", resetDurataLocal);
+                connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
+                    mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
+                    const inputNome=document.querySelector('#filtroForm input[name="nome"]'); if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
+                });
+
+                connection.start().then(()=>{
+                    connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
+                    setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
+                    connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
+                    connection.invoke("RichiediStatoAttuale");
+                }).catch(err=>console.error(err));
+
+                // Bottoni pausa/riprendi/reset che usano "connection" DEVONO stare qui dentro:
+                document.getElementById('btn-pausa')?.addEventListener('click', ()=>{ connection.invoke("PausaAsta", legaAliasAdmin).catch(()=>{}); });
+                document.getElementById('btn-riprendi')?.addEventListener('click', ()=>{ connection.invoke("RiprendiAsta", legaAliasAdmin).catch(()=>{}); });
+                document.getElementById('btn-reset')?.addEventListener('click', async ()=>{ resetDurataLocal(); try{ await connection.invoke("ResetDurataAsta", legaAliasAdmin); }catch{} });
+
+                // helper paint partecipanti
+                window.paintPartecipanti=function(list){
+                    list.forEach(p=>{
+                        const nick=(p.nick||p.Nick||'').toString();
+                        const el=document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) || document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
+                        if(!el) return;
+                        el.classList.remove('dot-online','dot-offline','dot-waiting');
+                        const stato=(p.stato||p.Stato||'offline').toLowerCase();
+                        if(stato==='waiting') el.classList.add('dot-waiting');
+                        else if(stato==='online') el.classList.add('dot-online');
+                        else el.classList.add('dot-offline');
+                    });
+                };
+            });
+        })();
     </script>
 }

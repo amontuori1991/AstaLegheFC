@@ -22,5 +22,6 @@ namespace AstaLegheFC.Models
         [Display(Name = "Max Attaccanti")]
         public int MaxAttaccanti { get; set; } = 6;
         public List<Squadra> Squadre { get; set; } = new List<Squadra>();
+
     }
 }
