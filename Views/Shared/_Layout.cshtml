@@ -96,5 +96,18 @@
           });
         }
     </script>
+    <script>
+        (function(){
+          var isStandalone = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches
+                             || window.navigator.standalone === true; // iOS legacy
+          if (isStandalone) {
+            var p = location.pathname.toLowerCase();
+            if (p === '/' || p === '/index' || p === '/home' || p === '/home/index') {
+              location.replace('/app-start.html?v=3');
+            }
+          }
+        })();
+    </script>
+
 </body>
 </html>

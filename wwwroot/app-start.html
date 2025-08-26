@@ -94,38 +94,31 @@
     </div>
 
     <script>
-    (function () {
-      const KEY = 'fb:lastUtenteUrl';
-
-      function go(url) {
-        try { localStorage.setItem(KEY, url); } catch(e) {}
-        location.replace(url);
-      }
-
-      // 1) se arriviamo con ?lega&nick li salviamo e partiamo
-      const qs = new URLSearchParams(location.search);
-      const lega = qs.get('lega');
-      const nick = qs.get('nick');
-      if (lega && nick) {
-        return go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
-      }
-
-      // 2) altrimenti, se c'è un ultimo URL salvato, vai
-      try {
-        const last = localStorage.getItem(KEY);
-        if (last) return go(last);
-      } catch(e) {}
-
-      // 3) altrimenti mostra il mini form
-      const ui = document.getElementById('ui');
-      ui.hidden = false;
-      document.getElementById('goBtn').addEventListener('click', function(){
-        const lega = document.getElementById('lega').value.trim();
-        const nick = document.getElementById('nick').value.trim();
-        if (!lega || !nick) { alert('Inserisci sia alias lega che nickname'); return; }
-        go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
-      });
-    })();
+        (function () {
+            const KEY = 'fb:lastUtenteUrl';
+            function go(url) {
+                try { localStorage.setItem(KEY, url); } catch (e) { }
+                location.replace(url);
+            }
+            const qs = new URLSearchParams(location.search);
+            const lega = qs.get('lega');
+            const nick = qs.get('nick');
+            if (lega && nick) {
+                return go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
+            }
+            try {
+                const last = localStorage.getItem(KEY);
+                if (last) return go(last);
+            } catch (e) { }
+            const ui = document.getElementById('ui');
+            ui.hidden = false;
+            document.getElementById('goBtn').addEventListener('click', function () {
+                const lega = document.getElementById('lega').value.trim();
+                const nick = document.getElementById('nick').value.trim();
+                if (!lega || !nick) { alert('Inserisci sia alias lega che nickname'); return; }
+                go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
+            });
+        })();
     </script>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <!-- 👇 importante: viewport-fit=cover per safe area su iOS -->
+    <!-- 👇 aggiunto viewport-fit=cover per abilitare le safe-area -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>@ViewData["Title"] - AstaLegheFC</title>
 
@@ -19,16 +19,26 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="~/png/logo_bazzer.png" />
+
+    <style>
+        /* 👇 spingi giù il contenuto quando l’app è in standalone su iPhone con notch */
+        .safe-top {
+            /* iOS 11 */
+            padding-top: calc(constant(safe-area-inset-top) + 10px);
+            /* iOS 12+ */
+            padding-top: calc(env(safe-area-inset-top) + 10px);
+        }
+    </style>
 </head>
-<!-- 👇 spazio extra in fondo pagina che tiene conto della safe area -->
-<body class="pwa-add-bottom-space">
+<body>
     <div class="container-fluid">
-        <main role="main" class="pb-3">
+        <!-- 👇 aggiunta la classe safe-top -->
+        <main role="main" class="pb-3 safe-top">
             @RenderBody()
         </main>
     </div>
 
-    <!-- Modale messaggi globale -->
+    <!-- Modal riuso messaggi -->
     <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content text-white" style="background-color: #2c3e50; border: 1px solid #3498db;">
@@ -53,10 +63,12 @@
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>
+        // SW: registra se presente
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
-                    .catch(err => console.error('SW registration failed:', err));
+                    .then(() => console.log('Service Worker registrato'))
+                    .catch(err => console.error('SW error:', err));
             });
         }
     </script>
