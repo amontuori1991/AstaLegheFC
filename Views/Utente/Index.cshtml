@@ -144,14 +144,16 @@
         position: fixed;
         left: 0;
         right: 0;
-        bottom: 0;
+        /* 👇 sposta tutta la barra sopra la gesture bar */
+        bottom: env(safe-area-inset-bottom, 0px);
         display: flex;
         justify-content: center;
         gap: 18px;
         align-items: center;
         background: #2c3e50;
         border-top: 1px solid #34495e;
-        padding: 10px 14px env(safe-area-inset-bottom);
+        /* 👇 un filo di padding extra + safe-area */
+        padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
         box-shadow: 0 -6px 16px rgba(0,0,0,0.35);
         z-index: 1900;
     }
@@ -166,9 +168,11 @@
             font-size: .95rem;
         }
 
+    /* Spazio “di rientro” per evitare che il contenuto ci finisca sotto */
     .spacer-crediti {
-        height: 60px;
+        height: calc(64px + env(safe-area-inset-bottom, 0px));
     }
+
 
     /* Modal/Accordion dark */
     .modal-content {

@@ -1,12 +1,12 @@
 ﻿{
-    "name": "Fantabuzzer Asta",
-    "short_name": "Fantabuzzer",
-    "start_url": "/app-launch.html",
+    "name": "Fantabazzer Asta",
+    "short_name": "Fantabazzer",
+    "start_url": "/app-start.html?v=2",
     "scope": "/",
     "display": "standalone",
     "background_color": "#2c3e50",
     "theme_color": "#2c3e50",
-    "description": "App per l'asta del Fantabuzzer.",
+    "description": "App per l'asta del Fantabazzer.",
     "icons": [
         {
             "src": "/images/icons/icon-192x192.png",

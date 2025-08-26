@@ -1,0 +1,131 @@
+﻿<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Avvio Fantabazzer</title>
+    <meta name="theme-color" content="#2c3e50">
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+            background: #1f2a39;
+            color: #fff;
+            display: flex;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center
+        }
+
+        .box {
+            background: #2c3e50;
+            border: 1px solid #34495e;
+            border-radius: 14px;
+            padding: 22px 18px;
+            max-width: 520px;
+            width: 92%;
+            box-shadow: 0 10px 30px rgba(0,0,0,.45)
+        }
+
+        h1 {
+            margin: .25rem 0 1rem 0;
+            font-size: 1.15rem
+        }
+
+        .row {
+            display: flex;
+            gap: 10px
+        }
+
+            .row .col {
+                flex: 1
+            }
+
+        label {
+            display: block;
+            font-size: .85rem;
+            margin-bottom: 4px;
+            opacity: .85
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #34495e;
+            background: #1a2533;
+            color: #fff
+        }
+
+        button {
+            margin-top: 12px;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #3498db;
+            background: #3498db;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer
+        }
+
+        .muted {
+            font-size: .85rem;
+            opacity: .8;
+            margin-top: 10px
+        }
+    </style>
+</head>
+<body>
+    <div class="box" id="ui" hidden>
+        <h1>Inserisci i tuoi dati una volta</h1>
+        <div class="row">
+            <div class="col">
+                <label for="lega">Alias lega</label>
+                <input id="lega" placeholder="es. BackToTheFuture">
+            </div>
+            <div class="col">
+                <label for="nick">Nickname</label>
+                <input id="nick" placeholder="es. ALEX">
+            </div>
+        </div>
+        <button id="goBtn">Entra</button>
+        <div class="muted">Il prossimo avvio userà questi dati automaticamente.</div>
+    </div>
+
+    <script>
+    (function () {
+      const KEY = 'fb:lastUtenteUrl';
+
+      function go(url) {
+        try { localStorage.setItem(KEY, url); } catch(e) {}
+        location.replace(url);
+      }
+
+      // 1) se arriviamo con ?lega&nick li salviamo e partiamo
+      const qs = new URLSearchParams(location.search);
+      const lega = qs.get('lega');
+      const nick = qs.get('nick');
+      if (lega && nick) {
+        return go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
+      }
+
+      // 2) altrimenti, se c'è un ultimo URL salvato, vai
+      try {
+        const last = localStorage.getItem(KEY);
+        if (last) return go(last);
+      } catch(e) {}
+
+      // 3) altrimenti mostra il mini form
+      const ui = document.getElementById('ui');
+      ui.hidden = false;
+      document.getElementById('goBtn').addEventListener('click', function(){
+        const lega = document.getElementById('lega').value.trim();
+        const nick = document.getElementById('nick').value.trim();
+        if (!lega || !nick) { alert('Inserisci sia alias lega che nickname'); return; }
+        go('/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
+      });
+    })();
+    </script>
+</body>
+</html>
