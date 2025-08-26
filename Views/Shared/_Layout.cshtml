@@ -120,5 +120,39 @@
           }
         })();
     </script>
+
+    <script>
+        (function () {
+          var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
+                             || window.navigator.standalone === true; // iOS legacy
+          if (!isStandalone) return;
+
+          var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
+          if (isLocalhost) return; // non disturbare in sviluppo
+
+          var p = (location.pathname || '').toLowerCase();
+
+          // Pagine "atterraggio" tipiche dell'admin / root
+          var isAdminLanding =
+            p === '/' || p === '/index' ||
+            p === '/home' || p === '/home/index' ||
+            p === '/admin' || p === '/admin/index';
+
+          if (!isAdminLanding) return;
+
+          try {
+            var last = localStorage.getItem('fb:lastUtenteUrl');
+            // se ho già un URL utente salvato, vai lì; altrimenti apri il launcher utente
+            if (last && /^\/utente(\?|$)/i.test(last)) {
+              location.replace(last);
+            } else {
+              location.replace('/pwa/utente');
+            }
+          } catch (e) {
+            location.replace('/pwa/utente');
+          }
+        })();
+    </script>
+
 </body>
 </html>

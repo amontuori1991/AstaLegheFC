@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>@ViewData["Title"] - AstaLegheFC</title>
 
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/manifest-utente">
     <meta name="theme-color" content="#2c3e50" />
 
     <meta name="mobile-web-app-capable" content="yes">
@@ -72,5 +72,21 @@
             });
         }
     </script>
+
+    <script>
+        (function(){
+          try {
+            var qs = new URLSearchParams(location.search);
+            var lega = qs.get('lega');
+            var nick = qs.get('nick');
+            if (lega && nick) {
+              localStorage.setItem('fb:lega', lega);
+              localStorage.setItem('fb:nick', nick);
+              localStorage.setItem('fb:lastUtenteUrl', '/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick));
+            }
+          } catch(e){}
+        })();
+    </script>
+
 </body>
 </html>
