@@ -34,7 +34,7 @@
 
         }
 
-        /* Evita che contenuto vada sotto la status bar su iPhone con notch */
+        /* Evita che il contenuto vada sotto la status bar su iPhone con notch */
         body {
             padding-top: env(safe-area-inset-top, 0px);
         }
@@ -96,7 +96,7 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
-    <!-- Registrazione / Unregister Service Worker: produzione sì, localhost no -->
+    <!-- SW: in prod sì, in localhost unregister -->
     <script>
         (function(){
           var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
@@ -106,7 +106,6 @@
               navigator.serviceWorker.register('/service-worker.js').catch(function(){});
             });
           } else {
-            // Sviluppo: assicurati di non avere SW attivi
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.getRegistrations().then(function(regs){
                 regs.forEach(function(r){ r.unregister(); });
@@ -116,30 +115,30 @@
         })();
     </script>
 
-    <!-- PWA routing helper: attivo solo in standalone E non in localhost -->
+    <!-- Routing PWA: SOLO in standalone e NON in localhost -->
     <script>
         (function () {
           var isStandalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)
-                             || window.navigator.standalone === true; // iOS
+                             || window.navigator.standalone === true; // iOS legacy
           var isLocalhost = /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i.test(location.host);
           if (!isStandalone || isLocalhost) return;
 
           var path = location.pathname.toLowerCase();
 
-          // Se aprono la home in PWA (produzione), vai alla pagina di avvio
+          // Home → pagina di bootstrap della PWA
           if (path === '/' || path === '/index' || path === '/home' || path === '/home/index') {
-            location.replace('app-start.html?v=4'); // relativo per evitare "//"
+            location.replace('/app-start.html?v=6');
             return;
           }
 
-          // Se aprono /utente senza parametri in PWA (produzione), prova ultimo URL salvato o start
+          // /utente senza parametri → ultimo URL salvato, altrimenti bootstrap
           var qs = new URLSearchParams(location.search);
           if (path === '/utente' && (!qs.get('lega') || !qs.get('nick'))) {
             try {
               var last = localStorage.getItem('fb:lastUtenteUrl');
               if (last) { location.replace(last); return; }
             } catch(e) {}
-            location.replace('app-start.html?v=4');
+            location.replace('/app-start.html?v=6');
           }
         })();
     </script>
