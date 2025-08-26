@@ -508,12 +508,13 @@
           document.getElementById('idGiocatoreSvincola').value = id;
           document.getElementById('costoOriginaleSvincolo').innerText = costo;
 
-          const input = document.getElementById('creditiSvincoloInput');
-          if (input) {
-            input.min = 0;
-            input.max = String(costo);
-            input.value = String(costo);
-          }
+                 const input = document.getElementById('creditiSvincoloInput');
+        if (input) {
+          input.min = 0;
+          input.removeAttribute('max');   // ← niente tetto massimo lato UI
+          input.value = String(costo);    // precompila col costo, ma l’admin può modificarlo liberamente
+        }
+
 
           document.getElementById('logoGiocatoreSvincola').src = logo || '';
           document.getElementById('nomeGiocatoreSvincolo').innerText = nome || '';
@@ -694,9 +695,9 @@
                 document.getElementById('btnConfermaSvincolo')?.addEventListener('click', ()=>{
                     const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
                     const costoOriginale=parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
-                    let crediti=parseInt(document.getElementById('creditiSvincoloInput').value);
-                    if(isNaN(crediti)||crediti<0) crediti=0;
-                    if(!isNaN(costoOriginale)&&crediti>costoOriginale) crediti=costoOriginale;
+                            let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
+        if (isNaN(crediti) || crediti < 0) crediti = 0; // niente clamp superiore: decide l’admin
+
                     fetch('/Admin/SvincolaGiocatore',{
                         method:'POST',
                         headers:{ 'Content-Type':'application/json' },

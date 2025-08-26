@@ -23,7 +23,6 @@ namespace AstaLegheFC.Services
 
         public async Task SvincolaGiocatoreAsync(int giocatoreId, int creditiRestituiti)
         {
-            // Transazione: niente stati parziali
             await using var tx = await _context.Database.BeginTransactionAsync();
 
             var g = await _context.Giocatori
@@ -38,15 +37,29 @@ namespace AstaLegheFC.Services
 
             var squadra = g.Squadra ?? await _context.Squadre.FirstAsync(s => s.Id == g.SquadraId);
 
-            // Clamp rimborso a [0 .. costoOriginale]
             var costoOriginale = g.CreditiSpesi ?? 0;
-            var rimborso = Math.Max(0, Math.Min(creditiRestituiti, costoOriginale));
 
-            // Se è un portiere acquistato con blocco: rimuovi anche i portieri collegati (stessa squadra reale, costo 0)
-            if (string.Equals(g.Ruolo, "P", System.StringComparison.OrdinalIgnoreCase)
-                && !string.IsNullOrWhiteSpace(g.SquadraReale))
+            // Rimborso: libero, ma non negativo (l’admin può mettere 0, metà, più del costo, ecc.)
+            var rimborso = Math.Max(0, creditiRestituiti);
+
+            var isPortiere = string.Equals(g.Ruolo, "P", System.StringComparison.OrdinalIgnoreCase);
+            var haSquadraReale = !string.IsNullOrWhiteSpace(g.SquadraReale);
+
+            // È un portiere "collegato" (costo 0) di un blocco?
+            var isCollegatoCostoZero = isPortiere && costoOriginale == 0 && haSquadraReale &&
+                await _context.Giocatori.AnyAsync(x => x.SquadraId == g.SquadraId
+                                                       && x.Ruolo == "P"
+                                                       && x.SquadraReale == g.SquadraReale
+                                                       && (x.CreditiSpesi ?? 0) > 0);
+
+            // Se è un collegato a costo 0 → rimborso sempre 0
+            if (isCollegatoCostoZero)
+                rimborso = 0;
+
+            // Se sto svincolando il portiere "principale": elimina anche i collegati a costo 0
+            if (isPortiere && costoOriginale > 0 && haSquadraReale)
             {
-                var collegatiCostoZero = await _context.Giocatori
+                var collegatiZero = await _context.Giocatori
                     .Where(x => x.SquadraId == g.SquadraId
                                 && x.Id != g.Id
                                 && x.Ruolo == "P"
@@ -54,19 +67,19 @@ namespace AstaLegheFC.Services
                                 && (x.CreditiSpesi ?? 0) == 0)
                     .ToListAsync();
 
-                if (collegatiCostoZero.Count > 0)
-                    _context.Giocatori.RemoveRange(collegatiCostoZero);
+                if (collegatiZero.Count > 0)
+                    _context.Giocatori.RemoveRange(collegatiZero);
             }
 
-            // Rimuovi il principale
+            // Rimuovo il giocatore principale
             _context.Giocatori.Remove(g);
 
-            // 🔧 Aggiusta il budget base: delta = rimborso - costoOriginale
-            // (così il totale disponibile diventa: S + delta - Σ(senza il giocatore) = +rimborso rispetto a prima)
+            // Budget base: delta = rimborso - costoOriginale
+            // Disponibili dopo = (S + delta) - (Σ - costo) = S - Σ + rimborso → incrementa esattamente del rimborso inserito
             var delta = rimborso - costoOriginale;
             if (delta != 0)
             {
-                squadra.Crediti += delta; // può essere negativo
+                squadra.Crediti += delta;
                 _context.Squadre.Update(squadra);
             }
 
