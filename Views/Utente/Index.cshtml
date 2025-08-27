@@ -309,6 +309,47 @@
         font-weight: 700;
     }
 
+    /* Overlay Reconnect */
+    #reconnect-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.75);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2100;
+        text-align: center;
+        color: #fff;
+        padding: 20px;
+    }
+
+        #reconnect-overlay.visible {
+            display: flex;
+        }
+
+    #reconnect-box {
+        background: linear-gradient(145deg,#2b3a4b,#1e2a38);
+        border: 1px solid #5dade2;
+        border-radius: 14px;
+        padding: 20px 18px;
+        width: 92%;
+        max-width: 460px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.6);
+    }
+
+        #reconnect-box h4 {
+            margin: 0 0 .25rem 0;
+            color: #5dade2;
+        }
+
+        #reconnect-box p {
+            margin: 0;
+        }
+
+    #reconnect-attempt {
+        font-weight: 700;
+    }
+
     /* Mobile tweaks */
     @@media (max-width:576px) {
         h2 #giocatore
@@ -524,6 +565,15 @@
     </div>
 </div>
 
+<!-- Overlay Reconnect -->
+<div id="reconnect-overlay" aria-live="polite">
+    <div id="reconnect-box">
+        <h4>Connessione persa</h4>
+        <p>Riconnessione in corso… tentativo <span id="reconnect-attempt">0</span></p>
+        <p class="small text-muted mt-1">I comandi sono disabilitati finché la connessione non torna disponibile.</p>
+    </div>
+</div>
+
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
@@ -552,7 +602,34 @@
             // Stato pausa lato client
             let pausaAttivaClient = false;
 
-            const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+            // === NUOVO: gestione reconnect ===
+            let pingIntervalId = null;
+            let manualReconnectTimer = null;
+            let manualAttempts = 0;
+            const MAX_AUTO_ATTEMPTS = 120; // 120 tentativi = 120s
+            const reconnectOverlay = document.getElementById('reconnect-overlay');
+            const reconnectAttemptEl = document.getElementById('reconnect-attempt');
+
+            function showReconnectOverlay(attempt) {
+                reconnectAttemptEl.textContent = attempt ?? 0;
+                reconnectOverlay.classList.add('visible');
+                setBidControlsEnabled(false);
+            }
+            function hideReconnectOverlay() {
+                reconnectOverlay.classList.remove('visible');
+                aggiornaStatoPulsantiBazzer();
+            }
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/bazzerHub")
+                .withAutomaticReconnect({
+                    nextRetryDelayInMilliseconds: (ctx) => {
+                        // 1 secondo fisso, fino a 120 tentativi; poi lasciare a null per onclose
+                        if (ctx.previousRetryCount < MAX_AUTO_ATTEMPTS) return 1000;
+                        return null; // stop auto; subentra fallback manuale
+                    }
+                })
+                .build();
 
             /* =======================
                UTILS
@@ -563,8 +640,9 @@
             }
 
             function aggiornaStatoPulsantiBazzer() {
-                // Abilitati solo se c'è un giocatore in asta e NON siamo in pausa
-                let abilitato = idListoneAttuale > 0 && !pausaAttivaClient;
+                // Abilitati solo se c'è un giocatore in asta e NON siamo in pausa e connessione ok
+                const hubState = connection.state; // "Disconnected" | "Connecting" | "Connected" | "Reconnecting"
+                let abilitato = idListoneAttuale > 0 && !pausaAttivaClient && hubState === "Connected";
                 let messaggio = "";
                 if (abilitato) {
                     if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) {
@@ -653,59 +731,58 @@
                 `;
             }
 
-                function renderAccordionSquadre(data) {
-          const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
-          const mantraAttivo = !!data?.mantraAttivo;
-          const accId = 'acc-riepilogo';
+            function renderAccordionSquadre(data) {
+                const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+                const mantraAttivo = !!data?.mantraAttivo;
+                const accId = 'acc-riepilogo';
 
-          const html = squads.map((s) => {
-            const collapseId = `collapse-${s.squadraId}`;
-            const headingId = `heading-${s.squadraId}`;
-            const show = s.isMe ? 'show' : '';
-            const myTeamClass = s.isMe ? 'my-team' : '';
-            const counts = {
-              P: (s.portieri || []).length,
-              D: (s.difensori || []).length,
-              C: (s.centrocampisti || []).length,
-              A: (s.attaccanti || []).length
-            };
-            const credVal = (typeof s.creditiDisponibili === 'number') ? s.creditiDisponibili : '-';
-            const maxVal  = (typeof s.puntataMassima    === 'number') ? s.puntataMassima    : '-';
+                const html = squads.map((s) => {
+                    const collapseId = `collapse-${s.squadraId}`;
+                    const headingId = `heading-${s.squadraId}`;
+                    const show = s.isMe ? 'show' : '';
+                    const myTeamClass = s.isMe ? 'my-team' : '';
+                    const counts = {
+                        P: (s.portieri || []).length,
+                        D: (s.difensori || []).length,
+                        C: (s.centrocampisti || []).length,
+                        A: (s.attaccanti || []).length
+                    };
+                    const credVal = (typeof s.creditiDisponibili === 'number') ? s.creditiDisponibili : '-';
+                    const maxVal  = (typeof s.puntataMassima    === 'number') ? s.puntataMassima    : '-';
 
-            return `
-              <div class="accordion-item ${myTeamClass}">
-                <h2 class="accordion-header" id="${headingId}">
-                  <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
-                          data-bs-toggle="collapse" data-bs-target="#${collapseId}"
-                          aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
-                    <span class="team-chip">${s.nickname}</span>
-                    <span class="ms-3 small text-muted">P:${counts.P} D:${counts.D} C:${counts.C} A:${counts.A}</span>
-                    <span class="badge bg-secondary ms-2">
-                      Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span>
-                    </span>
-                    <span class="badge bg-secondary ms-2">
-                      Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span>
-                    </span>
-                    ${s.isMe ? '<span class="badge bg-info ms-2">La tua</span>' : ''}
-                  </button>
-                </h2>
-                <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
-                  <div class="accordion-body">
-                    <div class="d-flex flex-wrap gap-3">
-                      ${renderListaGiocatori('Portieri', s.portieri, mantraAttivo)}
-                      ${renderListaGiocatori('Difensori', s.difensori, mantraAttivo)}
-                      ${renderListaGiocatori('Centrocampisti', s.centrocampisti, mantraAttivo)}
-                      ${renderListaGiocatori('Attaccanti', s.attaccanti, mantraAttivo)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            `;
-          }).join('');
+                    return `
+                      <div class="accordion-item ${myTeamClass}">
+                        <h2 class="accordion-header" id="${headingId}">
+                          <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
+                                  data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                                  aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
+                            <span class="team-chip">${s.nickname}</span>
+                            <span class="ms-3 small text-muted">P:${counts.P} D:${counts.D} C:${counts.C} A:${counts.A}</span>
+                            <span class="badge bg-secondary ms-2">
+                              Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span>
+                            </span>
+                            <span class="badge bg-secondary ms-2">
+                              Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span>
+                            </span>
+                            ${s.isMe ? '<span class="badge bg-info ms-2">La tua</span>' : ''}
+                          </button>
+                        </h2>
+                        <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
+                          <div class="accordion-body">
+                            <div class="d-flex flex-wrap gap-3">
+                              ${renderListaGiocatori('Portieri', s.portieri, mantraAttivo)}
+                              ${renderListaGiocatori('Difensori', s.difensori, mantraAttivo)}
+                              ${renderListaGiocatori('Centrocampisti', s.centrocampisti, mantraAttivo)}
+                              ${renderListaGiocatori('Attaccanti', s.attaccanti, mantraAttivo)}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                }).join('');
 
-          return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
-        }
-
+                return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
+            }
 
             async function apriRiepilogo() {
                 try {
@@ -884,29 +961,18 @@
                 }
             });
 
-            // === NUOVO: riepilogo & crediti in tempo reale ===
-        connection.on("RiepilogoAggiornato", (data) => {
-          // 1) aggiorna barra crediti e limiti pulsanti
-          aggiornaCrediti();
-
-          // 2) aggiorna subito i badge nel titolo (se il modale è aperto)
-          const squads = (data && (data.squadre || data.squads)) ? (data.squadre || data.squads) : [];
-          squads.forEach(s => {
-            const credChip = document.getElementById(`cred-${s.squadraId}`);
-            if (credChip && typeof s.creditiDisponibili === 'number') {
-              credChip.textContent = s.creditiDisponibili;
-            }
-            const maxChip = document.getElementById(`max-${s.squadraId}`);
-            if (maxChip && typeof s.puntataMassima === 'number') {
-              maxChip.textContent = s.puntataMassima;
-            }
-          });
-
-          // 3) ricarica l’elenco rose per riflettere nuove liste/crediti
-          apriRiepilogo();
-        });
-
-
+            // === Riepilogo & crediti live ===
+            connection.on("RiepilogoAggiornato", (data) => {
+                aggiornaCrediti();
+                const squads = (data && (data.squadre || data.squads)) ? (data.squadre || data.squads) : [];
+                squads.forEach(s => {
+                    const credChip = document.getElementById(`cred-${s.squadraId}`);
+                    if (credChip && typeof s.creditiDisponibili === 'number') credChip.textContent = s.creditiDisponibili;
+                    const maxChip = document.getElementById(`max-${s.squadraId}`);
+                    if (maxChip && typeof s.puntataMassima === 'number') maxChip.textContent = s.puntataMassima;
+                });
+                if (modalRoseAperto()) apriRiepilogo();
+            });
 
             connection.on("AggiornaUtente", ()=>{ aggiornaCrediti(); caricaListone(); });
             connection.on("AggiornaDurataTimer", (nuoviSecondi)=>{ timerSecondi = nuoviSecondi; });
@@ -966,18 +1032,99 @@
             });
 
             /* =======================
-               AVVIO
+               GESTIONE RECONNECT
             ======================= */
-            connection.start().then(() => {
-                // presenza & ping (per dot lato admin)
-                connection.invoke("RegistratiAllaLega", legaAlias, nickname, false);
-                setInterval(() => connection.invoke("Ping", legaAlias, nickname), 15000);
+            function clearPing() { if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; } }
+            function startPing() {
+                clearPing();
+                pingIntervalId = setInterval(() => {
+                    if (connection.state === "Connected") {
+                        connection.invoke("Ping", legaAlias, nickname).catch(()=>{});
+                    }
+                }, 15000);
+            }
 
-                // stato attuale aste / timer
-                connection.invoke("RichiediStatoAttuale");
+            async function postConnectedSetup() {
+                // Registrazione e stato
+                try { await connection.invoke("RegistratiAllaLega", legaAlias, nickname, false); } catch(_){}
+                try { await connection.invoke("RichiediStatoAttuale"); } catch(_){}
                 aggiornaStatoPulsantiBazzer();
                 caricaListone();
-            }).catch(err => console.error("Errore connessione SignalR:", err));
+                aggiornaCrediti();
+                startPing();
+            }
+
+            async function startConnectionInitial() {
+                try {
+                    await connection.start();
+                    hideReconnectOverlay();
+                    manualAttempts = 0;
+                    await postConnectedSetup();
+                } catch (err) {
+                    console.warn("Connessione iniziale fallita, parte retry 1s:", err);
+                    startManualReconnectLoop(); // parte subito il loop manuale
+                }
+            }
+
+            function startManualReconnectLoop() {
+                if (manualReconnectTimer) return; // già in corso
+                manualAttempts = 0;
+                showReconnectOverlay(0);
+                manualReconnectTimer = setInterval(async () => {
+                    if (connection.state === "Connected") {
+                        stopManualLoop();
+                        hideReconnectOverlay();
+                        return;
+                    }
+                    manualAttempts++;
+                    showReconnectOverlay(manualAttempts);
+                    try {
+                        await connection.start();
+                        stopManualLoop();
+                        hideReconnectOverlay();
+                        await postConnectedSetup();
+                    } catch (e) {
+                        // resta in loop 1s
+                    }
+                }, 1000);
+            }
+
+            function stopManualLoop() {
+                if (manualReconnectTimer) { clearInterval(manualReconnectTimer); manualReconnectTimer = null; }
+            }
+
+            // Eventi SignalR di ciclo vita
+            connection.onreconnecting((err) => {
+                console.warn("Reconnecting…", err);
+                showReconnectOverlay((connection._reconnectDisplayCount || 0) + 1);
+                setBidControlsEnabled(false);
+            });
+
+            connection.onreconnected((_id) => {
+                console.info("Reconnected");
+                hideReconnectOverlay();
+                stopManualLoop();
+                manualAttempts = 0;
+                postConnectedSetup();
+            });
+
+            connection.onclose((err) => {
+                console.warn("Connessione chiusa:", err);
+                // Auto-retry si è fermato (ha superato i 120 tentativi) o close esplicita → fallback manuale
+                showReconnectOverlay(manualAttempts);
+                clearPing();
+                startManualReconnectLoop();
+            });
+
+            /* =======================
+               AVVIO
+            ======================= */
+            startConnectionInitial();
+
+            // Evita leak se si lascia la pagina
+            window.addEventListener('beforeunload', () => {
+                try { clearPing(); stopManualLoop(); connection.stop(); } catch(_) {}
+            });
 
         });
 
