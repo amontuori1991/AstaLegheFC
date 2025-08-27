@@ -308,6 +308,7 @@
     <input type="hidden" name="lega" value="@ViewBag.LegaAlias" />
     <input type="hidden" name="iniziale" id="inizialeInput" value="@(ViewBag.Iniziale ?? "")" />
     <input type="hidden" name="sorteggio" id="sorteggioInput" value="@(ViewBag.SorteggioLetteraAttivo ? "true" : "false")" />
+    <input type="hidden" name="mantra" id="mantraInput" value="@(ViewBag.MantraAttivo ? "true" : "false")" />
     <div class="col-md-4"><input type="text" name="nome" id="nomeFilterInput" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" /></div>
     <div class="col-md-4"><input type="text" name="squadra" id="squadraFilterInput" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" /></div>
     <div class="col-md-4">
@@ -725,10 +726,13 @@
                     else await mostraMessaggio('Errore','Errore aggiornamento regola.');
                 });
 
-                document.getElementById('mantraSwitch')?.addEventListener('change', function(){
-                    const url=new URL(window.location.href); url.searchParams.set('mantra', this.checked); window.location.href=url.toString();
-                });
-
+                        document.getElementById('mantraSwitch')?.addEventListener('change', function(){
+          const hidden = document.getElementById('mantraInput');
+          if (hidden) hidden.value = this.checked ? 'true' : 'false';
+          const url=new URL(window.location.href);
+          url.searchParams.set('mantra', this.checked);
+          window.location.href=url.toString();
+        });
                 document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
                     const sorteggioInput=document.getElementById('sorteggioInput');
                     const isAttivo=this.checked;

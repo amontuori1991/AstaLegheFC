@@ -129,44 +129,84 @@ namespace AstaLegheFC.Controllers
             return View();
         }
 
-        public async Task<IActionResult> VisualizzaListone(string lega, string nome, string squadra, string ruolo, [FromQuery(Name = "mantra")] bool mantraAttivo = false, [FromQuery(Name = "sorteggio")] bool sorteggioLetteraAttivo = false, [FromQuery(Name = "iniziale")] string? iniziale = null)
+        public async Task<IActionResult> VisualizzaListone(
+    string lega,
+    string nome,
+    string squadra,
+    string ruolo,
+    [FromQuery(Name = "mantra")] bool mantraAttivo = false,
+    [FromQuery(Name = "sorteggio")] bool sorteggioLetteraAttivo = false,
+    [FromQuery(Name = "iniziale")] string? iniziale = null)
         {
-            if (string.IsNullOrEmpty(lega)) return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
+            if (string.IsNullOrEmpty(lega))
+                return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
 
             var adminId = _userManager.GetUserId(User);
-            if (string.IsNullOrEmpty(adminId)) return Unauthorized();
+            if (string.IsNullOrEmpty(adminId))
+                return Unauthorized();
 
-            var legaModel = await _context.Leghe.FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower() && l.AdminId == adminId);
-            if (legaModel == null) return Forbid("Lega non trovata o non appartenente a questo utente.");
+            var legaModel = await _context.Leghe
+                .FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower() && l.AdminId == adminId);
+            if (legaModel == null)
+                return Forbid("Lega non trovata o non appartenente a questo utente.");
 
+            // Escludi i già acquistati nella lega
             var idGiocatoriAcquistati = await _context.Giocatori
                 .Where(g => g.Squadra.LegaId == legaModel.Id)
                 .Select(g => g.IdListone)
                 .ToListAsync();
 
-            var queryListone = _context.ListoneCalciatori
-                                       .Where(c => c.AdminId == adminId && !idGiocatoriAcquistati.Contains(c.IdListone));
+            // Base query: listone dell'admin, non ancora acquistati
+            IQueryable<CalciatoreListone> queryListone = _context.ListoneCalciatori
+                .Where(c => c.AdminId == adminId && !idGiocatoriAcquistati.Contains(c.IdListone));
 
-            if (!string.IsNullOrEmpty(nome)) queryListone = queryListone.Where(c => c.Nome.ToLower().Contains(nome.ToLower()));
-            if (!string.IsNullOrEmpty(squadra)) queryListone = queryListone.Where(c => c.Squadra.ToLower().Contains(squadra.ToLower()));
-            if (!string.IsNullOrEmpty(ruolo)) queryListone = queryListone.Where(c => c.Ruolo == ruolo);
-            if (!string.IsNullOrEmpty(iniziale))
-                queryListone = queryListone.Where(c => EF.Functions.Like(c.Nome, iniziale + "%"));
+            // Filtri testo (case-insensitive)
+            if (!string.IsNullOrWhiteSpace(nome))
+                queryListone = queryListone.Where(c => EF.Functions.ILike(c.Nome, $"%{nome}%"));
+            if (!string.IsNullOrWhiteSpace(squadra))
+                queryListone = queryListone.Where(c => EF.Functions.ILike(c.Squadra, $"%{squadra}%"));
 
-            var listoneDisponibile = await queryListone.OrderBy(g => g.Nome).ToListAsync();
-            var bloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
+            // Filtro iniziale
+            if (!string.IsNullOrWhiteSpace(iniziale))
+                queryListone = queryListone.Where(c => EF.Functions.ILike(c.Nome, $"{iniziale}%"));
 
+            // Filtro ruolo (standard vs Mantra)
+            if (!string.IsNullOrWhiteSpace(ruolo))
+            {
+                if (mantraAttivo)
+                {
+                    // cerca il token nei campi RuoloMantra (es: "D", "M", "W", ecc.)
+                    queryListone = queryListone.Where(c =>
+                        c.RuoloMantra != null &&
+                        EF.Functions.ILike(c.RuoloMantra, $"%{ruolo}%"));
+                }
+                else
+                {
+                    queryListone = queryListone.Where(c => c.Ruolo == ruolo);
+                }
+            }
+
+            // Applica Mantra alla sessione d’asta
+            _bazzerService.ImpostaModalitaMantra(mantraAttivo);
+
+            // Ordina e materializza
+            var listoneDisponibile = await queryListone
+                .OrderBy(g => g.Nome)
+                .ToListAsync();
+
+            // Flags & viewbag base
             ViewBag.Nome = nome;
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
+            ViewBag.Iniziale = iniziale;
             ViewBag.SorteggioLetteraAttivo = sorteggioLetteraAttivo;
-            ViewBag.BloccoPortieriAttivo = bloccoPortieriAttivo;
+            ViewBag.BloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
             ViewBag.DurataTimer = _bazzerService.DurataTimer;
             ViewBag.MantraAttivo = mantraAttivo;
-            ViewBag.AdminNick = User.Identity?.Name ?? "ADMIN";   // <-- aggiunto
-            _bazzerService.ImpostaModalitaMantra(mantraAttivo);
+            ViewBag.AdminNick = User.Identity?.Name ?? "ADMIN";
+            ViewBag.LegaAlias = legaModel.Alias;
 
-            // Riepilogo
+            // Riepilogo squadre
             var squadreDaDb = await _context.Squadre
                 .Include(s => s.Giocatori)
                 .Where(s => s.LegaId == legaModel.Id)
@@ -196,15 +236,40 @@ namespace AstaLegheFC.Controllers
                 });
             }
             ViewBag.RiepilogoSquadre = riepilogo;
-            ViewBag.LegaAlias = legaModel.Alias;
 
-            ViewBag.RuoliDisponibili = await (mantraAttivo
-                ? _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.RuoloMantra != null).Select(c => c.RuoloMantra)
-                : _context.ListoneCalciatori.Where(c => c.AdminId == adminId && c.Ruolo != null).Select(c => c.Ruolo))
-                .Distinct().OrderBy(r => r).ToListAsync();
+            // Tendina "Ruoli"
+            if (mantraAttivo)
+            {
+                var ruoliRaw = await _context.ListoneCalciatori
+                    .Where(c => c.AdminId == adminId && c.RuoloMantra != null && c.RuoloMantra != "")
+                    .Select(c => c.RuoloMantra!)
+                    .ToListAsync();
 
+                var splitter = new[] { ',', ';', '/', ' ' };
+                var ruoliMantra = ruoliRaw
+                    .SelectMany(s => s.Split(splitter, StringSplitOptions.RemoveEmptyEntries))
+                    .Select(s => s.Trim())
+                    .Where(s => s.Length > 0)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(s => s)
+                    .ToList();
+
+                ViewBag.RuoliDisponibili = ruoliMantra;
+            }
+            else
+            {
+                ViewBag.RuoliDisponibili = await _context.ListoneCalciatori
+                    .Where(c => c.AdminId == adminId && c.Ruolo != null && c.Ruolo != "")
+                    .Select(c => c.Ruolo!)
+                    .Distinct()
+                    .OrderBy(r => r)
+                    .ToListAsync();
+            }
+
+            // ✅ ritorno certo in tutti i casi
             return View("VisualizzaListone", listoneDisponibile);
         }
+
 
         [HttpPost]
         public async Task<IActionResult> AvviaAsta(int id, [FromForm(Name = "mantra")] bool mantraAttivo)
