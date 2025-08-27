@@ -15,11 +15,13 @@ namespace AstaLegheFC.Hubs
     {
         private readonly BazzerService _bazzerService;
         private readonly AppDbContext _context;
+        private readonly LegaService _legaService; // ⬅️ inject
 
-        public BazzerHub(BazzerService bazzerService, AppDbContext context)
+        public BazzerHub(BazzerService bazzerService, AppDbContext context, LegaService legaService)
         {
             _bazzerService = bazzerService;
             _context = context;
+            _legaService = legaService;
         }
 
         // ========= Presence & stato partecipanti =========
@@ -159,7 +161,6 @@ namespace AstaLegheFC.Hubs
 
         // ========= Funzioni esistenti (con estensioni) =========
 
-        // Admin si aggiunge al gruppo admin_{lega}
         public async Task AggiungiAdminAlGruppo(string legaAlias)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup(NormalizeLega(legaAlias)));
@@ -179,25 +180,21 @@ namespace AstaLegheFC.Hubs
         /// </summary>
         public async Task InviaOfferta(string offerente, int offerta, int? baseOfferta = null)
         {
-            // Blocchiamo offerte durante la pausa
             if (_bazzerService.PausaAttiva) return;
 
             var (attOfferente, attOfferta) = _bazzerService.GetOffertaAttuale();
 
-            // Concurrency: l'utente ha calcolato da una base non più attuale
             if (baseOfferta.HasValue && baseOfferta.Value != attOfferta) return;
-
             if (offerta <= attOfferta) return;
 
             _bazzerService.AggiornaOfferta(offerente, offerta);
 
-            // Invia anche l'end-time autorevole (ISO 8601 UTC) come terzo argomento
             var fineUtc = _bazzerService.FineOffertaUtc?.ToUniversalTime().ToString("o");
             await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
         }
 
         /// <summary>
-        /// Conclusione asta: ammettiamo la chiusura solo se non in pausa e il countdown lato server è effettivamente scaduto.
+        /// Conclusione asta (rispetta pausa e countdown).
         /// </summary>
         public async Task TerminaAsta(string legaAlias)
         {
@@ -205,9 +202,8 @@ namespace AstaLegheFC.Hubs
             {
                 var now = DateTime.UtcNow;
 
-                if (_bazzerService.PausaAttiva) return; // non si chiude in pausa
+                if (_bazzerService.PausaAttiva) return;
 
-                // Se abbiamo un end-time, rispettiamolo
                 if (_bazzerService.FineOffertaUtc.HasValue && now < _bazzerService.FineOffertaUtc.Value)
                     return;
 
@@ -256,6 +252,7 @@ namespace AstaLegheFC.Hubs
                                 IdListone = portiere.IdListone,
                                 Nome = portiere.Nome,
                                 Ruolo = portiere.Ruolo,
+                                RuoloMantra = portiere.RuoloMantra,
                                 SquadraReale = portiere.Squadra,
                                 SquadraId = squadraVincitrice.Id,
                                 CreditiSpesi = 0
@@ -267,7 +264,12 @@ namespace AstaLegheFC.Hubs
                     await _context.SaveChangesAsync();
                     _bazzerService.SegnaAstaConclusa();
 
+                    // Notifiche standard di fine asta
                     await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
+
+                    // 🔔 NUOVO: broadcast aggiornamenti di crediti + rose alla LEGA interessata
+                    // (sia la barra crediti/puntata max, sia la lista rose nel modale)
+                    await _legaService.BroadcastAggiornamentiLegaAsync(squadraVincitrice.LegaId);
 
                     // Resetta lo stato server dell’asta corrente
                     _bazzerService.AnnullaAstaCorrente();
@@ -300,7 +302,6 @@ namespace AstaLegheFC.Hubs
                 });
             }
 
-            // inviamo anche fineUtc (terzo argomento)
             var fineUtc = _bazzerService.FineOffertaUtc?.ToUniversalTime().ToString("o");
             await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
             var stato = _bazzerService.GetStato();
@@ -311,7 +312,6 @@ namespace AstaLegheFC.Hubs
                 pausaAttiva = stato.pausaAttiva
             });
 
-            // Se al momento è in pausa, il caller può adeguare la UI quando implementeremo l’overlay
             if (_bazzerService.PausaAttiva)
             {
                 var elapsed = (int)Math.Max(0, Math.Floor(_bazzerService.GetDurataAsta(DateTime.UtcNow).TotalSeconds));
@@ -324,7 +324,7 @@ namespace AstaLegheFC.Hubs
             }
         }
 
-        // ========= Nuovo: gestione Pausa / Ripresa =========
+        // ========= Pausa / Ripresa =========
 
         public async Task PausaAsta(string legaAlias)
         {
@@ -335,7 +335,6 @@ namespace AstaLegheFC.Hubs
             var remaining = _bazzerService.GetRemainingOfferta(DateTime.UtcNow);
             var partecipanti = BuildPartecipantiSnapshot(legaLower);
 
-            // broadcast evento di pausa + stato partecipanti
             await Clients.All.SendAsync("AstaPausa", new
             {
                 elapsedSec = elapsed,
@@ -364,9 +363,8 @@ namespace AstaLegheFC.Hubs
         }
 
         public async Task ResetDurataAsta(string legaAlias)
-{
-    await Clients.Group($"admin_{legaAlias?.Trim().ToLower()}").SendAsync("DurataResettata");
-}
-
+        {
+            await Clients.Group($"admin_{legaAlias?.Trim().ToLower()}").SendAsync("DurataResettata");
+        }
     }
 }

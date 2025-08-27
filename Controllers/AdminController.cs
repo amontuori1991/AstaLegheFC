@@ -156,7 +156,6 @@ namespace AstaLegheFC.Controllers
             var listoneDisponibile = await queryListone.OrderBy(g => g.Nome).ToListAsync();
             var bloccoPortieriAttivo = _bazzerService.BloccoPortieriAttivo;
 
-
             ViewBag.Nome = nome;
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
@@ -207,7 +206,6 @@ namespace AstaLegheFC.Controllers
             return View("VisualizzaListone", listoneDisponibile);
         }
 
-
         [HttpPost]
         public async Task<IActionResult> AvviaAsta(int id, [FromForm(Name = "mantra")] bool mantraAttivo)
         {
@@ -245,13 +243,30 @@ namespace AstaLegheFC.Controllers
         {
             if (request.Id <= 0) return BadRequest("Dati non validi.");
 
+            // ricavo la lega prima della modifica (dopo potrebbe non esserci più il legame)
+            var gioc = await _context.Giocatori
+                .Include(g => g.Squadra)
+                .ThenInclude(s => s.Lega)
+                .FirstOrDefaultAsync(g => g.Id == request.Id);
+
+            var legaId = gioc?.Squadra?.LegaId;
+            var legaAlias = gioc?.Squadra?.Lega?.Alias;
+
             // 👇 clamp difensivo (il service farà un ulteriore clamp usando il costo originale)
             if (request.CreditiRestituiti < 0) request.CreditiRestituiti = 0;
 
             await _legaService.SvincolaGiocatoreAsync(request.Id, request.CreditiRestituiti);
+
+            // broadcast aggiornamento crediti/rose agli utenti della lega
+            if (legaId.HasValue)
+            {
+                await BroadcastRiepilogoLegaAsync(legaId.Value);
+                if (!string.IsNullOrEmpty(legaAlias))
+                    await _hubContext.Clients.Group(legaAlias).SendAsync("AggiornaUtente");
+            }
+
             return Ok();
         }
-
 
         [HttpPost]
         public async Task<IActionResult> AssegnaManualmente([FromBody] AssegnaRequest request)
@@ -260,8 +275,26 @@ namespace AstaLegheFC.Controllers
             {
                 return BadRequest("Dati non validi.");
             }
+
             var adminId = _userManager.GetUserId(User);
+
+            // ricavo la lega dalla squadra destinataria
+            var squadra = await _context.Squadre
+                .Include(s => s.Lega)
+                .FirstOrDefaultAsync(s => s.Id == request.SquadraId);
+            var legaId = squadra?.LegaId;
+            var legaAlias = squadra?.Lega?.Alias;
+
             await _legaService.AssegnaGiocatoreManualmenteAsync(request.GiocatoreId, request.SquadraId, request.Costo, adminId);
+
+            // broadcast aggiornamento crediti/rose agli utenti della lega
+            if (legaId.HasValue)
+            {
+                await BroadcastRiepilogoLegaAsync(legaId.Value);
+                if (!string.IsNullOrEmpty(legaAlias))
+                    await _hubContext.Clients.Group(legaAlias).SendAsync("AggiornaUtente");
+            }
+
             return Ok();
         }
 
@@ -301,6 +334,55 @@ namespace AstaLegheFC.Controllers
             return File(Encoding.UTF8.GetBytes(builder.ToString()), "text/csv", $"{squadra.Nickname}.csv");
         }
 
+        // ========= Helper privato: broadcast riepilogo legato ad una lega =========
+        private async Task BroadcastRiepilogoLegaAsync(int legaId)
+        {
+            var lega = await _context.Leghe.AsNoTracking().FirstOrDefaultAsync(l => l.Id == legaId);
+            if (lega == null) return;
+
+            var squadre = await _context.Squadre
+                .Include(s => s.Giocatori)
+                .Where(s => s.LegaId == legaId)
+                .ToListAsync();
+
+            var slotTotali = lega.MaxPortieri + lega.MaxDifensori + lega.MaxCentrocampisti + lega.MaxAttaccanti;
+
+            var payloadSquadre = squadre.Select(s =>
+            {
+                int creditiSpesi = s.Giocatori.Sum(g => g.CreditiSpesi ?? 0);
+                int creditiDisponibili = s.Crediti - creditiSpesi;
+
+                int p = s.Giocatori.Count(g => g.Ruolo == "P");
+                int d = s.Giocatori.Count(g => g.Ruolo == "D");
+                int c = s.Giocatori.Count(g => g.Ruolo == "C");
+                int a = s.Giocatori.Count(g => g.Ruolo == "A");
+                int acquistati = p + d + c + a;
+                int slotRimasti = slotTotali - acquistati;
+                int puntataMassima = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+                if (puntataMassima < 0) puntataMassima = 0;
+
+                return new
+                {
+                    squadraId = s.Id,
+                    nickname = s.Nickname,
+                    creditiDisponibili,
+                    puntataMassima,
+                    portieri = p,
+                    difensori = d,
+                    centrocampisti = c,
+                    attaccanti = a
+                };
+            }).ToList();
+
+            var payload = new
+            {
+                squadre = payloadSquadre
+            };
+
+            await _hubContext.Clients.Group(lega.Alias).SendAsync("RiepilogoAggiornato", payload);
+        }
+
+        // ========= DTO =========
         public class SvincolaRequest { public int Id { get; set; } public int CreditiRestituiti { get; set; } }
         public class TimerRequest { public int Secondi { get; set; } }
         public class AssegnaRequest { public int GiocatoreId { get; set; } public int SquadraId { get; set; } public int Costo { get; set; } }

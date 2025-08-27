@@ -143,96 +143,84 @@ namespace AstaLegheFC.Controllers
 
             return Json(listoneDisponibile);
         }
-        [HttpGet("/utente/riepilogo")]
+        [HttpGet]
         public async Task<IActionResult> Riepilogo(string lega, string nick)
         {
             if (string.IsNullOrWhiteSpace(lega))
-                return BadRequest();
+                return BadRequest("lega mancante");
 
             var legaModel = await _context.Leghe
-                .AsNoTracking()
+                .Include(l => l.Squadre)
                 .FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
 
-            if (legaModel == null)
-                return NotFound();
+            if (legaModel == null) return NotFound();
 
-            // Flag globale per la UI (se non hai BazzerService qui, inietta BazzerService nel controller)
-            var mantraAttivo = _bazzerService?.MantraAttivo ?? false;
+            var slotTotali = legaModel.MaxPortieri + legaModel.MaxDifensori + legaModel.MaxCentrocampisti + legaModel.MaxAttaccanti;
+            var mantraAttivo = _bazzerService.MantraAttivo; // oppure leggi da impostazioni della lega
 
-            // 1) Materializziamo dal DB
-            var squadre = await _context.Squadre
-                .AsNoTracking()
+            var squads = await _context.Squadre
                 .Include(s => s.Giocatori)
                 .Where(s => s.LegaId == legaModel.Id)
-                .OrderBy(s => s.Nickname)
-                .ToListAsync();
-
-            // 2) Proiettiamo in memoria (LINQ to Objects) – nessuna funzione locale in query EF
-            var payload = new
-            {
-                mantraAttivo, // <- usato dalla UI per decidere se mostrare ruoloMantra
-                squads = squadre.Select(s => new
+                .Select(s => new
                 {
                     squadraId = s.Id,
                     nickname = s.Nickname,
+                    // crediti di budget rimasti
+                    creditiDisponibili = s.Crediti - s.Giocatori.Sum(g => g.CreditiSpesi ?? 0),
+                    // puntata max = crediti rimasti - (slot rimanenti - 1) (min 0)
+                    puntataMassima = Math.Max(
+                        0,
+                        (s.Crediti - s.Giocatori.Sum(g => g.CreditiSpesi ?? 0))
+                        - Math.Max(0, (slotTotali - s.Giocatori.Count()) - 1)
+                    ),
                     isMe = s.Nickname == nick,
 
                     portieri = s.Giocatori
                         .Where(g => g.Ruolo == "P")
-                        .Select(g => new
-                        {
-                            id = g.Id,
+                        .Select(g => new {
                             nome = g.Nome,
-                            crediti = g.CreditiSpesi ?? 0,
-                            squadraReale = g.SquadraReale,
-                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
                             ruolo = g.Ruolo,
-                            ruoloMantra = g.RuoloMantra
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
                         }).ToList(),
 
                     difensori = s.Giocatori
                         .Where(g => g.Ruolo == "D")
-                        .Select(g => new
-                        {
-                            id = g.Id,
+                        .Select(g => new {
                             nome = g.Nome,
-                            crediti = g.CreditiSpesi ?? 0,
-                            squadraReale = g.SquadraReale,
-                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
                             ruolo = g.Ruolo,
-                            ruoloMantra = g.RuoloMantra
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
                         }).ToList(),
 
                     centrocampisti = s.Giocatori
                         .Where(g => g.Ruolo == "C")
-                        .Select(g => new
-                        {
-                            id = g.Id,
+                        .Select(g => new {
                             nome = g.Nome,
-                            crediti = g.CreditiSpesi ?? 0,
-                            squadraReale = g.SquadraReale,
-                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
                             ruolo = g.Ruolo,
-                            ruoloMantra = g.RuoloMantra
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
                         }).ToList(),
 
                     attaccanti = s.Giocatori
                         .Where(g => g.Ruolo == "A")
-                        .Select(g => new
-                        {
-                            id = g.Id,
+                        .Select(g => new {
                             nome = g.Nome,
-                            crediti = g.CreditiSpesi ?? 0,
-                            squadraReale = g.SquadraReale,
-                            logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(g.SquadraReale),
                             ruolo = g.Ruolo,
-                            ruoloMantra = g.RuoloMantra
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
                         }).ToList()
-                }).ToList()
-            };
+                })
+                .OrderBy(s => s.nickname)
+                .ToListAsync();
 
-            return Json(payload);
+            return Json(new { squads, mantraAttivo });
         }
+
 
     }
 }

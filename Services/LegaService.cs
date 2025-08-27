@@ -1,5 +1,6 @@
 ﻿using AstaLegheFC.Data;
 using AstaLegheFC.Hubs;
+using AstaLegheFC.Helpers;
 using AstaLegheFC.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,90 @@ namespace AstaLegheFC.Services
             _bazzerService = bazzerService;
         }
 
+        /// <summary>
+        /// 🔔 Broadcast unico: invia sia AggiornaUtente (barra crediti/puntata)
+        /// sia RiepilogoAggiornato (contenuto modale rose) al gruppo della lega.
+        /// </summary>
+        public async Task BroadcastAggiornamentiLegaAsync(int legaId)
+        {
+            // recupera alias e normalizza il nome gruppo
+            var legaInfo = await _context.Leghe
+                .Where(l => l.Id == legaId)
+                .Select(l => new { l.Id, l.Alias, l.MaxPortieri, l.MaxDifensori, l.MaxCentrocampisti, l.MaxAttaccanti })
+                .FirstOrDefaultAsync();
+
+            if (legaInfo == null) return;
+
+            var legaLower = (legaInfo.Alias ?? "").Trim().ToLower();
+
+            // prepara payload "riepilogo" (stesso shape dell'endpoint /utente/riepilogo, senza isMe)
+            var slotTotali = legaInfo.MaxPortieri + legaInfo.MaxDifensori + legaInfo.MaxCentrocampisti + legaInfo.MaxAttaccanti;
+            var mantraAttivo = _bazzerService.MantraAttivo;
+
+            var squads = await _context.Squadre
+                .Include(s => s.Giocatori)
+                .Where(s => s.LegaId == legaInfo.Id)
+                .Select(s => new
+                {
+                    squadraId = s.Id,
+                    nickname = s.Nickname,
+                    creditiDisponibili = s.Crediti - s.Giocatori.Sum(g => g.CreditiSpesi ?? 0),
+                    puntataMassima = System.Math.Max(
+                        0,
+                        (s.Crediti - s.Giocatori.Sum(g => g.CreditiSpesi ?? 0))
+                        - System.Math.Max(0, (slotTotali - s.Giocatori.Count()) - 1)
+                    ),
+                    // isMe non ha senso in broadcast (dipende dal client)
+                    portieri = s.Giocatori
+                        .Where(g => g.Ruolo == "P")
+                        .Select(g => new {
+                            nome = g.Nome,
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
+                        }).ToList(),
+
+                    difensori = s.Giocatori
+                        .Where(g => g.Ruolo == "D")
+                        .Select(g => new {
+                            nome = g.Nome,
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
+                        }).ToList(),
+
+                    centrocampisti = s.Giocatori
+                        .Where(g => g.Ruolo == "C")
+                        .Select(g => new {
+                            nome = g.Nome,
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
+                        }).ToList(),
+
+                    attaccanti = s.Giocatori
+                        .Where(g => g.Ruolo == "A")
+                        .Select(g => new {
+                            nome = g.Nome,
+                            ruolo = g.Ruolo,
+                            ruoloMantra = g.RuoloMantra,
+                            crediti = g.CreditiSpesi ?? 0,
+                            logoUrl = LogoHelper.GetLogoUrl(g.SquadraReale)
+                        }).ToList()
+                })
+                .OrderBy(s => s.nickname)
+                .ToListAsync();
+
+            // 1) aggiorna barra crediti/puntata max dei client
+            await _hubContext.Clients.Group(legaLower).SendAsync("AggiornaUtente");
+
+            // 2) aggiorna contenuto modale rose (e chip crediti nel titolo che il client rimpiazza al volo)
+            await _hubContext.Clients.Group(legaLower).SendAsync("RiepilogoAggiornato", new { squads, mantraAttivo });
+        }
+
         public async Task SvincolaGiocatoreAsync(int giocatoreId, int creditiRestituiti)
         {
             await using var tx = await _context.Database.BeginTransactionAsync();
@@ -39,24 +124,23 @@ namespace AstaLegheFC.Services
 
             var costoOriginale = g.CreditiSpesi ?? 0;
 
-            // Rimborso: libero, ma non negativo (l’admin può mettere 0, metà, più del costo, ecc.)
-            var rimborso = Math.Max(0, creditiRestituiti);
+            // Rimborso libero (clamp >= 0). Se collegato a costo 0 → sempre 0.
+            var rimborso = System.Math.Max(0, creditiRestituiti);
 
             var isPortiere = string.Equals(g.Ruolo, "P", System.StringComparison.OrdinalIgnoreCase);
             var haSquadraReale = !string.IsNullOrWhiteSpace(g.SquadraReale);
 
-            // È un portiere "collegato" (costo 0) di un blocco?
+            // Portiere collegato (costo 0) di un blocco? → rimborso 0
             var isCollegatoCostoZero = isPortiere && costoOriginale == 0 && haSquadraReale &&
                 await _context.Giocatori.AnyAsync(x => x.SquadraId == g.SquadraId
                                                        && x.Ruolo == "P"
                                                        && x.SquadraReale == g.SquadraReale
                                                        && (x.CreditiSpesi ?? 0) > 0);
 
-            // Se è un collegato a costo 0 → rimborso sempre 0
             if (isCollegatoCostoZero)
                 rimborso = 0;
 
-            // Se sto svincolando il portiere "principale": elimina anche i collegati a costo 0
+            // Svincolo del principale → rimuovi collegati a 0
             if (isPortiere && costoOriginale > 0 && haSquadraReale)
             {
                 var collegatiZero = await _context.Giocatori
@@ -71,11 +155,10 @@ namespace AstaLegheFC.Services
                     _context.Giocatori.RemoveRange(collegatiZero);
             }
 
-            // Rimuovo il giocatore principale
+            // Rimuovi il giocatore svincolato
             _context.Giocatori.Remove(g);
 
-            // Budget base: delta = rimborso - costoOriginale
-            // Disponibili dopo = (S + delta) - (Σ - costo) = S - Σ + rimborso → incrementa esattamente del rimborso inserito
+            // Delta sul budget squadra (incrementa di “rimborso”)
             var delta = rimborso - costoOriginale;
             if (delta != 0)
             {
@@ -85,20 +168,22 @@ namespace AstaLegheFC.Services
 
             await _context.SaveChangesAsync();
             await tx.CommitAsync();
+
+            // 🔔 broadcast alla lega
+            await BroadcastAggiornamentiLegaAsync(squadra.LegaId);
         }
-
-
-        // In Services/LegaService.cs
 
         public async Task AssegnaGiocatoreManualmenteAsync(int giocatoreId, int squadraId, int costo, string adminId)
         {
-            // La ricerca ora controlla che il giocatore appartenga al listone dell'admin corretto
             var calciatoreDaListone = await _context.ListoneCalciatori
                 .FirstOrDefaultAsync(c => c.Id == giocatoreId && c.AdminId == adminId);
 
-            if (calciatoreDaListone == null) return; // Non fa nulla se il giocatore non è dell'admin
+            if (calciatoreDaListone == null) return;
 
-            var squadra = await _context.Squadre.FindAsync(squadraId);
+            var squadra = await _context.Squadre
+                .Include(s => s.Lega)
+                .FirstOrDefaultAsync(s => s.Id == squadraId);
+
             if (squadra == null) return;
 
             var nuovoGiocatore = new Giocatore
@@ -125,7 +210,7 @@ namespace AstaLegheFC.Services
                                 p.Ruolo == "P" &&
                                 p.Id != calciatoreDaListone.Id &&
                                 !idGiocatoriAcquistatiLega.Contains(p.IdListone) &&
-                                p.AdminId == adminId) // Aggiunto controllo di sicurezza anche qui
+                                p.AdminId == adminId)
                     .ToListAsync();
 
                 foreach (var portiere in altriPortieri)
@@ -145,7 +230,9 @@ namespace AstaLegheFC.Services
             }
 
             await _context.SaveChangesAsync();
-            await _hubContext.Clients.All.SendAsync("AggiornaUtente");
+
+            // 🔔 broadcast alla lega (sostituisce l’All precedente)
+            await BroadcastAggiornamentiLegaAsync(squadra.LegaId);
         }
     }
 }
