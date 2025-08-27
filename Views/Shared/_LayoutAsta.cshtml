@@ -28,6 +28,17 @@
             /* iOS 12+ */
             padding-top: calc(env(safe-area-inset-top) + 10px);
         }
+
+        /* Evita scroll chaining/glow su Android/Chrome */
+        html, body {
+            overscroll-behavior: none;
+        }
+
+            /* Classe che blocca lo scroll quando non serve */
+            html.scroll-lock, body.scroll-lock {
+                overflow: hidden;
+                height: 100%;
+            }
     </style>
 </head>
 <body>
@@ -88,5 +99,55 @@
         })();
     </script>
 
+    <!-- 👇 Blocco scroll “intelligente” su mobile -->
+    <script>
+        (function () {
+          let isLocked = false;
+
+          // iOS: blocca il "rubber-band" quando lock attivo
+          const preventTouchMove = (e) => { if (isLocked) e.preventDefault(); };
+          document.addEventListener('touchmove', preventTouchMove, { passive: false });
+
+          function viewportHeight() {
+            return window.visualViewport ? Math.round(window.visualViewport.height) : window.innerHeight;
+          }
+
+          function docHeight() {
+            const d = document.documentElement, b = document.body;
+            return Math.max(d.scrollHeight, d.offsetHeight, b.scrollHeight, b.offsetHeight);
+          }
+
+          function updateScrollLock() {
+            // Non bloccare mai con modali aperti (Bootstrap aggiunge .modal-open al body)
+            const modalOpen = document.body.classList.contains('modal-open');
+
+            // piccolo margine per evitare “1px scroll” da safe-area / toolbar
+            const shouldLock = !modalOpen && (docHeight() <= viewportHeight() + 1);
+
+            document.documentElement.classList.toggle('scroll-lock', shouldLock);
+            document.body.classList.toggle('scroll-lock', shouldLock);
+            isLocked = shouldLock;
+          }
+
+          // Ricalcola su eventi tipici
+          ['load', 'resize', 'orientationchange'].forEach(ev =>
+            window.addEventListener(ev, updateScrollLock)
+          );
+          if (window.visualViewport) window.visualViewport.addEventListener('resize', updateScrollLock);
+
+          // Ricalcola quando cambia l’altezza del body (es. contenuti che arrivano via SignalR)
+          if ('ResizeObserver' in window) {
+            new ResizeObserver(updateScrollLock).observe(document.body);
+          }
+
+          // Ricalcola quando Bootstrap apre/chiude modali (cambia class sul body)
+          new MutationObserver(updateScrollLock).observe(document.body, {
+            attributes: true, attributeFilter: ['class']
+          });
+
+          document.addEventListener('DOMContentLoaded', updateScrollLock);
+          updateScrollLock();
+        })();
+    </script>
 </body>
 </html>
