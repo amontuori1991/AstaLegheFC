@@ -213,7 +213,11 @@
     <div class="table-responsive mb-4">
         <table class="table table-bordered table-sm text-center align-middle">
             <thead class="table-primary">
-                <tr><th>Nickname</th><th>Crediti</th><th>Puntata Max</th><th>P</th><th>D</th><th>C</th><th>A</th></tr>
+                <tr><th>Nickname</th>
+                    <th>Bonus/Malus</th>
+                    <th>Crediti</th>
+                    <th>Puntata Max</th>
+                    <th>P</th><th>D</th><th>C</th><th>A</th></tr>
             </thead>
             <tbody>
                 @foreach (var s in riepilogo)
@@ -223,8 +227,19 @@
                             <span class="status-dot dot-offline" data-nick="@s.Nickname" title="@s.Nickname"></span>
                             @s.Nickname
                         </td>
-                        <td>@s.CreditiDisponibili</td>
-                        <td>@s.PuntataMassima</td>
+                        <td>
+                            <button class="btn btn-info btn-sm btn-bonus"
+                                    data-squadraid="@s.SquadraId"
+                                    data-nickname="@s.Nickname"
+                                    data-crediti="@s.CreditiDisponibili"
+                                    data-pmax="@s.PuntataMassima"
+                                    data-giocatori="@(s.PortieriAssegnati.Count + s.DifensoriAssegnati.Count + s.CentrocampistiAssegnati.Count + s.AttaccantiAssegnati.Count)">
+                                Bonus/Malus
+                            </button>
+                        </td>
+                        <td><span id="cred-@s.SquadraId">@s.CreditiDisponibili</span></td>
+                        <td><span id="pmax-@s.SquadraId">@s.PuntataMassima</span></td>
+
                         <td>
                             <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('portieri-@s.Nickname')">@s.PortieriAssegnati.Count +/-</button>
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
@@ -463,6 +478,39 @@
     </div>
 </div>
 
+<!-- Modale Bonus Crediti -->
+<div class="modal fade" id="bonusModal" tabindex="-1" aria-labelledby="bonusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bonusModalLabel">Assegna crediti bonus</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-2"><strong>Squadra:</strong> <span id="bonusNick"></span></div>
+                <div class="mb-2"><strong>Crediti attuali:</strong> <span id="bonusCreditiAttuali"></span></div>
+                <div class="mb-2"><strong>Puntata max attuale:</strong> <span id="bonusPMaxAttuale"></span></div>
+                <hr />
+                <div class="mb-3">
+                    <label for="bonusDeltaInput" class="form-label">Delta crediti (può essere negativo)</label>
+                    <input type="number" id="bonusDeltaInput" class="form-control" value="0" step="1">
+                    <div class="form-text">Esempi: +10 (aggiungi), -5 (togli)</div>
+                </div>
+                <div class="mb-2"><strong>Crediti dopo:</strong> <span id="bonusCreditiDopo"></span></div>
+                <div><strong>Puntata max dopo:</strong> <span id="bonusPMaxDopo"></span></div>
+
+                <input type="hidden" id="bonusSquadraId" />
+                <input type="hidden" id="bonusGiocatoriCount" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary" id="btnConfermaBonus">Applica</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 <audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
 <audio id="suono-vittoria" src="~/sounds/gavel.mp3" preload="auto"></audio>
@@ -598,6 +646,8 @@
 
                 const squadreArr = JSON.parse('@Html.Raw(squadreJson)');
                 const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+                const SLOT_TOTALI = parseInt("@(ViewBag.SlotTotali ?? 0)") || 0;
+
 
                 // ====== FILTRI (digita → debounce submit)
                 const urlParams=new URLSearchParams(window.location.search);
@@ -709,6 +759,76 @@
                     });
                 });
 
+                        // === BONUS CREDITI ===
+        let bonusModal, bonusDeltaInput;
+
+        function calcolaPuntataMax(creditiDisponibili, giocatoriCount) {
+          const slotRimasti = Math.max(0, SLOT_TOTALI - (parseInt(giocatoriCount) || 0));
+          const pmax = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+          return Math.max(0, pmax);
+        }
+
+        function aggiornaPreviewBonus() {
+          const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
+          const giocatoriCount = parseInt(document.getElementById('bonusGiocatoriCount').value) || 0;
+          const delta = parseInt(bonusDeltaInput.value) || 0;
+
+          const afterCred = currCred + delta;
+          const afterPMax = calcolaPuntataMax(afterCred, giocatoriCount);
+
+          document.getElementById('bonusCreditiDopo').textContent = afterCred;
+          document.getElementById('bonusPMaxDopo').textContent = afterPMax;
+        }
+
+        document.querySelectorAll('.btn-bonus').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const sId = parseInt(btn.dataset.squadraid);
+            const nick = btn.dataset.nickname || '';
+            const cred = parseInt(btn.dataset.crediti) || 0;
+            const pmax = parseInt(btn.dataset.pmax) || 0;
+            const giocatoriCount = parseInt(btn.dataset.giocatori) || 0;
+
+            document.getElementById('bonusSquadraId').value = sId;
+            document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
+            document.getElementById('bonusNick').textContent = nick;
+            document.getElementById('bonusCreditiAttuali').textContent = cred;
+            document.getElementById('bonusPMaxAttuale').textContent = pmax;
+
+            bonusDeltaInput = document.getElementById('bonusDeltaInput');
+            bonusDeltaInput.value = "0";
+            aggiornaPreviewBonus();
+
+            if (!bonusModal) {
+              bonusModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
+            }
+            bonusModal.show();
+          });
+        });
+
+        document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
+
+        document.getElementById('btnConfermaBonus')?.addEventListener('click', async () => {
+          const sId = parseInt(document.getElementById('bonusSquadraId').value);
+          const delta = parseInt(document.getElementById('bonusDeltaInput').value) || 0;
+          try {
+            const r = await fetch('/Admin/AggiornaCreditiBonus', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': antiToken
+              },
+              body: JSON.stringify({ squadraId: sId, delta })
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            // Chiudo: l’update live arriva via SignalR (RiepilogoAggiornato)
+            bonusModal?.hide();
+          } catch (e) {
+            console.error(e);
+            await mostraMessaggio?.('Errore', 'Impossibile applicare il bonus.');
+          }
+        });
+
+
                 // ====== TIMER / SWITCHES
                 document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
                     e.preventDefault();
@@ -786,6 +906,26 @@
                     }
                     startDurataLoop();
                 });
+
+        connection.on("RiepilogoAggiornato", (data) => {
+          const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+          squads.forEach(s => {
+            // aggiorna numeri in tabella
+            const cred = document.getElementById(`cred-${s.squadraId}`);
+            const pmax = document.getElementById(`pmax-${s.squadraId}`);
+            if (cred) cred.textContent = s.creditiDisponibili;
+            if (pmax) pmax.textContent = s.puntataMassima;
+
+            // se usi il bottone "Bonus", aggiorna anche i dataset per aperture successive coerenti
+            const btn = document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
+            if (btn) {
+              btn.dataset.crediti = s.creditiDisponibili;
+              btn.dataset.pmax = s.puntataMassima;
+            }
+          });
+        });
+
+
 
                 connection.on("MostraGiocatoreInAsta",(giocatore)=>{
                     if(!localStorage.getItem(LS_START)){

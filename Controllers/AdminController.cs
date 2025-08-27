@@ -452,5 +452,59 @@ namespace AstaLegheFC.Controllers
         public class TimerRequest { public int Secondi { get; set; } }
         public class AssegnaRequest { public int GiocatoreId { get; set; } public int SquadraId { get; set; } public int Costo { get; set; } }
         public class BloccoPortieriRequest { public bool Attivo { get; set; } }
+        // DTO per il bonus
+        public class BonusRequest
+        {
+            public int SquadraId { get; set; }
+            public int Delta { get; set; }       // può essere negativo
+            public string? Nota { get; set; }    // opzionale, per futuro log
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AggiornaCreditiBonus([FromBody] BonusRequest request)
+        {
+            if (request == null || request.SquadraId <= 0)
+                return BadRequest("Richiesta non valida.");
+
+            var squadra = await _context.Squadre
+                .Include(s => s.Lega)
+                .Include(s => s.Giocatori)
+                .FirstOrDefaultAsync(s => s.Id == request.SquadraId);
+
+            if (squadra == null)
+                return NotFound("Squadra non trovata.");
+
+            // Applica il delta (positivo o negativo)
+            squadra.Crediti += request.Delta;
+            await _context.SaveChangesAsync();
+
+            // Prepara payload riepilogo per TUTTA la lega della squadra
+            var lega = squadra.Lega!;
+            var slotTotali = lega.MaxPortieri + lega.MaxDifensori + lega.MaxCentrocampisti + lega.MaxAttaccanti;
+
+            var squads = await _context.Squadre
+                .Include(s => s.Giocatori)
+                .Where(s => s.LegaId == lega.Id)
+                .Select(s => new
+                {
+                    squadraId = s.Id,
+                    nickname = s.Nickname,
+                    creditiDisponibili = s.Crediti - s.Giocatori.Sum(g => g.CreditiSpesi ?? 0),
+                    puntataMassima = Math.Max(
+                        0,
+                        (s.Crediti - s.Giocatori.Sum(g => g.CreditiSpesi ?? 0))
+                        - Math.Max(0, (slotTotali - s.Giocatori.Count()) - 1)
+                    )
+                })
+                .OrderBy(s => s.nickname)
+                .ToListAsync();
+
+            // Broadcast in tempo reale (Utente + Admin + modale rose)
+            await _hubContext.Clients.All.SendAsync("RiepilogoAggiornato", new { squads, mantraAttivo = _bazzerService.MantraAttivo });
+            await _hubContext.Clients.All.SendAsync("AggiornaUtente");
+
+            return Ok(new { ok = true });
+        }
+
     }
 }
