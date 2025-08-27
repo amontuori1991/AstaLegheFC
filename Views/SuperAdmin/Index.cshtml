@@ -1,0 +1,298 @@
+﻿@using AstaLegheFC.Models
+@model AstaLegheFC.Models.ViewModels.SuperAdminIndexViewModel
+@{
+    ViewData["Title"] = "Super Admin – Licenze";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    string fmt(DateTimeOffset? d) => d.HasValue ? d.Value.ToString("yyyy-MM-dd") : "Per sempre";
+}
+
+<style>
+    /* ---------- Leggibilità tabelle su tema scuro ---------- */
+    .dm-fix {
+        --tbl-text: #212529;
+        --tbl-bg: #ffffff;
+        --tbl-bg-alt: #f6f8fa;
+        --tbl-hover: #eef2f6;
+    }
+
+        .dm-fix .table {
+            color: var(--tbl-text) !important;
+        }
+
+        .dm-fix thead th {
+            color: var(--tbl-text) !important;
+            background-color: #f8f9fa !important;
+        }
+
+        .dm-fix tbody td, .dm-fix tbody th {
+            color: var(--tbl-text) !important;
+            background-color: var(--tbl-bg) !important;
+        }
+
+        .dm-fix tbody tr:nth-child(even) td,
+        .dm-fix tbody tr:nth-child(even) th {
+            background-color: var(--tbl-bg-alt) !important;
+        }
+
+        .dm-fix.table-hover tbody tr:hover td,
+        .dm-fix.table-hover tbody tr:hover th {
+            background-color: var(--tbl-hover) !important;
+        }
+
+        .dm-fix .form-control {
+            background-color: #fff !important;
+            color: var(--tbl-text) !important;
+            border-color: #ced4da !important;
+        }
+
+    /* ---------- Header collassabile ---------- */
+    .section-toggle {
+        border: 0;
+        width: 100%;
+        text-align: left;
+        padding: .75rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+    }
+
+        .section-toggle .left {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+    .chev {
+        display: inline-block;
+        transition: transform .2s ease;
+        font-weight: 700;
+    }
+
+    .section-toggle[aria-expanded="false"] .chev {
+        transform: rotate(-90deg);
+    }
+
+    .card-header.bg-warning {
+        color: #212529;
+    }
+    /* contrasto su giallo */
+</style>
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">Gestione licenze</h3>
+        <form method="post" asp-action="Logout">
+            @Html.AntiForgeryToken()
+            <button class="btn btn-outline-secondary">Esci</button>
+        </form>
+    </div>
+
+    @if (TempData["ok"] != null)
+    {
+        <div class="alert alert-success">@TempData["ok"]</div>
+    }
+    @if (TempData["err"] != null)
+    {
+        <div class="alert alert-danger">@TempData["err"]</div>
+    }
+
+    <div class="row g-4">
+
+        <!-- ATTIVI -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header p-0">
+                    <button class="section-toggle bg-success text-white" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#secActive" aria-expanded="true" aria-controls="secActive">
+                        <div class="left">
+                            <span class="chev">▾</span>
+                            <strong>Utenti attivi</strong>
+                            <span class="badge bg-dark text-white">@Model.Active.Count</span>
+                        </div>
+                        <small class="opacity-75">tocca per comprimere/espandere</small>
+                    </button>
+                </div>
+                <div id="secActive" class="collapse show">
+                    <div class="card-body p-0">
+                        @if (Model.Active.Count == 0)
+                        {
+                            <div class="p-3 text-muted">Nessun utente attivo.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 dm-fix">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Email</th>
+                                            <th>Username</th>
+                                            <th>Scadenza</th>
+                                            <th style="width:320px">Modifica</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var u in Model.Active)
+                                        {
+                                            <tr>
+                                                <td>@u.Email</td>
+                                                <td>@u.UserName</td>
+                                                <td>@fmt(u.LicenseExpiresAt)</td>
+                                                <td>
+                                                    <form method="post" asp-action="UpdateLicense" class="d-flex gap-2">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                        <input type="date" name="newDate" class="form-control"
+                                                               value="@(u.LicenseExpiresAt.HasValue? u.LicenseExpiresAt.Value.ToString("yyyy-MM-dd") : "")" />
+                                                        <button class="btn btn-primary">Salva</button>
+                                                        <button class="btn btn-outline-secondary"
+                                                                formaction="@Url.Action("UpdateLicense", "SuperAdmin")"
+                                                                formmethod="post"
+                                                                onclick="this.form.newDate.value='';">
+                                                            Per sempre
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- IN SCADENZA -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header p-0">
+                    <button class="section-toggle bg-warning" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#secExpiring" aria-expanded="true" aria-controls="secExpiring">
+                        <div class="left">
+                            <span class="chev">▾</span>
+                            <strong>Utenti in scadenza (entro 7 giorni)</strong>
+                            <span class="badge bg-dark text-white">@Model.Expiring.Count</span>
+                        </div>
+                        <small class="opacity-75 text-dark">tocca per comprimere/espandere</small>
+                    </button>
+                </div>
+                <div id="secExpiring" class="collapse show">
+                    <div class="card-body p-0">
+                        @if (Model.Expiring.Count == 0)
+                        {
+                            <div class="p-3 text-muted">Nessun utente in scadenza entro una settimana.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 dm-fix">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Email</th>
+                                            <th>Username</th>
+                                            <th>Scadenza</th>
+                                            <th style="width:320px">Modifica</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var u in Model.Expiring)
+                                        {
+                                            <tr>
+                                                <td>@u.Email</td>
+                                                <td>@u.UserName</td>
+                                                <td>@fmt(u.LicenseExpiresAt)</td>
+                                                <td>
+                                                    <form method="post" asp-action="UpdateLicense" class="d-flex gap-2">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                        <input type="date" name="newDate" class="form-control"
+                                                               value="@(u.LicenseExpiresAt.HasValue? u.LicenseExpiresAt.Value.ToString("yyyy-MM-dd") : "")" />
+                                                        <button class="btn btn-primary">Salva</button>
+                                                        <button class="btn btn-outline-secondary"
+                                                                formaction="@Url.Action("UpdateLicense", "SuperAdmin")"
+                                                                formmethod="post"
+                                                                onclick="this.form.newDate.value='';">
+                                                            Per sempre
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCADUTI -->
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header p-0">
+                    <button class="section-toggle bg-danger text-white" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#secExpired" aria-expanded="true" aria-controls="secExpired">
+                        <div class="left">
+                            <span class="chev">▾</span>
+                            <strong>Utenti scaduti</strong>
+                            <span class="badge bg-dark text-white">@Model.Expired.Count</span>
+                        </div>
+                        <small class="opacity-75">tocca per comprimere/espandere</small>
+                    </button>
+                </div>
+                <div id="secExpired" class="collapse show">
+                    <div class="card-body p-0">
+                        @if (Model.Expired.Count == 0)
+                        {
+                            <div class="p-3 text-muted">Nessun utente scaduto.</div>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle mb-0 dm-fix">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Email</th>
+                                            <th>Username</th>
+                                            <th>Scadenza</th>
+                                            <th style="width:320px">Modifica</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var u in Model.Expired)
+                                        {
+                                            <tr>
+                                                <td>@u.Email</td>
+                                                <td>@u.UserName</td>
+                                                <td>@fmt(u.LicenseExpiresAt)</td>
+                                                <td>
+                                                    <form method="post" asp-action="UpdateLicense" class="d-flex gap-2">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                        <input type="date" name="newDate" class="form-control"
+                                                               value="@(u.LicenseExpiresAt.HasValue? u.LicenseExpiresAt.Value.ToString("yyyy-MM-dd") : "")" />
+                                                        <button class="btn btn-primary">Salva</button>
+                                                        <button class="btn btn-outline-secondary"
+                                                                formaction="@Url.Action("UpdateLicense", "SuperAdmin")"
+                                                                formmethod="post"
+                                                                onclick="this.form.newDate.value='';">
+                                                            Per sempre
+                                                        </button>
+                                                    </form>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity; // Aggiungi questo using per IdentityUser
 namespace AstaLegheFC.Data
 {
     //               👇 QUI LA MODIFICA FONDAMENTALE 👇
-    public class AppDbContext : IdentityDbContext<IdentityUser> // Specifichiamo di usare la classe IdentityUser di default
+    public class AppDbContext : IdentityDbContext<ApplicationUser> // Specifichiamo di usare la classe IdentityUser di default
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public AppDbContext() { }

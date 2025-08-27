@@ -27,10 +27,10 @@ namespace AstaLegheFC.Controllers
         private readonly BazzerService _bazzerService;
         private readonly LegaService _legaService;
         private readonly IHubContext<BazzerHub> _hubContext;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
         // Costruttore aggiornato per ricevere UserManager
-        public AdminController(AppDbContext context, BazzerService bazzerService, LegaService legaService, IHubContext<BazzerHub> hubContext, UserManager<IdentityUser> userManager)
+        public AdminController(AppDbContext context, BazzerService bazzerService, LegaService legaService, IHubContext<BazzerHub> hubContext, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _bazzerService = bazzerService;

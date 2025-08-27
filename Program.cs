@@ -1,10 +1,11 @@
 using AstaLegheFC.Data;
 using AstaLegheFC.Hubs;
+using AstaLegheFC.Models;
 using AstaLegheFC.Services;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.UI.Services;
-
+using Microsoft.EntityFrameworkCore;
+using System;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,8 +15,11 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // MODIFICATO: Ho impostato RequireConfirmedAccount a 'false' per evitare l'errore sull'invio email che avremmo incontrato dopo
-builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = true;
+})
+.AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<BazzerService>();
@@ -23,6 +27,14 @@ builder.Services.AddScoped<LegaService>();
 builder.Services.AddRazorPages();
 builder.Services.Configure<GmailSettings>(builder.Configuration.GetSection("Gmail"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+// using System;
+builder.Services.AddSession(o =>
+{
+    o.IdleTimeout = TimeSpan.FromHours(8);
+    o.Cookie.HttpOnly = true;
+    o.Cookie.IsEssential = true;
+});
+
 
 var app = builder.Build();
 
@@ -69,6 +81,7 @@ app.UseRouting();
 // ==> CORREZIONE CHIAVE 1: Aggiunta di UseAuthentication() e ordine corretto <==
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession();
 
 
 app.MapHub<BazzerHub>("/bazzerHub");

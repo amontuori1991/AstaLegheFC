@@ -16,11 +16,11 @@ namespace AstaLegheFC.Controllers
     public class LegheController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         private readonly IHubContext<BazzerHub> _hubContext;
 
         public LegheController(AppDbContext context,
-        UserManager<IdentityUser> userManager,        // <-- Aggiunto
+        UserManager<ApplicationUser> userManager,        // <-- Aggiunto
         IHubContext<BazzerHub> hubContext)
         {
             _context = context;

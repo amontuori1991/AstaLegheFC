@@ -12,9 +12,9 @@ namespace AstaLegheFC.Controllers
     public class SquadreController : Controller
     {
         private readonly AppDbContext _context;
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public SquadreController(AppDbContext context, UserManager<IdentityUser> userManager)
+        public SquadreController(AppDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
             _userManager = userManager;

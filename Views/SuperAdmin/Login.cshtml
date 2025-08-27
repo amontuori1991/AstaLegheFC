@@ -1,0 +1,38 @@
+﻿@{
+    ViewData["Title"] = "Super Admin - Login";
+    Layout = "~/Views/Shared/_LayoutAsta.cshtml";  // usa il layout che preferisci
+}
+
+<div class="container" style="max-width: 420px;">
+    <div class="card shadow mt-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Super Admin</h5>
+        </div>
+        <div class="card-body">
+
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-danger">@TempData["Error"]</div>
+            }
+
+            <form asp-controller="SuperAdmin" asp-action="Login" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input name="username" class="form-control" value="system_admin" />
+                    <div class="form-text">Username fisso: <strong>system_admin</strong></div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input name="password" type="password" class="form-control" required />
+                </div>
+
+                <input type="hidden" name="returnUrl" value="@Context.Request.Query["returnUrl"]" />
+
+                <button type="submit" class="btn btn-primary w-100">Entra</button>
+            </form>
+        </div>
+    </div>
+</div>
