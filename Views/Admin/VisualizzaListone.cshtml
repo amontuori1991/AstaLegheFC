@@ -7,6 +7,7 @@
 }
 
 <style>
+    /* ===== Timer overlay ===== */
     #overlay-timer {
         font-size: 3.5rem;
         font-weight: 700;
@@ -127,6 +128,7 @@
         margin-top: 30px
     }
 
+    /* ===== Presence ===== */
     .status-dot {
         display: inline-block;
         width: 10px;
@@ -149,32 +151,99 @@
         background: #f1c40f
     }
 
+    /* ===== Top bar ===== */
     .auction-bar {
         background: rgba(44,62,80,.5);
         border: 1px solid #34495e;
-        border-radius: .5rem;
-        padding: .5rem .75rem
+        border-radius: .75rem;
+        padding: .75rem .9rem;
+        box-shadow: inset 2px 2px 6px rgba(0,0,0,.25), inset -2px -2px 6px rgba(255,255,255,.06)
     }
 
+    /* ===== Neumorphic buttons (3D/pressed) ===== */
+    .btn-neo {
+        border: none !important;
+        position: relative;
+        font-weight: 700;
+        letter-spacing: .2px;
+        border-radius: .8rem !important;
+        padding: .5rem .9rem !important;
+        color: #fff !important;
+        background: #2d3b4d;
+        box-shadow: 6px 6px 12px rgba(0,0,0,.35), -6px -6px 12px rgba(255,255,255,.04);
+        transition: transform .07s ease, box-shadow .07s ease, filter .15s ease;
+    }
+
+        .btn-neo:hover {
+            filter: brightness(1.05)
+        }
+
+        .btn-neo:active {
+            transform: translateY(1px);
+            box-shadow: inset 6px 6px 12px rgba(0,0,0,.35), inset -6px -6px 12px rgba(255,255,255,.04)
+        }
+
+    .btn-neo-warning {
+        background: #d9822b
+    }
+
+    .btn-neo-success {
+        background: #2da44e
+    }
+
+    .btn-neo-danger {
+        background: #c0353a
+    }
+
+    .btn-neo-primary {
+        background: #2563eb
+    }
+
+    .btn-neo-secondary {
+        background: #6b7280
+    }
+
+    .btn-neo-info {
+        background: #0ea5e9
+    }
+
+    .btn-neo-dark {
+        background: #222f3e
+    }
+
+    .btn-neo[disabled], .btn-neo:disabled {
+        opacity: .6;
+        filter: none;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: 6px 6px 12px rgba(0,0,0,.35), -6px -6px 12px rgba(255,255,255,.04) !important
+    }
+
+    /* ===== Letter chips ===== */
     .letters-bar .letter-chip {
-        border: 1px solid #6c757d;
-        background: transparent;
+        border: none;
+        background: #2d3b4d;
         color: #fff;
-        padding: .125rem .5rem;
-        border-radius: .375rem;
-        font-weight: 600;
+        padding: .35rem .6rem;
+        border-radius: .6rem;
+        font-weight: 700;
         line-height: 1;
-        cursor: pointer
+        cursor: pointer;
+        box-shadow: 4px 4px 10px rgba(0,0,0,.35), -4px -4px 10px rgba(255,255,255,.04);
+        transition: transform .07s ease, box-shadow .07s ease, filter .15s ease;
     }
 
         .letters-bar .letter-chip:hover {
-            background: rgba(255,255,255,.06)
+            filter: brightness(1.06)
+        }
+
+        .letters-bar .letter-chip:active {
+            transform: translateY(1px);
+            box-shadow: inset 4px 4px 10px rgba(0,0,0,.35), inset -4px -4px 10px rgba(255,255,255,.04)
         }
 
     .letters-bar .letter-selected {
-        border-color: #0d6efd !important;
-        background: #0d6efd !important;
-        color: #fff !important
+        background: #2563eb !important
     }
 
     .letters-bar .letter-archived {
@@ -191,17 +260,19 @@
         <span id="durata-asta" class="fs-4 fw-bold">00:00</span>
         <span id="stato-pausa" class="badge bg-warning d-none">In PAUSA</span>
     </div>
+
     <div class="btn-group">
-        <button id="btn-pausa" type="button" class="btn btn-outline-warning btn-sm">Pausa</button>
-        <button id="btn-riprendi" type="button" class="btn btn-outline-success btn-sm" disabled>Riprendi</button>
-        <button id="btn-reset" class="btn btn-outline-danger btn-sm">Reset</button>
+        <button id="btn-pausa" type="button" class="btn-neo btn-neo-warning btn-sm">Pausa</button>
+        <button id="btn-riprendi" type="button" class="btn-neo btn-neo-success btn-sm" disabled>Riprendi</button>
+        <button id="btn-stop" type="button" class="btn-neo btn-neo-dark btn-sm" data-state="go">Stop</button>
+        <button id="btn-reset" type="button" class="btn-neo btn-neo-danger btn-sm">Reset</button>
     </div>
 
     @if (ViewBag.SorteggioLetteraAttivo)
     {
         <div class="letters-bar d-flex align-items-center gap-2 flex-wrap mb-2">
-            <button id="btnSorteggiaLettera" type="button" class="btn btn-outline-primary btn-sm">Sorteggia lettera</button>
-            <button id="btnResetLettere" type="button" class="btn btn-outline-secondary btn-sm">Reset lettere</button>
+            <button id="btnSorteggiaLettera" type="button" class="btn-neo btn-neo-primary btn-sm">Sorteggia lettera</button>
+            <button id="btnResetLettere" type="button" class="btn-neo btn-neo-secondary btn-sm">Reset lettere</button>
             <div id="lettersChips" class="d-flex flex-wrap gap-1 ms-1"></div>
         </div>
     }
@@ -213,11 +284,16 @@
     <div class="table-responsive mb-4">
         <table class="table table-bordered table-sm text-center align-middle">
             <thead class="table-primary">
-                <tr><th>Nickname</th>
+                <tr>
+                    <th>Nickname</th>
                     <th>Bonus/Malus</th>
                     <th>Crediti</th>
                     <th>Puntata Max</th>
-                    <th>P</th><th>D</th><th>C</th><th>A</th></tr>
+                    <th>P</th>
+                    <th>D</th>
+                    <th>C</th>
+                    <th>A</th>
+                </tr>
             </thead>
             <tbody>
                 @foreach (var s in riepilogo)
@@ -234,14 +310,17 @@
                                     data-crediti="@s.CreditiDisponibili"
                                     data-pmax="@s.PuntataMassima"
                                     data-giocatori="@(s.PortieriAssegnati.Count + s.DifensoriAssegnati.Count + s.CentrocampistiAssegnati.Count + s.AttaccantiAssegnati.Count)">
-                                Bonus/Malus
+                                +/- Crediti
                             </button>
                         </td>
                         <td><span id="cred-@s.SquadraId">@s.CreditiDisponibili</span></td>
                         <td><span id="pmax-@s.SquadraId">@s.PuntataMassima</span></td>
 
                         <td>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('portieri-@s.Nickname')">@s.PortieriAssegnati.Count +/-</button>
+                            <button class="btn btn-sm btn-warning btn-toggle-rosa" type="button" onclick="toggleLista('portieri-@s.Nickname')">
+                                @s.PortieriAssegnati.Count +/-
+                            </button>
+
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.PortieriAssegnati)
                                 {
@@ -259,7 +338,10 @@
                             </ul>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('difensori-@s.Nickname')">@s.DifensoriAssegnati.Count +/-</button>
+                            <button class="btn btn-sm btn-success btn-toggle-rosa" type="button" onclick="toggleLista('difensori-@s.Nickname')">
+                                @s.DifensoriAssegnati.Count +/-
+                            </button>
+
                             <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.DifensoriAssegnati)
                                 {
@@ -277,7 +359,10 @@
                             </ul>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('centro-@s.Nickname')">@s.CentrocampistiAssegnati.Count +/-</button>
+                            <button class="btn btn-sm btn-primary btn-toggle-rosa" type="button" onclick="toggleLista('centro-@s.Nickname')">
+                                @s.CentrocampistiAssegnati.Count +/-
+                            </button>
+
                             <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.CentrocampistiAssegnati)
                                 {
@@ -295,7 +380,10 @@
                             </ul>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-secondary" type="button" onclick="toggleLista('attaccanti-@s.Nickname')">@s.AttaccantiAssegnati.Count +/-</button>
+                            <button class="btn btn-sm btn-danger btn-toggle-rosa" type="button" onclick="toggleLista('attaccanti-@s.Nickname')">
+                                @s.AttaccantiAssegnati.Count +/-
+                            </button>
+
                             <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.AttaccantiAssegnati)
                                 {
@@ -341,7 +429,7 @@
     <div class="col-auto">
         <form id="formTimer" class="d-flex" onsubmit="return false;">
             <input type="number" class="form-control me-2" id="secondiTimer" value="5" min="2" placeholder="Secondi Timer" />
-            <button type="submit" class="btn btn-secondary">Imposta Timer</button>
+            <button type="submit" class="btn-neo btn-neo-secondary">Imposta Timer</button>
         </form>
     </div>
     <div class="col-auto">
@@ -390,7 +478,6 @@
                                 data-logo="@AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(c.Squadra)">
                             Assegna
                         </button>
-
                     </td>
                 </tr>
             }
@@ -398,7 +485,7 @@
     </table>
 </div>
 
-<!-- Modale Assegna -->
+<!-- ===== Modale Assegna ===== -->
 <div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -412,7 +499,6 @@
                 <p class="text-muted" id="dettagliGiocatoreAssegna"></p>
                 <hr />
                 <input type="hidden" id="idGiocatoreModale" />
-
                 <div class="mb-3 text-start">
                     <label for="squadraSelect" class="form-label">Assegna a:</label>
                     <select id="squadraSelect" class="form-select"></select>
@@ -422,7 +508,6 @@
                     <input type="number" id="costoInput" class="form-control" value="1" min="1" />
                 </div>
             </div>
-
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
                 <button type="button" class="btn btn-primary" id="btnSalvaAssegnazione">Salva Assegnazione</button>
@@ -431,7 +516,7 @@
     </div>
 </div>
 
-<!-- Modale Svincola -->
+<!-- ===== Modale Svincola ===== -->
 <div class="modal fade" id="svincolaModal" tabindex="-1" aria-labelledby="svincolaModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -446,7 +531,9 @@
                 <hr />
                 <input type="hidden" id="idGiocatoreSvincola" />
                 <div class="mb-3 text-start">
-                    <label for="creditiSvincoloInput" class="form-label">Crediti da restituire (costo originale: <span id="costoOriginaleSvincolo"></span>):</label>
+                    <label for="creditiSvincoloInput" class="form-label">
+                        Crediti da restituire (costo originale: <span id="costoOriginaleSvincolo"></span>):
+                    </label>
                     <input type="number" id="creditiSvincoloInput" class="form-control" value="1" min="0" />
                 </div>
             </div>
@@ -458,7 +545,7 @@
     </div>
 </div>
 
-<!-- Overlay Asta -->
+<!-- ===== Overlay Asta ===== -->
 <div id="asta-overlay">
     <div class="asta-box">
         <div class="asta-box-header">
@@ -478,7 +565,7 @@
     </div>
 </div>
 
-<!-- Modale Bonus Crediti -->
+<!-- ===== Modale Bonus Crediti ===== -->
 <div class="modal fade" id="bonusModal" tabindex="-1" aria-labelledby="bonusModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -510,6 +597,22 @@
     </div>
 </div>
 
+<!-- ===== Modale Messaggi generici (mostraMessaggio) ===== -->
+<div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-white" style="background-color:#2c3e50;border:1px solid #3498db;">
+            <div class="modal-header" style="border-bottom-color:#34495e;">
+                <h5 class="modal-title" id="messaggioModaleTitolo">Info</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body"><p id="messaggioModaleCorpo">-</p></div>
+            <div class="modal-footer" style="border-top-color:#34495e;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="messaggioModaleBtnAnnulla" style="display:none;">Annulla</button>
+                <button type="button" class="btn btn-primary" id="messaggioModaleBtnOk">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 <audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
@@ -518,6 +621,9 @@
 @section Scripts {
     @Html.AntiForgeryToken()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
+    <!-- Assicuriamo Bootstrap JS per le modali -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
     <script>
         (function(){
             // ====== VAR GLOBALI ======
@@ -529,10 +635,15 @@
 
             const legaAliasAdmin = "@ViewBag.LegaAlias";
             const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+
             const LS_START = `asta:start:${legaAliasAdmin}`;
             const LS_PAUSE_ACC = `asta:pauseAcc:${legaAliasAdmin}`;
             const LS_PAUSE_AT = `asta:pauseAt:${legaAliasAdmin}`;
             const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
+
+            /* STOP locale (nessun segnale server) */
+            const LS_STOP_ACTIVE = `asta:stopActive:${legaAliasAdmin}`;
+            const LS_STOP_SEC = `asta:stopSec:${legaAliasAdmin}`;
 
             const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
             const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
@@ -543,64 +654,150 @@
             function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
             function submitFormDebounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>document.getElementById("filtroForm").submit(),500); }
             function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
-            window.toggleLista = toggleLista; // usato in onclick
+            window.toggleLista = toggleLista;
 
-                    // --- aggiungi questo blocco nel tuo script (dentro l'IIFE), ad es. vicino a toggleLista ---
-        function apriModaleSvincolo(btn){
-          const id = btn.dataset.id;
-          const nome = btn.dataset.nome;
-          const costo = parseInt(btn.dataset.costo) || 0;
-          const squadra = btn.dataset.squadra;
-          const logo = btn.dataset.logo;
-          const ruolo = btn.dataset.ruolo;
+            // Messaggi modali
+                    // Sostituisci questa funzione nel tuo script:
+              // sostituisci TUTTA la funzione con questa
+        window.mostraMessaggio = function (titolo, corpo, conferma = false) {
+          const mEl = document.getElementById('messaggioModale');
+          if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
 
-          document.getElementById('idGiocatoreSvincola').value = id;
-          document.getElementById('costoOriginaleSvincolo').innerText = costo;
+          const titleEl = document.getElementById('messaggioModaleTitolo');
+          const bodyEl  = document.getElementById('messaggioModaleCorpo');
+          let   btnOk   = document.getElementById('messaggioModaleBtnOk');
+          let   btnAnn  = document.getElementById('messaggioModaleBtnAnnulla');
 
-                 const input = document.getElementById('creditiSvincoloInput');
-        if (input) {
-          input.min = 0;
-          input.removeAttribute('max');   // ← niente tetto massimo lato UI
-          input.value = String(costo);    // precompila col costo, ma l’admin può modificarlo liberamente
-        }
+          titleEl.textContent = titolo || 'Info';
+          bodyEl.textContent  = corpo  || '';
+
+          btnAnn.style.display = conferma ? '' : 'none';
+
+          const bs = bootstrap.Modal.getOrCreateInstance(mEl);
+
+          // reset listeners (clone trick)
+          btnOk.replaceWith(btnOk.cloneNode(true));
+          btnAnn.replaceWith(btnAnn.cloneNode(true));
+          btnOk  = document.getElementById('messaggioModaleBtnOk');
+          btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
+
+          return new Promise((resolve) => {
+            let decided = false;
+
+            const cleanup = () => {
+              mEl.removeEventListener('hidden.bs.modal', onHidden);
+            };
+
+            const onHidden = () => {
+              // se arrivo qui senza onOk/onAnn ⇒ chiusura con X/backdrop
+              if (!decided) { decided = true; resolve(false); }
+              cleanup();
+            };
+
+            const onOk = () => {
+              if (decided) return;
+              decided = true;
+              // risolvo true DOPO la chiusura reale
+              mEl.addEventListener('hidden.bs.modal', () => { resolve(true); cleanup(); }, { once: true });
+              bs.hide();
+            };
+
+            const onAnn = () => {
+              if (decided) return;
+              decided = true;
+              mEl.addEventListener('hidden.bs.modal', () => { resolve(false); cleanup(); }, { once: true });
+              bs.hide();
+            };
+
+            btnOk.addEventListener('click', onOk,  { once: true });
+            if (conferma) btnAnn.addEventListener('click', onAnn, { once: true });
+
+            // fallback SOLO se l’utente chiude con X / backdrop
+            mEl.addEventListener('hidden.bs.modal', onHidden);
+            bs.show();
+          });
+        };
 
 
-          document.getElementById('logoGiocatoreSvincola').src = logo || '';
-          document.getElementById('nomeGiocatoreSvincolo').innerText = nome || '';
-          document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+            /* Audio warm-up una sola volta */
+            let audioUnlocked = false;
+            document.addEventListener('click', () => {
+                if (audioUnlocked) return;
+                audioUnlocked = true;
+                ['suono-offerta','suono-countdown','suono-vittoria'].forEach(id => {
+                    const a = document.getElementById(id);
+                    if (!a) return;
+                    a.muted = true;
+                    a.play().catch(()=>{}).finally(() => {
+                      try { a.pause(); a.currentTime = 0; } catch {}
+                      a.muted = false;
+                    });
+                });
+            }, { once:true });
 
-          const modalEl = document.getElementById('svincolaModal');
-          const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-          modal.show();
-        }
-        // esporta per l'onclick inline dei bottoni
-        window.apriModaleSvincolo = apriModaleSvincolo;
-
+            // ====== DURATA GLOBALE ======
+            function computeElapsedSec(){
+                const startIso=localStorage.getItem(LS_START);
+                if(!startIso) return 0;
+                const start=new Date(startIso).getTime();
+                const pauseAcc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+                const pauseActive=(localStorage.getItem(LS_PAUSE_ACTIVE)==="true");
+                const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
+                const extra=pauseActive && pauseAtIso ? Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)) : 0;
+                return Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extra));
+            }
 
             function paintDurata(){
                 const out=document.getElementById('durata-asta');
                 const badge=document.getElementById('stato-pausa');
                 const startIso=localStorage.getItem(LS_START);
                 if(!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
-                const start=new Date(startIso).getTime();
-                const pauseAcc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-                const pauseActive=localStorage.getItem(LS_PAUSE_ACTIVE)==="true";
-                const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
-                const extra=pauseActive && pauseAtIso ? Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)) : 0;
-                const sec=Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extra));
+
+                // STOP locale
+                if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
+                    const frozen = parseInt(localStorage.getItem(LS_STOP_SEC)||"0");
+                    out.textContent = fmt(frozen);
+                    badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
+                    return;
+                }
+
+                const sec = computeElapsedSec();
                 out.textContent=fmt(sec);
-                badge?.classList.toggle('d-none', !pauseActive);
+                badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
             }
             let durataInterval=null;
             function startDurataLoop(){ if(durataInterval) clearInterval(durataInterval); paintDurata(); durataInterval=setInterval(paintDurata,1000); }
+            function stopDurataLoop(){ if(durataInterval){ clearInterval(durataInterval); durataInterval=null; } }
             function resetDurataLocal(){
                 localStorage.removeItem(LS_START);
                 localStorage.removeItem(LS_PAUSE_AT);
                 localStorage.setItem(LS_PAUSE_ACC,"0");
                 localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-                if(durataInterval){ clearInterval(durataInterval); durataInterval=null; }
+                localStorage.setItem(LS_STOP_ACTIVE,"false");
+                localStorage.removeItem(LS_STOP_SEC);
+                stopDurataLoop();
                 const out=document.getElementById('durata-asta'); const badge=document.getElementById('stato-pausa');
                 if(out) out.textContent='00:00'; if(badge) badge.classList.add('d-none');
+                const stopBtn = document.getElementById('btn-stop');
+                if(stopBtn){ stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; }
+            }
+
+            function toggleStop(){
+                const stopBtn = document.getElementById('btn-stop');
+                if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
+                    localStorage.setItem(LS_STOP_ACTIVE,"false");
+                    stopBtn.dataset.state='go';
+                    stopBtn.textContent='Stop';
+                    startDurataLoop();
+                } else {
+                    const sec = computeElapsedSec();
+                    localStorage.setItem(LS_STOP_ACTIVE,"true");
+                    localStorage.setItem(LS_STOP_SEC,String(sec));
+                    stopBtn.dataset.state='stop';
+                    stopBtn.textContent='Riprendi Timer';
+                    paintDurata();
+                    stopDurataLoop();
+                }
             }
 
             function applyInitialFilter(letter){
@@ -608,7 +805,6 @@
                 const nomeInput=document.getElementById('nomeFilterInput');
                 const squadraInput=document.getElementById('squadraFilterInput');
                 const sorteggioInput=document.getElementById('sorteggioInput');
-
                 if (sorteggioInput) sorteggioInput.value='true';
                 if (inizialeInput) inizialeInput.value=letter||'';
                 if (nomeInput) nomeInput.value='';
@@ -638,18 +834,17 @@
             }
 
             document.addEventListener('DOMContentLoaded', function(){
-                // pulizia eventuale ?bp= nell’URL (vecchi link)
-                try{
-                    const url=new URL(window.location.href);
-                    if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); }
-                }catch{}
+                // pulizia ?bp=
+                try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
 
-                const squadreArr = JSON.parse('@Html.Raw(squadreJson)');
+                // dati squadre per modale Assegna
+                let squadreArr = [];
+                try { squadreArr = JSON.parse('@Html.Raw(squadreJson)') || []; } catch (e) { console.error('Errore parse squadreJson', e); squadreArr = []; }
+
                 const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
                 const SLOT_TOTALI = parseInt("@(ViewBag.SlotTotali ?? 0)") || 0;
 
-
-                // ====== FILTRI (digita → debounce submit)
+                // FILTRI
                 const urlParams=new URLSearchParams(window.location.search);
                 const nomeFilter=document.getElementById('nomeFilterInput');
                 if (urlParams.has('nome') && urlParams.get('nome')!=='' && nomeFilter){
@@ -659,95 +854,134 @@
                 nomeFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
                 squadraFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
 
-                // Toggle liste nel riepilogo (senza ID col nickname)
-                document.querySelectorAll('table.table-bordered.table-sm button.btn.btn-sm.btn-secondary').forEach(btn=>{
-                    if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
-                    btn.addEventListener('click', (ev)=>{
-                        ev.preventDefault(); ev.stopPropagation();
-                        const td=btn.closest('td'); const ul=td?.querySelector('ul'); if(ul) ul.classList.toggle('d-none');
-                    });
-                });
-
-                // ====== PULSANTI "ASTA" / "ASSEGNA"
-                document.querySelectorAll('.btn-avvia-asta').forEach(btn=>{
-                    btn.addEventListener('click', ()=>{
-                        const id=btn.dataset.id;
-                        const mantra=btn.dataset.mantra==='true';
-                        const body=`id=${encodeURIComponent(id)}&mantra=${mantra}`;
-                        fetch('/Admin/AvviaAsta', {
-                            method:'POST',
-                            headers:{
-                                'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8',
-                                'RequestVerificationToken': antiToken
-                            },
-                            body
-                        }).then(async r=>{
-                            if(!r.ok){
-                                const t=await r.text().catch(()=>'-');
-                                console.error('AvviaAsta fallita', r.status, t);
-                                await mostraMessaggio('Errore','Errore avvio asta.');
-                            }
-                        }).catch(err=>{
-                            console.error('AvviaAsta errore:', err);
-                            mostraMessaggio('Errore','Impossibile avviare l’asta.');
-                        });
-                    });
-                });
-
-                       document.querySelectorAll('.btn-assegna').forEach(btn => {
-          btn.addEventListener('click', function () {
-            // dati dal bottone
-            const id = this.dataset.id;
-            const nome = this.dataset.nome || '';
-            const ruolo = this.dataset.ruolo || '';
-            const squadra = this.dataset.squadra || '';
-            const logo = this.dataset.logo || '';
-
-            // campi modale
-            document.getElementById('idGiocatoreModale').value = id;
-            document.getElementById('nomeGiocatoreModale').innerText = nome;
-            document.getElementById('dettagliGiocatoreAssegna').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
-            const img = document.getElementById('logoGiocatoreAssegna');
-            if (img) img.src = logo;
-
-            // riempi select squadre
-            const sel = document.getElementById('squadraSelect');
-            sel.innerHTML = '';
-            squadreArr.forEach(s => {
-              const o = document.createElement('option');
-              o.value = s.SquadraId;
-              o.innerText = s.Nickname;
-              sel.appendChild(o);
+                // Toggle liste nel riepilogo
+                        // Toggle liste nel riepilogo (robusto ai cambi di colore)
+        document.querySelectorAll('table.table-bordered.table-sm button.btn-toggle-rosa').forEach(btn=>{
+            if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
+            btn.addEventListener('click', (ev)=>{
+                ev.preventDefault(); ev.stopPropagation();
+                const td = btn.closest('td');
+                const ul = td?.querySelector('ul');
+                if (ul) ul.classList.toggle('d-none');
             });
-
-            // apri modale
-            new bootstrap.Modal(document.getElementById('assegnaModal')).show();
-          });
         });
 
 
-                document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', ()=>{
-                    const payload={
-                        giocatoreId: parseInt(document.getElementById('idGiocatoreModale').value),
-                        squadraId: parseInt(document.getElementById('squadraSelect').value),
-                        costo: parseInt(document.getElementById('costoInput').value)
-                    };
-                    fetch('/Admin/AssegnaManualmente',{
-                        method:'POST',
-                        headers:{ 'Content-Type':'application/json', 'RequestVerificationToken': antiToken },
-                        body: JSON.stringify(payload)
-                    }).then(async r=>{
-                        if(r.ok){ location.reload(); }
-                        else{ await mostraMessaggio('Errore','Errore assegnazione.'); }
-                    });
+                // ====== PULSANTI "ASTA" / "ASSEGNA" con delegation ======
+                document.addEventListener('click', async (ev) => {
+                    const btnAsta = ev.target.closest('.btn-avvia-asta');
+                    const btnAssegna = ev.target.closest('.btn-assegna');
+
+                    // === AVVIA ASTA ===
+                    if (btnAsta) {
+                        ev.preventDefault();
+                        try {
+                            const id = btnAsta.dataset.id;
+                            const mantra = btnAsta.dataset.mantra === 'true';
+                            const body = `id=${encodeURIComponent(id)}&mantra=${mantra}`;
+
+                            const r = await fetch('/Admin/AvviaAsta', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                    'RequestVerificationToken': antiToken
+                                },
+                                body
+                            });
+
+                            if (!r.ok) {
+                                const t = await r.text().catch(() => '-');
+                                console.error('AvviaAsta fallita', r.status, t);
+                                await mostraMessaggio?.('Errore', 'Errore avvio asta.');
+                                return;
+                            }
+
+                            // Feedback immediato
+                            const overlay = document.getElementById('asta-overlay');
+                            if (overlay) {
+                                document.getElementById('overlay-nome-giocatore').innerText = '…';
+                                document.getElementById('overlay-dettagli-giocatore').innerText = 'In attesa…';
+                                document.getElementById('overlay-offerta').innerText = '0';
+                                document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
+                                document.getElementById('overlay-timer').innerText = '--';
+                                overlay.classList.add('visible');
+                            }
+                            // nudge
+                            try { if (window.connection) await window.connection.invoke("RichiediStatoAttuale"); } catch {}
+                        } catch (err) {
+                            console.error('AvviaAsta errore:', err);
+                            await mostraMessaggio?.('Errore','Impossibile avviare l’asta.');
+                        }
+                        return;
+                    }
+
+                    // === ASSEGNA (modale) ===
+                    if (btnAssegna) {
+                        ev.preventDefault();
+                        try {
+                            const id = btnAssegna.dataset.id;
+                            const nome = btnAssegna.dataset.nome || '';
+                            const ruolo = btnAssegna.dataset.ruolo || '';
+                            const squadra = btnAssegna.dataset.squadra || '';
+                            const logo = btnAssegna.dataset.logo || '';
+
+                            document.getElementById('idGiocatoreModale').value = id;
+                            document.getElementById('nomeGiocatoreModale').innerText = nome;
+                            document.getElementById('dettagliGiocatoreAssegna').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+                            const img = document.getElementById('logoGiocatoreAssegna');
+                            if (img) img.src = logo;
+
+                            const sel = document.getElementById('squadraSelect');
+                            sel.innerHTML = '';
+                            (squadreArr || []).forEach(s => {
+                                const o = document.createElement('option');
+                                o.value = s.SquadraId;
+                                o.innerText = s.Nickname;
+                                sel.appendChild(o);
+                            });
+
+                            const modalEl = document.getElementById('assegnaModal');
+                            const modal = bootstrap?.Modal?.getOrCreateInstance?.(modalEl);
+                            if (modal) modal.show();
+                            else {
+                                modalEl?.classList.add('show');
+                                modalEl?.setAttribute('style','display:block');
+                            }
+                        } catch (e) {
+                            console.error('Errore apertura modale Assegna', e);
+                            await mostraMessaggio?.('Errore', 'Impossibile aprire la modale di assegnazione.');
+                        }
+                        return;
+                    }
                 });
 
-                // ====== MODALE SVINCOLO
+                // ====== SVINCOLO ======
+                window.apriModaleSvincolo = function(btn){
+                    const id = btn.dataset.id;
+                    const nome = btn.dataset.nome || '';
+                    const costo = parseInt(btn.dataset.costo) || 0;
+                    const squadra = btn.dataset.squadra || '';
+                    const logo = btn.dataset.logo || '';
+                    const ruolo = btn.dataset.ruolo || '';
+
+                    document.getElementById('idGiocatoreSvincola').value = id;
+                    document.getElementById('costoOriginaleSvincolo').innerText = costo;
+                    const input = document.getElementById('creditiSvincoloInput');
+                    if (input) { input.min = 0; input.removeAttribute('max'); input.value = String(costo); }
+
+                    document.getElementById('logoGiocatoreSvincola').src = logo;
+                    document.getElementById('nomeGiocatoreSvincolo').innerText = nome;
+                    document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+
+                    const modalEl = document.getElementById('svincolaModal');
+                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modal.show();
+                };
+
                 document.getElementById('btnConfermaSvincolo')?.addEventListener('click', ()=>{
                     const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
-                    const costoOriginale=parseInt(document.getElementById('costoOriginaleSvincolo').innerText);
-                            let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
-        if (isNaN(crediti) || crediti < 0) crediti = 0; // niente clamp superiore: decide l’admin
+                    let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
+                    if (isNaN(crediti) || crediti < 0) crediti = 0;
 
                     fetch('/Admin/SvincolaGiocatore',{
                         method:'POST',
@@ -759,77 +993,69 @@
                     });
                 });
 
-                        // === BONUS CREDITI ===
-        let bonusModal, bonusDeltaInput;
+                // === BONUS CREDITI ===
+                let bonusModal, bonusDeltaInput;
+                function calcolaPuntataMax(creditiDisponibili, giocatoriCount) {
+                    const SLOT_TOTALI = parseInt("@(ViewBag.SlotTotali ?? 0)") || 0;
+                    const slotRimasti = Math.max(0, SLOT_TOTALI - (parseInt(giocatoriCount) || 0));
+                    const pmax = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+                    return Math.max(0, pmax);
+                }
+                function aggiornaPreviewBonus() {
+                    const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
+                    const giocatoriCount = parseInt(document.getElementById('bonusGiocatoriCount').value) || 0;
+                    const delta = parseInt(bonusDeltaInput.value) || 0;
+                    const afterCred = currCred + delta;
+                    const afterPMax = calcolaPuntataMax(afterCred, giocatoriCount);
+                    document.getElementById('bonusCreditiDopo').textContent = afterCred;
+                    document.getElementById('bonusPMaxDopo').textContent = afterPMax;
+                }
+                document.querySelectorAll('.btn-bonus').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const sId = parseInt(btn.dataset.squadraid);
+                        const nick = btn.dataset.nickname || '';
+                        const cred = parseInt(btn.dataset.crediti) || 0;
+                        const pmax = parseInt(btn.dataset.pmax) || 0;
+                        const giocatoriCount = parseInt(btn.dataset.giocatori) || 0;
 
-        function calcolaPuntataMax(creditiDisponibili, giocatoriCount) {
-          const slotRimasti = Math.max(0, SLOT_TOTALI - (parseInt(giocatoriCount) || 0));
-          const pmax = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
-          return Math.max(0, pmax);
-        }
+                        document.getElementById('bonusSquadraId').value = sId;
+                        document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
+                        document.getElementById('bonusNick').textContent = nick;
+                        document.getElementById('bonusCreditiAttuali').textContent = cred;
+                        document.getElementById('bonusPMaxAttuale').textContent = pmax;
 
-        function aggiornaPreviewBonus() {
-          const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
-          const giocatoriCount = parseInt(document.getElementById('bonusGiocatoriCount').value) || 0;
-          const delta = parseInt(bonusDeltaInput.value) || 0;
+                        bonusDeltaInput = document.getElementById('bonusDeltaInput');
+                        bonusDeltaInput.value = "0";
+                        aggiornaPreviewBonus();
 
-          const afterCred = currCred + delta;
-          const afterPMax = calcolaPuntataMax(afterCred, giocatoriCount);
+                        if (!bonusModal) {
+                            bonusModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
+                        }
+                        bonusModal.show();
+                    });
+                });
+                document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
+                document.getElementById('btnConfermaBonus')?.addEventListener('click', async () => {
+                    const sId = parseInt(document.getElementById('bonusSquadraId').value);
+                    const delta = parseInt(document.getElementById('bonusDeltaInput').value) || 0;
+                    try {
+                        const r = await fetch('/Admin/AggiornaCreditiBonus', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': antiToken
+                            },
+                            body: JSON.stringify({ squadraId: sId, delta })
+                        });
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        bonusModal?.hide();
+                    } catch (e) {
+                        console.error(e);
+                        await mostraMessaggio?.('Errore', 'Impossibile applicare il bonus.');
+                    }
+                });
 
-          document.getElementById('bonusCreditiDopo').textContent = afterCred;
-          document.getElementById('bonusPMaxDopo').textContent = afterPMax;
-        }
-
-        document.querySelectorAll('.btn-bonus').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const sId = parseInt(btn.dataset.squadraid);
-            const nick = btn.dataset.nickname || '';
-            const cred = parseInt(btn.dataset.crediti) || 0;
-            const pmax = parseInt(btn.dataset.pmax) || 0;
-            const giocatoriCount = parseInt(btn.dataset.giocatori) || 0;
-
-            document.getElementById('bonusSquadraId').value = sId;
-            document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
-            document.getElementById('bonusNick').textContent = nick;
-            document.getElementById('bonusCreditiAttuali').textContent = cred;
-            document.getElementById('bonusPMaxAttuale').textContent = pmax;
-
-            bonusDeltaInput = document.getElementById('bonusDeltaInput');
-            bonusDeltaInput.value = "0";
-            aggiornaPreviewBonus();
-
-            if (!bonusModal) {
-              bonusModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
-            }
-            bonusModal.show();
-          });
-        });
-
-        document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
-
-        document.getElementById('btnConfermaBonus')?.addEventListener('click', async () => {
-          const sId = parseInt(document.getElementById('bonusSquadraId').value);
-          const delta = parseInt(document.getElementById('bonusDeltaInput').value) || 0;
-          try {
-            const r = await fetch('/Admin/AggiornaCreditiBonus', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': antiToken
-              },
-              body: JSON.stringify({ squadraId: sId, delta })
-            });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            // Chiudo: l’update live arriva via SignalR (RiepilogoAggiornato)
-            bonusModal?.hide();
-          } catch (e) {
-            console.error(e);
-            await mostraMessaggio?.('Errore', 'Impossibile applicare il bonus.');
-          }
-        });
-
-
-                // ====== TIMER / SWITCHES
+                // TIMER / SWITCHES
                 document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
                     e.preventDefault();
                     const s=parseInt(document.getElementById('secondiTimer').value||"0");
@@ -837,7 +1063,6 @@
                     if (r.ok){ durataTimer=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
                     else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
                 });
-
                 document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
                     try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
                     const isAttivo=this.checked;
@@ -845,14 +1070,13 @@
                     if (r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri ' + (isAttivo ? 'ATTIVATO' : 'DISATTIVATO'));
                     else await mostraMessaggio('Errore','Errore aggiornamento regola.');
                 });
-
-                        document.getElementById('mantraSwitch')?.addEventListener('change', function(){
-          const hidden = document.getElementById('mantraInput');
-          if (hidden) hidden.value = this.checked ? 'true' : 'false';
-          const url=new URL(window.location.href);
-          url.searchParams.set('mantra', this.checked);
-          window.location.href=url.toString();
-        });
+                document.getElementById('mantraSwitch')?.addEventListener('change', function(){
+                    const hidden = document.getElementById('mantraInput');
+                    if (hidden) hidden.value = this.checked ? 'true' : 'false';
+                    const url=new URL(window.location.href);
+                    url.searchParams.set('mantra', this.checked);
+                    window.location.href=url.toString();
+                });
                 document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
                     const sorteggioInput=document.getElementById('sorteggioInput');
                     const isAttivo=this.checked;
@@ -862,15 +1086,26 @@
                     if(!isAttivo) url.searchParams.delete('iniziale');
                     window.location.href=url.toString();
                 });
+        document.getElementById('btnAnnullaAsta')?.addEventListener('click', async () => {
+          const ok = await mostraMessaggio('Annulla Asta', 'Sei sicuro?', true);
+          if (!ok) return;
+          try {
+            const r = await fetch('/Admin/AnnullaAsta', {
+              method: 'POST',
+              headers: { 'RequestVerificationToken': antiToken }
+            });
+            if (!r.ok) {
+              const t = await r.text().catch(() => '');
+              console.error('AnnullaAsta HTTP', r.status, t);
+              await mostraMessaggio('Errore', 'Errore annullamento asta.');
+            }
+          } catch (e) {
+            console.error(e);
+            await mostraMessaggio('Errore', 'Errore di rete durante l’annullamento.');
+          }
+        });
 
-                document.getElementById('btnAnnullaAsta')?.addEventListener('click', async ()=>{
-                    if(await mostraMessaggio('Annulla Asta','Sei sicuro?', true)){
-                        const r=await fetch('/Admin/AnnullaAsta',{ method:'POST', headers:{ 'RequestVerificationToken': antiToken } });
-                        if(!r.ok) await mostraMessaggio('Errore','Errore annullamento.');
-                    }
-                });
-
-                // ====== LETTERE
+                // LETTERE
                 renderLettersChips();
                 document.getElementById('btnSorteggiaLettera')?.addEventListener('click', ()=>{
                     const archived=getArchivedLetters(); const pool=ALPH.filter(l=>!archived.includes(l));
@@ -885,8 +1120,9 @@
                     document.getElementById('filtroForm').submit();
                 });
 
-                // ====== SIGNALR
+                // ====== SIGNALR ======
                 const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+                window.connection = connection; // per eventuale nudge nel click Asta
 
                 connection.on("StatoAsta",(stato)=>{
                     if(stato?.startUtc){ localStorage.setItem(LS_START, stato.startUtc); }
@@ -907,25 +1143,17 @@
                     startDurataLoop();
                 });
 
-        connection.on("RiepilogoAggiornato", (data) => {
-          const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
-          squads.forEach(s => {
-            // aggiorna numeri in tabella
-            const cred = document.getElementById(`cred-${s.squadraId}`);
-            const pmax = document.getElementById(`pmax-${s.squadraId}`);
-            if (cred) cred.textContent = s.creditiDisponibili;
-            if (pmax) pmax.textContent = s.puntataMassima;
-
-            // se usi il bottone "Bonus", aggiorna anche i dataset per aperture successive coerenti
-            const btn = document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
-            if (btn) {
-              btn.dataset.crediti = s.creditiDisponibili;
-              btn.dataset.pmax = s.puntataMassima;
-            }
-          });
-        });
-
-
+                connection.on("RiepilogoAggiornato", (data) => {
+                    const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+                    squads.forEach(s => {
+                        const cred = document.getElementById(`cred-${s.squadraId}`);
+                        const pmax = document.getElementById(`pmax-${s.squadraId}`);
+                        if (cred) cred.textContent = s.creditiDisponibili;
+                        if (pmax) pmax.textContent = s.puntataMassima;
+                        const btn = document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
+                        if (btn) { btn.dataset.crediti = s.creditiDisponibili; btn.dataset.pmax = s.puntataMassima; }
+                    });
+                });
 
                 connection.on("MostraGiocatoreInAsta",(giocatore)=>{
                     if(!localStorage.getItem(LS_START)){
@@ -964,7 +1192,7 @@
 
                     const isRealBid = (offerta > (lastOffertaAdmin||0));
                     if(isRealBid){
-                        document.getElementById('suono-offerta').play();
+                        try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch(_){}
                         const log=document.getElementById('overlay-log'); if(log){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; log.prepend(p); }
                     }
                     lastOffertaAdmin=offerta;
@@ -974,8 +1202,7 @@
                     const tick=()=>{
                         const sec = Math.max(0, Math.ceil((end.getTime() - Date.now()) / 1000));
                         paint(sec);
-                        if(sec>=0){ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play(); }
-                        else{ clearInterval(countdownTimerAdmin); }
+                        if(sec>=0){ try{ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play().catch(()=>{}); }catch(_){}} else { clearInterval(countdownTimerAdmin); }
                     };
                     tick(); countdownTimerAdmin=setInterval(tick,1000);
 
@@ -989,7 +1216,7 @@
 
                 connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
                     clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
-                    document.getElementById('suono-vittoria').play();
+                    try{ const v=document.getElementById('suono-vittoria'); v.currentTime=0; v.play().catch(()=>{}); }catch(_){}
                     const offEl=document.getElementById('overlay-offerente'); offEl.innerText=`AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color='#2ecc71';
                     document.getElementById('overlay-offerta').innerText=prezzo||0;
                     const log=document.getElementById('overlay-log'); if(log){ const ts=new Date().toLocaleTimeString(); const row=document.createElement('p'); row.innerText=`[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`; log.prepend(row); }
@@ -1000,18 +1227,31 @@
                 connection.on("AstaAnnullata",()=>{ clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null; document.getElementById('asta-overlay').classList.remove('visible'); });
 
                 connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
-                connection.on("AstaPausa",()=>{ localStorage.setItem(LS_PAUSE_ACTIVE,"true"); localStorage.setItem(LS_PAUSE_AT,new Date().toISOString()); document.getElementById('btn-pausa').disabled=true; document.getElementById('btn-riprendi').disabled=false; paintDurata(); });
+                connection.on("AstaPausa",()=>{
+                    localStorage.setItem(LS_PAUSE_ACTIVE,"true");
+                    localStorage.setItem(LS_PAUSE_AT,new Date().toISOString());
+                    document.getElementById('btn-pausa').disabled=true;
+                    document.getElementById('btn-riprendi').disabled=false;
+                    paintDurata();
+                });
                 connection.on("AstaRipresa",()=>{
                     const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
                     const acc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-                    if(pauseAtIso){ const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)); localStorage.setItem(LS_PAUSE_ACC, String(acc+delta)); }
-                    localStorage.setItem(LS_PAUSE_ACTIVE,"false"); localStorage.removeItem(LS_PAUSE_AT);
-                    document.getElementById('btn-pausa').disabled=false; document.getElementById('btn-riprendi').disabled=true; paintDurata();
+                    if(pauseAtIso){
+                        const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
+                        localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
+                    }
+                    localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+                    localStorage.removeItem(LS_PAUSE_AT);
+                    document.getElementById('btn-pausa').disabled=false;
+                    document.getElementById('btn-riprendi').disabled=true;
+                    paintDurata();
                 });
                 connection.on("DurataResettata", resetDurataLocal);
                 connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
                     mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
-                    const inputNome=document.querySelector('#filtroForm input[name="nome"]'); if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
+                    const inputNome=document.querySelector('#filtroForm input[name="nome"]');
+                    if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
                 });
 
                 connection.start().then(()=>{
@@ -1021,10 +1261,66 @@
                     connection.invoke("RichiediStatoAttuale");
                 }).catch(err=>console.error(err));
 
-                // Bottoni pausa/riprendi/reset che usano "connection" DEVONO stare qui dentro:
+                // Bottoni top bar
                 document.getElementById('btn-pausa')?.addEventListener('click', ()=>{ connection.invoke("PausaAsta", legaAliasAdmin).catch(()=>{}); });
                 document.getElementById('btn-riprendi')?.addEventListener('click', ()=>{ connection.invoke("RiprendiAsta", legaAliasAdmin).catch(()=>{}); });
                 document.getElementById('btn-reset')?.addEventListener('click', async ()=>{ resetDurataLocal(); try{ await connection.invoke("ResetDurataAsta", legaAliasAdmin); }catch{} });
+                document.getElementById('btn-stop')?.addEventListener('click', toggleStop);
+
+                        document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async () => {
+          const idGioc = parseInt(document.getElementById('idGiocatoreModale').value);
+          const squadraId = parseInt(document.getElementById('squadraSelect').value);
+          const costo = parseInt(document.getElementById('costoInput').value);
+
+          if (!idGioc || !squadraId || isNaN(costo) || costo < 0) {
+            await mostraMessaggio('Dati mancanti', 'Controlla squadra e costo.');
+            return;
+          }
+
+          // chiudo SUBITO la modale per evitare che rimanga bloccata
+          const modalEl = document.getElementById('assegnaModal');
+          bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+
+          try {
+            const r = await fetch('/Admin/AssegnaManualmente', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': antiToken
+              },
+              body: JSON.stringify({ giocatoreId: idGioc, squadraId, costo })
+            });
+
+            if (!r.ok) {
+              const t = await r.text().catch(() => '');
+              console.error('AssegnaManualmente HTTP', r.status, t);
+              await mostraMessaggio('Errore', 'Errore durante l’assegnazione.');
+              return;
+            }
+
+            // ok → ricarico per aggiornare riepilogo/rose
+            location.reload();
+          } catch (e) {
+            console.error(e);
+            await mostraMessaggio('Errore', 'Errore di rete durante l’assegnazione.');
+          }
+        });
+
+                // inizializza stato Stop al load
+                (function initStopUI(){
+                    const stopBtn=document.getElementById('btn-stop');
+                    if(!stopBtn) return;
+                    if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
+                        stopBtn.dataset.state='stop';
+                        stopBtn.textContent='Riprendi Timer';
+                        stopDurataLoop();
+                        paintDurata();
+                    } else {
+                        stopBtn.dataset.state='go';
+                        stopBtn.textContent='Stop';
+                        startDurataLoop();
+                    }
+                })();
 
                 // helper paint partecipanti
                 window.paintPartecipanti=function(list){

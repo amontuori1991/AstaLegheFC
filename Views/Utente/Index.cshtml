@@ -526,6 +526,56 @@
             color: #fff;
         }
 
+    /* Badge ruolo nel riepilogo rose */
+    .role-badge {
+        display: inline-block;
+        min-width: 22px;
+        height: 22px;
+        line-height: 22px;
+        text-align: center;
+        font-weight: 800;
+        border-radius: 6px;
+        color: #fff;
+        margin-right: 6px; /* spazio fra badge e numero */
+        font-size: .9rem;
+    }
+
+    /* Colori per ruolo */
+    .role-P {
+        background: #d9822b;
+    }
+    /* arancione */
+    .role-D {
+        background: #2da44e;
+    }
+    /* verde */
+    .role-C {
+        background: #2563eb;
+    }
+    /* blu */
+    .role-A {
+        background: #c0353a;
+    }
+    /* rosso */
+
+    /* Allineamento più compatto nella griglia ruoli */
+    .role-grid .rg {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .role-grid .lbl {
+        display: inline-flex;
+        align-items: center;
+    }
+
+    /* Badge ruolo nella lista giocatori del riepilogo */
+    .pl-role .role-badge {
+        margin-left: 6px;
+        transform: translateY(-1px);
+    }
+
     /* blocco centrale (per “La tua”) */
     .hg-center {
         text-align: center;
@@ -938,28 +988,44 @@
             const riepilogoContainer = document.getElementById('riepilogoContainer');
             const riepilogoLoading = document.getElementById('riepilogo-loading');
 
-            function renderListaGiocatori(titolo, arr, mantraAttivo) {
-                const items = (arr || []).map(p => {
-                    const ruoloVisibile = mantraAttivo ? (p.ruoloMantra || p.ruolo) : p.ruolo;
-                    return `
-                      <div class="pl-item">
-                        <div class="pl-left">
-                          <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
-                          <span class="pl-name">${p.nome}</span>
-                          <span class="pl-role">${ruoloVisibile || ''}</span>
-                        </div>
-                        <span class="pl-cred">(${p.crediti})</span>
-                      </div>
-                    `;
-                }).join('') || `<div class="text-muted small">Nessuno</div>`;
+                    function renderListaGiocatori(titolo, arr, mantraAttivo) {
+            const roleBadgeHtml = (r) => {
+                if (!r || r.length !== 1) return null;
+                const L = r.toUpperCase();
+                if (!['P','D','C','A'].includes(L)) return null;
+                const cls = `role-${L}`;
+                return `<span class="role-badge ${cls}">${L}</span>`;
+            };
+
+            const items = (arr || []).map(p => {
+                const ruoloVisibile = mantraAttivo ? (p.ruoloMantra || p.ruolo) : p.ruolo;
+                const badge = roleBadgeHtml(ruoloVisibile);
+                // Se c’è il badge (ruolo singola lettera), mostro SOLO il badge.
+                // Altrimenti mantengo il testo del ruolo com’è ora.
+                const ruoloMarkup = badge
+                    ? `<span class="pl-role">${badge}</span>`
+                    : `<span class="pl-role">${ruoloVisibile || ''}</span>`;
 
                 return `
-                  <div class="role-col">
-                    <div class="role-title">${titolo}</div>
-                    ${items}
+                  <div class="pl-item">
+                    <div class="pl-left">
+                      <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
+                      <span class="pl-name">${p.nome}</span>
+                      ${ruoloMarkup}
+                    </div>
+                    <span class="pl-cred">(${p.crediti})</span>
                   </div>
                 `;
-            }
+            }).join('') || `<div class="text-muted small">Nessuno</div>`;
+
+            return `
+              <div class="role-col">
+                <div class="role-title">${titolo}</div>
+                ${items}
+              </div>
+            `;
+        }
+
 
             function renderAccordionSquadre(data) {
                 const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
@@ -991,10 +1057,23 @@
             <div class="hg-left">
               <span class="team-chip nick-clip" title="${s.nickname}">${s.nickname}</span>
               <div class="role-grid">
-                <span class="rg">P:<span class="num">${counts.P}</span></span>
-                <span class="rg">D:<span class="num">${counts.D}</span></span>
-                <span class="rg">C:<span class="num">${counts.C}</span></span>
-                <span class="rg">A:<span class="num">${counts.A}</span></span>
+        <span class="rg">
+          <span class="lbl"><span class="role-badge role-P">P</span></span>
+          <span class="num">${counts.P}</span>
+        </span>
+        <span class="rg">
+          <span class="lbl"><span class="role-badge role-D">D</span></span>
+          <span class="num">${counts.D}</span>
+        </span>
+        <span class="rg">
+          <span class="lbl"><span class="role-badge role-C">C</span></span>
+          <span class="num">${counts.C}</span>
+        </span>
+        <span class="rg">
+          <span class="lbl"><span class="role-badge role-A">A</span></span>
+          <span class="num">${counts.A}</span>
+        </span>
+
               </div>
             </div>
 
