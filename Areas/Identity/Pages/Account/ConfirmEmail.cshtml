@@ -1,0 +1,49 @@
+﻿@page
+@model AstaLegheFC.Areas.Identity.Pages.Account.ConfirmEmailModel
+@{
+    ViewData["Title"] = "Conferma email";
+}
+
+<style>
+    body {
+        background: #1e1e1e;
+        color: #f0f0f0;
+        font-family: 'Segoe UI',sans-serif;
+    }
+
+    .wrap {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        text-align: center;
+    }
+
+    .card {
+        background: #223245;
+        border: 1px solid #314257;
+        border-radius: 12px;
+        padding: 24px;
+        max-width: 640px;
+        width: 100%;
+    }
+
+    .btn-primary {
+        background: #e91e63;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background: #c2185b;
+        }
+</style>
+
+<div class="wrap">
+    <div class="card">
+        <img src="~/png/logo_bazzer.png" alt="Bazzer" style="max-height:160px; margin-bottom:14px;" />
+        <h2 class="mb-3">@ViewData["Title"]</h2>
+        <p>@Model.Message</p>
+        <a class="btn btn-primary mt-3" href="/">Vai alla Home</a>
+    </div>
+</div>
