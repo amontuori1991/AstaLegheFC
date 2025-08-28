@@ -447,6 +447,124 @@
     .spacer-crediti {
         height: calc(64px + env(safe-area-inset-bottom, 0px));
     }
+
+    .badge-myteam {
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .badge-credits, .badge-max {
+        display: inline-block;
+        min-width: 45px; /* così tutti i numeri occupano lo stesso spazio */
+        text-align: right; /* allineamento a destra */
+    }
+
+    .role-counts {
+        display: inline-flex;
+        gap: 8px;
+        font-size: 0.85rem;
+        color: #aaa;
+    }
+
+        .role-counts .rc {
+            display: inline-block;
+            min-width: 40px; /* larghezza fissa per ogni colonna */
+        }
+
+        .role-counts .num {
+            display: inline-block;
+            min-width: 16px;
+            text-align: right; /* allinea i numeri a destra */
+            font-weight: 600;
+            color: #fff;
+        }
+    /* griglia uniforme dell’header di ogni squadra */
+    .header-grid {
+        display: grid;
+        grid-template-columns: var(--left-block) 1fr var(--right-block);
+        align-items: center;
+        width: 100%;
+        gap: 8px;
+    }
+
+    /* blocco sinistro = nickname (fisso) + ruoli (griglia fissa) */
+    .hg-left {
+        display: grid;
+        grid-template-columns: var(--nick-width) 1fr;
+        align-items: center;
+        gap: 12px;
+    }
+
+    /* nickname con ellissi se lungo */
+    .nick-clip {
+        display: inline-block;
+        max-width: var(--nick-width);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* griglia ruoli a colonne fisse */
+    .role-grid {
+        display: grid;
+        grid-template-columns: repeat(4, var(--role-col));
+        column-gap: 10px;
+        font-size: 0.95rem;
+        color: #bfc7cf;
+    }
+
+        .role-grid .rg {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .role-grid .num {
+            display: inline-block;
+            min-width: 18px;
+            text-align: right;
+            font-weight: 700;
+            color: #fff;
+        }
+
+    /* blocco centrale (per “La tua”) */
+    .hg-center {
+        text-align: center;
+    }
+
+    /* blocco destro: badge allineate a destra */
+    .hg-right {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    /* numeri nelle badge destra allineati a dx e larghezza costante */
+    .badge-credits, .badge-max {
+        display: inline-block;
+        min-width: 45px;
+        text-align: right;
+    }
+
+    /* dimensioni (puoi ritoccarle) */
+    :root {
+        --nick-width: 140px; /* larghezza fissa nickname */
+        --role-col: 56px; /* larghezza singola colonna P/D/C/A */
+        --left-block: 420px; /* = nick-width + (4 * role-col) + gap approx */
+        --right-block: 220px; /* spazio fisso per le due badge */
+    }
+
+    /* fallback responsive su schermi stretti */
+    @@media (max-width: 576px) {
+        : root
+
+    {
+        --nick-width: 110px;
+        --role-col: 50px;
+        --left-block: 360px;
+        --right-block: 200px;
+    }
+
+    }
 </style>
 
 <div class="row mt-md-4">
@@ -780,19 +898,38 @@
                     return `
                       <div class="accordion-item ${myTeamClass}">
                         <h2 class="accordion-header" id="${headingId}">
-                          <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
-                                  data-bs-toggle="collapse" data-bs-target="#${collapseId}"
-                                  aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
-                            <span class="team-chip">${s.nickname}</span>
-                            <span class="ms-3 small text-muted">P:${counts.P} D:${counts.D} C:${counts.C} A:${counts.A}</span>
-                            <span class="badge bg-secondary ms-2">
-                              Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span>
-                            </span>
-                            <span class="badge bg-secondary ms-2">
-                              Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span>
-                            </span>
-                            ${s.isMe ? '<span class="badge bg-info ms-2">La tua</span>' : ''}
-                          </button>
+        <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
+                data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
+          <div class="header-grid">
+            <!-- SINISTRA: Nickname + ruoli (colonne fisse) -->
+            <div class="hg-left">
+              <span class="team-chip nick-clip" title="${s.nickname}">${s.nickname}</span>
+              <div class="role-grid">
+                <span class="rg">P:<span class="num">${counts.P}</span></span>
+                <span class="rg">D:<span class="num">${counts.D}</span></span>
+                <span class="rg">C:<span class="num">${counts.C}</span></span>
+                <span class="rg">A:<span class="num">${counts.A}</span></span>
+              </div>
+            </div>
+
+            <!-- CENTRO: "La tua" centrato (solo se tua squadra) -->
+            <div class="hg-center">
+              ${s.isMe ? '<span class="badge bg-info">La tua</span>' : ''}
+            </div>
+
+            <!-- DESTRA: Crediti / Max allineati a destra -->
+            <div class="hg-right">
+              <span class="badge bg-secondary">
+                Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span>
+              </span>
+              <span class="badge bg-secondary">
+                Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span>
+              </span>
+            </div>
+          </div>
+        </button>
+
                         </h2>
                         <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
                           <div class="accordion-body">
