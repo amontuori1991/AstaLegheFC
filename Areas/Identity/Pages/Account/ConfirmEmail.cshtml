@@ -37,11 +37,21 @@
         .btn-primary:hover {
             background: #c2185b;
         }
+
+    /* 🔧 anti-schicciamento logo */
+    img.confirm-logo {
+        width: 260px !important; /* scegli la larghezza che preferisci */
+        max-width: 90% !important; /* responsivo su schermi piccoli */
+        height: auto !important; /* mantiene il rapporto d’aspetto */
+        object-fit: contain; /* ulteriore sicurezza */
+        display: block;
+        margin: 0 auto 14px;
+    }
 </style>
 
 <div class="wrap">
     <div class="card">
-        <img src="~/png/logo_bazzer.png" alt="Bazzer" style="max-height:160px; margin-bottom:14px;" />
+        <img src="~/png/logo_bazzer.png" alt="Bazzer" class="confirm-logo" />
         <h2 class="mb-3">@ViewData["Title"]</h2>
         <p>@Model.Message</p>
         <a class="btn btn-primary mt-3" href="/">Vai alla Home</a>
