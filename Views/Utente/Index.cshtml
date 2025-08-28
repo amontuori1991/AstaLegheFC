@@ -588,7 +588,9 @@
             let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
             let timerSecondi = @Model.TimerAsta;
             let fineUtcCorrente = null;
+            let lastFineUtcStr = null; // idempotenza timer
             let countdownTimerUtente = null;
+            let finalizeGuard = false;
 
             let maxPortieri = @Model.MaxPortieri;
             let maxDifensori = @Model.MaxDifensori;
@@ -602,11 +604,11 @@
             // Stato pausa lato client
             let pausaAttivaClient = false;
 
-            // === NUOVO: gestione reconnect ===
+            // === RECONNECT ===
             let pingIntervalId = null;
             let manualReconnectTimer = null;
             let manualAttempts = 0;
-            const MAX_AUTO_ATTEMPTS = 120; // 120 tentativi = 120s
+            const MAX_AUTO_ATTEMPTS = 120; // 120s
             const reconnectOverlay = document.getElementById('reconnect-overlay');
             const reconnectAttemptEl = document.getElementById('reconnect-attempt');
 
@@ -614,6 +616,7 @@
                 reconnectAttemptEl.textContent = attempt ?? 0;
                 reconnectOverlay.classList.add('visible');
                 setBidControlsEnabled(false);
+                stopCountdown();
             }
             function hideReconnectOverlay() {
                 reconnectOverlay.classList.remove('visible');
@@ -624,9 +627,8 @@
                 .withUrl("/bazzerHub")
                 .withAutomaticReconnect({
                     nextRetryDelayInMilliseconds: (ctx) => {
-                        // 1 secondo fisso, fino a 120 tentativi; poi lasciare a null per onclose
                         if (ctx.previousRetryCount < MAX_AUTO_ATTEMPTS) return 1000;
-                        return null; // stop auto; subentra fallback manuale
+                        return null; // stop auto; fallback manuale
                     }
                 })
                 .build();
@@ -640,9 +642,10 @@
             }
 
             function aggiornaStatoPulsantiBazzer() {
-                // Abilitati solo se c'è un giocatore in asta e NON siamo in pausa e connessione ok
-                const hubState = connection.state; // "Disconnected" | "Connecting" | "Connected" | "Reconnecting"
-                let abilitato = idListoneAttuale > 0 && !pausaAttivaClient && hubState === "Connected";
+                const hubState = connection.state;
+                let abilitato = idListoneAttuale > 0
+                                && !pausaAttivaClient
+                                && hubState === signalR.HubConnectionState.Connected;
                 let messaggio = "";
                 if (abilitato) {
                     if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) {
@@ -663,15 +666,39 @@
 
             function stopCountdown(){ clearInterval(countdownTimerUtente); countdownTimerUtente = null; }
 
+            function richiestaChiusuraAstaSafeguard() {
+                if (finalizeGuard) return;
+                finalizeGuard = true;
+                const tryFinalize = async () => {
+                    try {
+                        if (typeof connection.invoke === 'function') {
+                            await connection.invoke("VerificaScadenza", idListoneAttuale);
+                        }
+                    } catch (e) {
+                        try { await connection.invoke("RichiediStatoAttuale"); } catch(_){}
+                    } finally {
+                        setTimeout(()=> finalizeGuard = false, 600);
+                    }
+                };
+                setTimeout(tryFinalize, 250);
+            }
+
             function aggiornaCountdownDaFineUtc() {
                 const timerEl = document.getElementById("timer");
                 stopCountdown();
                 if (!idListoneAttuale || !fineUtcCorrente) { if (timerEl) timerEl.textContent = "-"; return; }
                 const end = new Date(fineUtcCorrente);
                 const tick = () => {
-                    const sec = Math.ceil((end.getTime() - Date.now()) / 1000);
-                    timerEl.textContent = sec >= 0 ? sec : 0;
-                    if (sec <= -1) stopCountdown();
+                    const msLeft = end.getTime() - Date.now();
+                    let sec = Math.ceil(msLeft / 1000);
+                    if (sec <= 0) {
+                        timerEl.textContent = 0;
+                        stopCountdown();
+                        setBidControlsEnabled(false);
+                        richiestaChiusuraAstaSafeguard();
+                        return;
+                    }
+                    timerEl.textContent = sec;
                 };
                 tick();
                 countdownTimerUtente = setInterval(tick, 1000);
@@ -793,7 +820,7 @@
                         riepilogoContainer.innerHTML = '<div class="text-danger">Errore nel caricamento del riepilogo.</div>';
                         return;
                     }
-                    const data = await res.json(); // contiene squads[] (+ eventuale mantraAttivo)
+                    const data = await res.json();
                     riepilogoContainer.innerHTML = renderAccordionSquadre(data);
                 } catch (e) {
                     console.error(e);
@@ -880,6 +907,8 @@
                 document.getElementById("offerta").textContent = "0";
                 offertaAttuale = 0;
                 fineUtcCorrente = null;
+                lastFineUtcStr = null;
+                finalizeGuard = false;
 
                 aggiornaStatoPulsantiBazzer();
                 aggiornaCountdownDaFineUtc();
@@ -889,9 +918,13 @@
                 document.getElementById("offerente").textContent = offerente || "-";
                 document.getElementById("offerta").textContent = offerta || 0;
                 offertaAttuale = offerta || 0;
-                fineUtcCorrente = fineUtc || null;
 
-                if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+                // riavvia countdown solo se cambia davvero l'end
+                if (fineUtc && fineUtc !== lastFineUtcStr) {
+                    lastFineUtcStr = fineUtc;
+                    fineUtcCorrente = fineUtc;
+                    if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+                }
             });
 
             connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
@@ -905,7 +938,8 @@
                 document.getElementById("logo-giocatore-in-asta").style.display = 'none';
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
-                fineUtcCorrente = null; stopCountdown(); document.getElementById("timer").textContent = "-";
+                fineUtcCorrente = null; lastFineUtcStr = null; finalizeGuard = false;
+                stopCountdown(); document.getElementById("timer").textContent = "-";
                 pausaAttivaClient = false; document.getElementById('pausa-overlay').classList.remove('visible');
 
                 aggiornaStatoPulsantiBazzer();
@@ -923,7 +957,8 @@
                 document.getElementById("logo-giocatore-in-asta").style.display = 'none';
                 document.getElementById("offerente").textContent = "-";
                 document.getElementById("offerta").textContent = "0";
-                fineUtcCorrente = null; stopCountdown(); document.getElementById("timer").textContent="-";
+                fineUtcCorrente = null; lastFineUtcStr = null; finalizeGuard = false;
+                stopCountdown(); document.getElementById("timer").textContent="-";
                 pausaAttivaClient = false; document.getElementById('pausa-overlay').classList.remove('visible');
                 aggiornaStatoPulsantiBazzer();
             });
@@ -943,6 +978,7 @@
                 pausaAttivaClient = false;
                 document.getElementById('pausa-overlay').classList.remove('visible');
                 if (fineUtc){
+                    lastFineUtcStr = fineUtc;
                     fineUtcCorrente = fineUtc;
                     aggiornaCountdownDaFineUtc();
                 }
@@ -953,6 +989,7 @@
                 if (stato?.pausaAttiva){
                     pausaAttivaClient = true;
                     setBidControlsEnabled(false);
+                    stopCountdown();
                     document.getElementById('pausa-overlay').classList.add('visible');
                 } else {
                     pausaAttivaClient = false;
@@ -1038,14 +1075,13 @@
             function startPing() {
                 clearPing();
                 pingIntervalId = setInterval(() => {
-                    if (connection.state === "Connected") {
+                    if (connection.state === signalR.HubConnectionState.Connected) {
                         connection.invoke("Ping", legaAlias, nickname).catch(()=>{});
                     }
                 }, 15000);
             }
 
             async function postConnectedSetup() {
-                // Registrazione e stato
                 try { await connection.invoke("RegistratiAllaLega", legaAlias, nickname, false); } catch(_){}
                 try { await connection.invoke("RichiediStatoAttuale"); } catch(_){}
                 aggiornaStatoPulsantiBazzer();
@@ -1060,18 +1096,19 @@
                     hideReconnectOverlay();
                     manualAttempts = 0;
                     await postConnectedSetup();
+                    aggiornaStatoPulsantiBazzer();
                 } catch (err) {
                     console.warn("Connessione iniziale fallita, parte retry 1s:", err);
-                    startManualReconnectLoop(); // parte subito il loop manuale
+                    startManualReconnectLoop();
                 }
             }
 
             function startManualReconnectLoop() {
-                if (manualReconnectTimer) return; // già in corso
+                if (manualReconnectTimer) return;
                 manualAttempts = 0;
                 showReconnectOverlay(0);
                 manualReconnectTimer = setInterval(async () => {
-                    if (connection.state === "Connected") {
+                    if (connection.state === signalR.HubConnectionState.Connected) {
                         stopManualLoop();
                         hideReconnectOverlay();
                         return;
@@ -1083,6 +1120,7 @@
                         stopManualLoop();
                         hideReconnectOverlay();
                         await postConnectedSetup();
+                        aggiornaStatoPulsantiBazzer();
                     } catch (e) {
                         // resta in loop 1s
                     }
@@ -1093,11 +1131,11 @@
                 if (manualReconnectTimer) { clearInterval(manualReconnectTimer); manualReconnectTimer = null; }
             }
 
-            // Eventi SignalR di ciclo vita
             connection.onreconnecting((err) => {
                 console.warn("Reconnecting…", err);
                 showReconnectOverlay((connection._reconnectDisplayCount || 0) + 1);
                 setBidControlsEnabled(false);
+                stopCountdown();
             });
 
             connection.onreconnected((_id) => {
@@ -1106,11 +1144,11 @@
                 stopManualLoop();
                 manualAttempts = 0;
                 postConnectedSetup();
+                aggiornaStatoPulsantiBazzer();
             });
 
             connection.onclose((err) => {
                 console.warn("Connessione chiusa:", err);
-                // Auto-retry si è fermato (ha superato i 120 tentativi) o close esplicita → fallback manuale
                 showReconnectOverlay(manualAttempts);
                 clearPing();
                 startManualReconnectLoop();
@@ -1128,7 +1166,7 @@
 
         });
 
-        // persistenza ultima URL utente (com’era già)
+        // persistenza ultima URL utente
         (function(){
           try {
             var isUtente = /^\/utente(?:\/)?(?:\?|$)/i.test(location.pathname);
