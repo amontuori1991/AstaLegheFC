@@ -139,7 +139,7 @@ namespace AstaLegheFC.Areas.Identity.Pages.Account
             <td class=""card"" style=""background:#223245; border-radius:14px; padding:28px; color:#e8eef6; box-shadow:0 10px 30px rgba(0,0,0,.35);"">
               <h1 style=""margin:0 0 8px; font-size:22px; line-height:1.35; font-weight:800;"">Conferma il tuo indirizzo email</h1>
               <p style=""margin:0 0 16px; color:#c8d3e0; font-size:15px;"">
-                Ciao, grazie per esserti registrato su <strong>Bazzer</strong>!
+                Ciao, grazie per esserti registrato su <strong>AstaLehe FC</strong>!
                 Per attivare il tuo account ti basta confermare l'indirizzo email.
               </p>
 

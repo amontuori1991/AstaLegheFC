@@ -87,7 +87,7 @@ namespace AstaLegheFC.Controllers
       <hr style=""border:none;border-top:1px solid #314257;margin:14px 0;"">
       <div style=""white-space:pre-wrap;line-height:1.6;"">{WebUtility.HtmlEncode(model.Message)}</div>
       <hr style=""border:none;border-top:1px solid #314257;margin:16px 0;"">
-      <p style=""margin:0;color:#aab4c0;font-size:12px"">Inviata da <a href=""{appUrl}"" style=""color:#8cc9ff;text-decoration:none"">Bazzer</a></p>
+      <p style=""margin:0;color:#aab4c0;font-size:12px"">Inviata da <a href=""{appUrl}"" style=""color:#8cc9ff;text-decoration:none"">AstaLeghe FC</a></p>
     </div>
   </body>
 </html>";
