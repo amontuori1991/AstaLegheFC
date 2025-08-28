@@ -41,5 +41,7 @@ namespace AstaLegheFC.Data
         public DbSet<Squadra> Squadre { get; set; }
         public DbSet<Lega> Leghe { get; set; }
         public DbSet<CalciatoreListone> ListoneCalciatori { get; set; }
+        public DbSet<AstaLegheFC.Models.Purchase> Purchases { get; set; }
+
     }
 }

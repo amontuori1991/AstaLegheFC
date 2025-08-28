@@ -2,6 +2,7 @@
 using System.Text; // ✅ Aggiungi questo using
 using System.Threading.Tasks;
 using AstaLegheFC.Data;
+using AstaLegheFC.Filters;
 using AstaLegheFC.Hubs;
 using AstaLegheFC.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -10,9 +11,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace AstaLegheFC.Controllers
 {
     [Authorize]
+    //[ActiveLicenseAuthorize]
     public class LegheController : Controller
     {
         private readonly AppDbContext _context;

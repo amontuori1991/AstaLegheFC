@@ -5,10 +5,12 @@ using Microsoft.AspNetCore.Identity;    // <-- 2. Aggiungi using
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using AstaLegheFC.Filters;
 
 namespace AstaLegheFC.Controllers
 {
     [Authorize]
+    //[ActiveLicenseAuthorize]
     public class SquadreController : Controller
     {
         private readonly AppDbContext _context;

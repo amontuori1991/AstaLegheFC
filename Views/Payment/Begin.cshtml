@@ -1,0 +1,23 @@
+﻿@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var plan = (ViewData["Plan"] as string) ?? "1M";
+    var provider = (ViewData["Provider"] as string) ?? "stripe";
+}
+
+<div class="container my-4">
+    <div class="alert alert-info">Reindirizzamento al pagamento in corso…</div>
+
+    <form id="autoStart" method="post" action="/Payment/Start">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="plan" value="@plan" />
+        <input type="hidden" name="provider" value="@provider" />
+        <noscript>
+            <button class="btn btn-primary" type="submit">Continua al pagamento</button>
+        </noscript>
+    </form>
+</div>
+
+<script>
+    // auto-invio verso /Payment/Start (richiede login)
+    document.getElementById('autoStart')?.submit();
+</script>

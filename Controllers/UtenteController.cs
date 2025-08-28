@@ -107,42 +107,87 @@ namespace AstaLegheFC.Controllers
 
             int creditiUsati = squadra.Giocatori?.Sum(g => g.CreditiSpesi) ?? 0;
             int creditiDisponibili = squadra.Crediti - creditiUsati;
-            int slotTotali = RegoleLega.MaxPortieri + RegoleLega.MaxDifensori + RegoleLega.MaxCentrocampisti + RegoleLega.MaxAttaccanti;
+
+            // ✅ usa i limiti della LEGA (non le costanti globali)
+            int slotTotali = (squadra.Lega?.MaxPortieri ?? 0)
+                           + (squadra.Lega?.MaxDifensori ?? 0)
+                           + (squadra.Lega?.MaxCentrocampisti ?? 0)
+                           + (squadra.Lega?.MaxAttaccanti ?? 0);
+
             int slotRimasti = slotTotali - (squadra.Giocatori?.Count ?? 0);
             int puntataMassima = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+            if (puntataMassima < 0) puntataMassima = 0;
 
-            // ✅ RESTITUIAMO ANCHE I CONTEGGI DEI RUOLI NEL JSON PER L'AGGIORNAMENTO IN TEMPO REALE
             return Json(new
             {
                 creditiDisponibili,
-                puntataMassima = puntataMassima > 0 ? puntataMassima : 0,
+                puntataMassima,
                 portieri = squadra.Giocatori.Count(g => g.Ruolo == "P"),
                 difensori = squadra.Giocatori.Count(g => g.Ruolo == "D"),
                 centrocampisti = squadra.Giocatori.Count(g => g.Ruolo == "C"),
                 attaccanti = squadra.Giocatori.Count(g => g.Ruolo == "A")
             });
         }
+
         [HttpGet]
         public async Task<IActionResult> GetListoneDisponibile(string lega)
         {
-            var legaModel = await _context.Leghe.FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
+            var legaModel = await _context.Leghe
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.Alias.ToLower() == lega.ToLower());
             if (legaModel == null) return NotFound();
 
-            // Trova tutti i giocatori già acquistati in questa lega
+            // IdListone già acquistati in questa lega
             var idGiocatoriAcquistati = await _context.Giocatori
+                .AsNoTracking()
                 .Where(g => g.Squadra.LegaId == legaModel.Id)
                 .Select(g => g.IdListone)
                 .ToListAsync();
 
-            // Restituisce la lista dei giocatori non acquistati, in un formato leggero
-            var listoneDisponibile = await _context.ListoneCalciatori
-                .Where(c => !idGiocatoriAcquistati.Contains(c.IdListone))
-                .OrderBy(c => c.Nome)
-                .Select(c => new { c.Id, c.Nome, c.Ruolo, c.Squadra }) // Seleziona solo i dati necessari
+            // Lista “candidata” — se hai un campo per legare il listone alla lega, filtra qui (lasciato commentato).
+            var query = _context.ListoneCalciatori.AsNoTracking()
+                //.Where(c => c.LegaId == legaModel.Id)
+                //.Where(c => c.LegaAlias.ToLower() == lega.ToLower())
+                .Where(c => !idGiocatoriAcquistati.Contains(c.IdListone));
+
+            // Prendi solo i campi necessari (niente LogoUrl)
+            var raw = await query
+                .Select(c => new
+                {
+                    c.Id,
+                    c.IdListone,
+                    c.Nome,
+                    c.Ruolo,
+                    Squadra = c.Squadra   // usa qui il campo che hai in tabella
+                })
                 .ToListAsync();
 
-            return Json(listoneDisponibile);
+            // Dedup per (Nome, Ruolo, Squadra) con normalizzazione accent/maiuscole/spazi
+            string Norm(string s) =>
+                (s ?? string.Empty)
+                    .Normalize(System.Text.NormalizationForm.FormD)
+                    .Where(ch => System.Globalization.CharUnicodeInfo.GetUnicodeCategory(ch) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                    .Aggregate(new System.Text.StringBuilder(), (sb, ch) => sb.Append(char.ToLowerInvariant(ch)))
+                    .ToString()
+                    .Trim();
+
+            var dedup = raw
+                .GroupBy(x => new { Nome = Norm(x.Nome), Ruolo = Norm(x.Ruolo), Squadra = Norm(x.Squadra) })
+                .Select(g => g.First())
+                .OrderBy(x => x.Nome)
+                .ToList();
+
+            return Json(dedup.Select(x => new
+            {
+                x.Id,
+                x.IdListone,
+                nome = x.Nome,
+                ruolo = x.Ruolo,
+                squadra = x.Squadra
+            }));
         }
+
+
         [HttpGet]
         public async Task<IActionResult> Riepilogo(string lega, string nick)
         {

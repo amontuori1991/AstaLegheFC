@@ -17,10 +17,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
+using AstaLegheFC.Filters;
 
 namespace AstaLegheFC.Controllers
 {
     [Authorize]
+    //[ActiveLicenseAuthorize]
     public class AdminController : Controller
     {
         private readonly AppDbContext _context;

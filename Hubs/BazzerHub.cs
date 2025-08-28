@@ -15,7 +15,10 @@ namespace AstaLegheFC.Hubs
     {
         private readonly BazzerService _bazzerService;
         private readonly AppDbContext _context;
-        private readonly LegaService _legaService; // ⬅️ inject
+        private readonly LegaService _legaService;
+
+        // 🔒 lock per prevenire doppie esecuzioni concorrenti di TerminaAsta
+        private static readonly object _finishLock = new();
 
         public BazzerHub(BazzerService bazzerService, AppDbContext context, LegaService legaService)
         {
@@ -39,25 +42,21 @@ namespace AstaLegheFC.Hubs
         {
             public string Nick { get; set; } = "-";
             public bool Online { get; set; }
-            public string Stato { get; set; } = "offline"; // "online" | "offline" | "waiting"
+            public string Stato { get; set; } = "offline";
             public bool ReadyPreAsta { get; set; }
             public bool ReadyRipresa { get; set; }
             public bool IsAdmin { get; set; }
         }
 
-        // legaAlias(lower) -> (nick -> Partecipante)
         private static readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Partecipante>> _presence
             = new(StringComparer.OrdinalIgnoreCase);
 
-        // connectionId -> (legaAlias, nick)
         private static readonly ConcurrentDictionary<string, (string lega, string nick)> _connMap
             = new();
 
         private static string NormalizeLega(string lega) => (lega ?? "").Trim().ToLowerInvariant();
         private static string AdminGroup(string legaLower) => $"admin_{legaLower}";
-
-        private static bool IsOnline(Partecipante p, DateTime nowUtc)
-            => (nowUtc - p.LastSeenUtc) <= TimeSpan.FromSeconds(45);
+        private static bool IsOnline(Partecipante p, DateTime nowUtc) => (nowUtc - p.LastSeenUtc) <= TimeSpan.FromSeconds(45);
 
         private List<ParticipantSnapshot> BuildPartecipantiSnapshot(string legaLower)
         {
@@ -70,10 +69,7 @@ namespace AstaLegheFC.Hubs
                     .Select(p =>
                     {
                         var online = IsOnline(p, now);
-                        var stato = _bazzerService.PausaAttiva
-                            ? "waiting"     // giallo: attesa ripresa
-                            : (online ? "online" : "offline");
-
+                        var stato = _bazzerService.PausaAttiva ? "waiting" : (online ? "online" : "offline");
                         return new ParticipantSnapshot
                         {
                             Nick = p.Nick,
@@ -86,7 +82,6 @@ namespace AstaLegheFC.Hubs
                     })
                     .ToList();
             }
-
             return new List<ParticipantSnapshot>();
         }
 
@@ -103,18 +98,12 @@ namespace AstaLegheFC.Hubs
             nickname ??= "-";
 
             await Groups.AddToGroupAsync(Context.ConnectionId, legaLower);
-            if (isAdmin)
-                await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup(legaLower));
+            if (isAdmin) await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup(legaLower));
 
             var dict = _presence.GetOrAdd(legaLower, _ => new ConcurrentDictionary<string, Partecipante>(StringComparer.OrdinalIgnoreCase));
             var p = dict.AddOrUpdate(nickname,
                 _ => new Partecipante { Nick = nickname, IsAdmin = isAdmin, LastSeenUtc = DateTime.UtcNow },
-                (_, old) =>
-                {
-                    old.IsAdmin = isAdmin || old.IsAdmin;
-                    old.LastSeenUtc = DateTime.UtcNow;
-                    return old;
-                });
+                (_, old) => { old.IsAdmin = isAdmin || old.IsAdmin; old.LastSeenUtc = DateTime.UtcNow; return old; });
 
             _connMap[Context.ConnectionId] = (legaLower, nickname);
             await BroadcastStatoPartecipantiAsync(legaLower);
@@ -135,10 +124,8 @@ namespace AstaLegheFC.Hubs
             var legaLower = NormalizeLega(legaAlias);
             if (_presence.TryGetValue(legaLower, out var dict) && dict.TryGetValue(nickname ?? "-", out var p))
             {
-                if (string.Equals(tipo, "pre-asta", StringComparison.OrdinalIgnoreCase))
-                    p.ReadyPreAsta = true;
-                else if (string.Equals(tipo, "pre-ripresa", StringComparison.OrdinalIgnoreCase))
-                    p.ReadyRipresa = true;
+                if (string.Equals(tipo, "pre-asta", StringComparison.OrdinalIgnoreCase)) p.ReadyPreAsta = true;
+                else if (string.Equals(tipo, "pre-ripresa", StringComparison.OrdinalIgnoreCase)) p.ReadyRipresa = true;
 
                 await BroadcastStatoPartecipantiAsync(legaLower);
             }
@@ -151,7 +138,6 @@ namespace AstaLegheFC.Hubs
                 var (legaLower, nick) = info;
                 if (_presence.TryGetValue(legaLower, out var dict) && dict.TryGetValue(nick, out var p))
                 {
-                    // non rimuoviamo: segniamo semplicemente offline per un po'
                     p.LastSeenUtc = DateTime.UtcNow.AddMinutes(-10);
                     await BroadcastStatoPartecipantiAsync(legaLower);
                 }
@@ -159,7 +145,7 @@ namespace AstaLegheFC.Hubs
             await base.OnDisconnectedAsync(exception);
         }
 
-        // ========= Funzioni esistenti (con estensioni) =========
+        // ========= Funzioni di bazzer =========
 
         public async Task AggiungiAdminAlGruppo(string legaAlias)
         {
@@ -170,20 +156,14 @@ namespace AstaLegheFC.Hubs
         {
             var giocatore = await _context.ListoneCalciatori.FindAsync(giocatoreId);
             if (giocatore != null)
-            {
                 await Clients.Group(AdminGroup(NormalizeLega(legaAlias))).SendAsync("GiocatoreSuggerito", giocatore, suggeritore);
-            }
         }
 
-        /// <summary>
-        /// Offerta con controllo concorrenza: se baseOfferta non è uguale all'attuale, l'offerta è rifiutata.
-        /// </summary>
         public async Task InviaOfferta(string offerente, int offerta, int? baseOfferta = null)
         {
             if (_bazzerService.PausaAttiva) return;
 
-            var (attOfferente, attOfferta) = _bazzerService.GetOffertaAttuale();
-
+            var (_, attOfferta) = _bazzerService.GetOffertaAttuale();
             if (baseOfferta.HasValue && baseOfferta.Value != attOfferta) return;
             if (offerta <= attOfferta) return;
 
@@ -193,9 +173,6 @@ namespace AstaLegheFC.Hubs
             await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
         }
 
-        /// <summary>
-        /// Conclusione asta (rispetta pausa e countdown).
-        /// </summary>
         public async Task TerminaAsta(string legaAlias)
         {
             try
@@ -203,23 +180,34 @@ namespace AstaLegheFC.Hubs
                 var now = DateTime.UtcNow;
 
                 if (_bazzerService.PausaAttiva) return;
+                if (_bazzerService.FineOffertaUtc.HasValue && now < _bazzerService.FineOffertaUtc.Value) return;
 
-                if (_bazzerService.FineOffertaUtc.HasValue && now < _bazzerService.FineOffertaUtc.Value)
-                    return;
+                // ========== SEZIONE CRITICA ==========
+                lock (_finishLock)
+                {
+                    if (_bazzerService.AstaConclusa()) return; // già processata
+                    _bazzerService.SegnaAstaConclusa();        // prenota l’esecuzione
+                }
+                // =====================================
 
                 var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
                 var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
 
-                if (_bazzerService.AstaConclusa() || giocatoreInAsta == null || offerente == "-" || offerta <= 0 || string.IsNullOrEmpty(legaAlias))
+                if (giocatoreInAsta == null || offerente == "-" || offerta <= 0 || string.IsNullOrEmpty(legaAlias))
                     return;
 
                 var squadraVincitrice = await _context.Squadre
                     .Include(s => s.Lega)
                     .FirstOrDefaultAsync(s => s.Nickname == offerente && s.Lega.Alias.ToLower() == legaAlias.ToLower());
 
-                if (squadraVincitrice != null)
+                if (squadraVincitrice == null) return;
+
+                // Winner (idempotente)
+                bool winnerGiaAssegnato = await _context.Giocatori
+                    .AnyAsync(g => g.SquadraId == squadraVincitrice.Id && g.IdListone == giocatoreInAsta.IdListone);
+                if (!winnerGiaAssegnato)
                 {
-                    var nuovoGiocatore = new Giocatore
+                    _context.Giocatori.Add(new Giocatore
                     {
                         Nome = giocatoreInAsta.Nome,
                         SquadraReale = giocatoreInAsta.Squadra,
@@ -228,52 +216,53 @@ namespace AstaLegheFC.Hubs
                         SquadraId = squadraVincitrice.Id,
                         IdListone = giocatoreInAsta.IdListone,
                         CreditiSpesi = offerta
-                    };
-                    _context.Giocatori.Add(nuovoGiocatore);
-
-                    if (_bazzerService.BloccoPortieriAttivo && giocatoreInAsta.Ruolo == "P")
-                    {
-                        var idGiocatoriAcquistatiLega = await _context.Giocatori
-                            .Where(g => g.Squadra.LegaId == squadraVincitrice.LegaId)
-                            .Select(g => g.IdListone)
-                            .ToListAsync();
-
-                        var altriPortieri = await _context.ListoneCalciatori
-                            .Where(p => p.Squadra == giocatoreInAsta.Squadra &&
-                                        p.Ruolo == "P" &&
-                                        p.Id != giocatoreInAsta.Id &&
-                                        !idGiocatoriAcquistatiLega.Contains(p.IdListone))
-                            .ToListAsync();
-
-                        foreach (var portiere in altriPortieri)
-                        {
-                            var portiereCollegato = new Giocatore
-                            {
-                                IdListone = portiere.IdListone,
-                                Nome = portiere.Nome,
-                                Ruolo = portiere.Ruolo,
-                                RuoloMantra = portiere.RuoloMantra,
-                                SquadraReale = portiere.Squadra,
-                                SquadraId = squadraVincitrice.Id,
-                                CreditiSpesi = 0
-                            };
-                            _context.Giocatori.Add(portiereCollegato);
-                        }
-                    }
-
-                    await _context.SaveChangesAsync();
-                    _bazzerService.SegnaAstaConclusa();
-
-                    // Notifiche standard di fine asta
-                    await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
-
-                    // 🔔 NUOVO: broadcast aggiornamenti di crediti + rose alla LEGA interessata
-                    // (sia la barra crediti/puntata max, sia la lista rose nel modale)
-                    await _legaService.BroadcastAggiornamentiLegaAsync(squadraVincitrice.LegaId);
-
-                    // Resetta lo stato server dell’asta corrente
-                    _bazzerService.AnnullaAstaCorrente();
+                    });
                 }
+
+                // Blocco portieri: aggiungi SOLO i compagni di squadra (idempotente + distinct)
+                if (_bazzerService.BloccoPortieriAttivo && giocatoreInAsta.Ruolo == "P")
+                {
+                    var idAssegnatiLega = await _context.Giocatori
+                        .Where(g => g.Squadra.LegaId == squadraVincitrice.LegaId)
+                        .Select(g => g.IdListone)
+                        .ToListAsync();
+                    var assegnatiSet = new HashSet<int>(idAssegnatiLega);
+
+                    var altriPortieri = await _context.ListoneCalciatori
+                        .AsNoTracking()
+                        .Where(p => p.Ruolo == "P"
+                                    && p.Squadra == giocatoreInAsta.Squadra
+                                    && p.IdListone != giocatoreInAsta.IdListone
+                                    && !assegnatiSet.Contains(p.IdListone))
+                        .ToListAsync();
+
+                    foreach (var portiere in altriPortieri
+                        .GroupBy(p => p.IdListone).Select(g => g.First())) // distinct by IdListone
+                    {
+                        // ulteriore check idempotente per la SQUADRA vincitrice
+                        bool giaAssegnato = await _context.Giocatori
+                            .AnyAsync(g => g.SquadraId == squadraVincitrice.Id && g.IdListone == portiere.IdListone);
+                        if (giaAssegnato) continue;
+
+                        _context.Giocatori.Add(new Giocatore
+                        {
+                            IdListone = portiere.IdListone,
+                            Nome = portiere.Nome,
+                            Ruolo = portiere.Ruolo,
+                            RuoloMantra = portiere.RuoloMantra,
+                            SquadraReale = portiere.Squadra,
+                            SquadraId = squadraVincitrice.Id,
+                            CreditiSpesi = 0
+                        });
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+
+                await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
+                await _legaService.BroadcastAggiornamentiLegaAsync(squadraVincitrice.LegaId);
+
+                _bazzerService.AnnullaAstaCorrente();
             }
             catch (Exception ex)
             {
@@ -282,9 +271,6 @@ namespace AstaLegheFC.Hubs
             }
         }
 
-        /// <summary>
-        /// Fornisce stato iniziale al caller (usato anche dopo F5).
-        /// </summary>
         public async Task RichiediStatoAttuale()
         {
             var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
@@ -323,8 +309,6 @@ namespace AstaLegheFC.Hubs
                 });
             }
         }
-
-        // ========= Pausa / Ripresa =========
 
         public async Task PausaAsta(string legaAlias)
         {

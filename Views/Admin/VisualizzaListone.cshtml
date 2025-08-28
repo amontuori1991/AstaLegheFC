@@ -972,7 +972,7 @@
                     const end=new Date(fineUtc);
                     const paint=(sec)=>{ timerEl.innerText = sec >= 0 ? sec : 0; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); if(sec>5) timerEl.classList.add('timer-green'); else if(sec>=4) timerEl.classList.add('timer-yellow'); else timerEl.classList.add('timer-red'); };
                     const tick=()=>{
-                        const sec=Math.max(0, Math.floor((end.getTime()-Date.now())/1000));
+                        const sec = Math.max(0, Math.ceil((end.getTime() - Date.now()) / 1000));
                         paint(sec);
                         if(sec>=0){ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play(); }
                         else{ clearInterval(countdownTimerAdmin); }

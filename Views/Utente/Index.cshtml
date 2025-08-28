@@ -871,7 +871,7 @@
                 const end = new Date(fineUtcCorrente);
                 const tick = () => {
                     const msLeft = end.getTime() - Date.now();
-                    let sec = Math.ceil(msLeft / 1000);
+                    let sec = Math.ceil((msLeft -200) / 1000);
                     if (sec <= 0) {
                         timerEl.textContent = 0;
                         stopCountdown();
@@ -897,12 +897,34 @@
                 } catch (e) { console.error("Errore aggiornamento crediti:", e); }
             }
 
-            async function caricaListone() {
-                try {
-                    const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
-                    if (res.ok) listoneCompleto = await res.json();
-                } catch (e) { console.error("Errore nel caricamento del listone:", e); }
-            }
+        async function caricaListone() {
+            try {
+                const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
+                if (!res.ok) return;
+
+                const raw = await res.json();
+
+                // Normalizza stringhe per un confronto robusto
+                const norm = (s) => (s || "")
+                    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+                    .toLowerCase().trim();
+
+                // Deduplica per (nome, ruolo, squadra)
+                const seen = new Set();
+                listoneCompleto = raw.filter(g => {
+                    const nome = norm(g.nome);
+                    const ruolo = norm(g.ruolo);
+                    // nell’API può essere "squadra" o "squadraReale": uso quello che c’è
+                    const squadra = norm(g.squadra ?? g.squadraReale);
+                    const key = `${nome}|${ruolo}|${squadra}`;
+                    if (seen.has(key)) return false;
+                    seen.add(key);
+                    return true;
+                });
+
+            } catch (e) { console.error("Errore nel caricamento del listone:", e); }
+        }
+
 
             function modalRoseAperto(){
                 const el = document.getElementById('modalRiepilogo');
@@ -1041,25 +1063,32 @@
             const inputRicerca = document.getElementById('input-ricerca-giocatore');
             const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
 
-            inputRicerca.addEventListener('input', () => {
-                const testo = inputRicerca.value.toLowerCase();
-                risultatiRicercaDiv.innerHTML = '';
-                if (testo.length < 2) return;
-                const filtrati = listoneCompleto.filter(g => g.nome.toLowerCase().includes(testo));
-                filtrati.slice(0, 10).forEach(g => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'risultato-item';
-                    const spanInfo = document.createElement('span');
-                    spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra})`;
-                    const suggestButton = document.createElement('button');
-                    suggestButton.className = 'btn btn-sm btn-info';
-                    suggestButton.textContent = 'Suggerisci';
-                    suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
-                    itemDiv.appendChild(spanInfo);
-                    itemDiv.appendChild(suggestButton);
-                    risultatiRicercaDiv.appendChild(itemDiv);
-                });
+                    inputRicerca.addEventListener('input', () => {
+            const norm = (s) => (s || "")
+                .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+                .toLowerCase();
+
+            const testo = norm(inputRicerca.value);
+            risultatiRicercaDiv.innerHTML = '';
+            if (testo.length < 2) return;
+
+            const filtrati = listoneCompleto.filter(g => norm(g.nome).includes(testo));
+
+            filtrati.slice(0, 10).forEach(g => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'risultato-item';
+                const spanInfo = document.createElement('span');
+                spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra ?? g.squadraReale ?? ''})`;
+                const suggestButton = document.createElement('button');
+                suggestButton.className = 'btn btn-sm btn-info';
+                suggestButton.textContent = 'Suggerisci';
+                suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
+                itemDiv.appendChild(spanInfo);
+                itemDiv.appendChild(suggestButton);
+                risultatiRicercaDiv.appendChild(itemDiv);
             });
+        });
+
 
             function suggerisciGiocatore(giocatore) {
                 connection.invoke("SuggerisciGiocatore", giocatore.id, nickname, legaAlias)

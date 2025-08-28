@@ -1,0 +1,667 @@
+﻿@{
+    ViewData["Title"] = "AstaLeghe FC – Software per aste fantacalcio";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    /* ====== BASE ====== */
+    .section {
+        margin-top: 48px;
+    }
+
+    .muted {
+        color: #aab4c0;
+    }
+
+    /* ====== HERO watermark ====== */
+    .hero-wrap {
+        --wm-size: clamp(420px, 62vw, 820px);
+        display: grid;
+        place-items: center;
+        padding: 24px;
+    }
+
+    .hero {
+        position: relative;
+        width: min(1100px,96%);
+        height: var(--wm-size);
+        background: linear-gradient(145deg,#0e172a,#1b2735);
+        border: 1px solid #243347;
+        border-radius: 16px;
+        overflow: hidden;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 16px;
+        color: #e8eef6;
+    }
+
+    .hero-overlay {
+        position: absolute;
+        inset: 0;
+        background: url('/png/logo_bazzer.png') no-repeat center;
+        background-size: var(--wm-size);
+        opacity: .09;
+        filter: blur(.5px);
+        z-index: 0;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 1;
+        max-width: min(720px, 86%);
+    }
+
+    .hero-logo {
+        height: 92px;
+    }
+
+    .hero-title {
+        font-size: clamp(28px,4.2vw,48px);
+        font-weight: 800;
+        color: #2fb4ff;
+        margin: 6px 0 8px;
+    }
+
+    .hero-copy {
+        font-size: .6em;
+        vertical-align: super;
+        margin-left: 2px;
+        opacity: .8;
+    }
+
+    .hero-subtitle {
+        color: #dbe4ee;
+        opacity: .95;
+        font-size: clamp(15px,1.6vw,18px);
+        line-height: 1.55;
+    }
+
+    .btn-primary {
+        background: #e91e63;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        box-shadow: 0 8px 22px rgba(233,30,99,.25);
+        transition: transform .18s ease, box-shadow .18s ease;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(233,30,99,.35);
+        }
+
+    .btn-outline-light {
+        border: 2px solid #fff;
+        color: #fff;
+        padding: 10px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all .18s ease;
+    }
+
+        .btn-outline-light:hover {
+            background: #fff;
+            color: #1b2735;
+            transform: translateY(-2px);
+        }
+
+    @@media (max-width: 576px) {
+        .hero-logo
+
+    {
+        height: 72px;
+    }
+
+    }
+
+    /* ====== FEATURE CARDS ====== */
+    .feature-card {
+        background: #132132;
+        border: 1px solid #243347;
+        border-radius: 14px;
+        padding: 18px;
+        color: #e8eef6;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+        .feature-card h5 {
+            margin: 4px 0 2px;
+            font-weight: 700;
+        }
+
+        .feature-card p, .feature-card li {
+            color: #d3dde8;
+        }
+
+    .feature-actions {
+        margin-top: auto;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn-ghost {
+        background: transparent;
+        border: 1px solid #30445f;
+        color: #cfe2ff;
+        padding: 8px 14px;
+        border-radius: 10px;
+    }
+
+        .btn-ghost:hover {
+            background: #203148;
+            color: #fff;
+        }
+
+    /* ====== SOCIAL PROOF ====== */
+    .logo-wall {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit,minmax(120px,1fr));
+        align-items: center;
+    }
+
+        .logo-wall .logo-box {
+            background: #0f1a28;
+            border: 1px dashed #30445f;
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            color: #7f93ad;
+        }
+
+    .testi {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    }
+
+    .quote {
+        background: #132132;
+        border: 1px solid #243347;
+        border-radius: 14px;
+        padding: 16px;
+        color: #e8eef6;
+    }
+
+        .quote .who {
+            color: #aab4c0;
+            font-size: .95rem;
+        }
+
+    /* ====== PRICING ====== */
+    .prices {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+    }
+
+    .cardx {
+        background: #132132;
+        border: 1px solid #243347;
+        border-radius: 14px;
+        padding: 18px;
+        color: #e8eef6;
+        position: relative;
+    }
+
+        .cardx h3 {
+            margin: 4px 0 8px;
+        }
+
+    .badge {
+        display: inline-block;
+        background: #203148;
+        border: 1px solid #2c4060;
+        border-radius: 999px;
+        padding: 3px 10px;
+        font-size: .85rem;
+    }
+
+    .pricing .price {
+        font-size: 2rem;
+        font-weight: 800;
+    }
+
+    .pricing .period {
+        font-size: .95rem;
+        opacity: .9;
+    }
+
+    .badge-reco {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #e91e63;
+        color: #fff;
+        border: 0;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: 700;
+        box-shadow: 0 8px 18px rgba(233,30,99,.28);
+    }
+
+    /* ====== CTA finale ====== */
+    .cta-final {
+        background: linear-gradient(145deg,#0e172a,#1b2735);
+        border: 1px solid #243347;
+        border-radius: 16px;
+        padding: 28px;
+        text-align: center;
+        color: #e8eef6;
+    }
+
+    /* ====== VIDEO MODAL ====== */
+    .modal-dark .modal-content {
+        background: #0f1a28;
+        color: #e8eef6;
+        border: 1px solid #243347;
+    }
+
+    .modal-dark .btn-close {
+        filter: invert(1);
+    }
+
+    .video-wrap {
+        position: relative;
+        padding-bottom: 56.25%;
+        height: 0;
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+        .video-wrap iframe, .video-wrap video, .video-wrap img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+            object-fit: cover;
+        }
+</style>
+
+<div class="container my-4">
+
+@if (Context.Request.Query["needPlan"] == "1")
+{
+        <div class="alert alert-warning mb-3">
+            Il tuo account non ha ancora un piano attivo. Scegli un piano qui sotto per continuare. 👇
+        </div>
+}
+
+
+    <!-- HERO -->
+    <section class="hero-wrap">
+        <div class="hero">
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <img src="~/png/logo_bazzer.png" alt="AstaLeghe FC Logo" class="hero-logo mb-3" />
+                <h1 class="hero-title">AstaLeghe FC<span class="hero-copy">©</span></h1>
+                <p class="hero-subtitle">
+                    La piattaforma veloce e moderna per gestire <strong>aste fantacalcio</strong>, rilanci in tempo reale,
+                    rose, crediti, regole Lega e suggerimenti. Progettata per essere semplice per i partecipanti e potente per gli admin.
+                </p>
+                <div class="mt-4">
+                    <a href="/Identity/Account/Login" class="btn btn-primary me-2">Accedi</a>
+                    <a href="/Identity/Account/Register" class="btn btn-outline-light">Crea un account</a>
+                </div>
+                <p class="small mt-3 opacity-75">Nessuna installazione. Funziona dal tuo browser.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FUNZIONALITÀ -->
+    <section class="section" id="features">
+        <h2 class="mb-3">Funzionalità principali</h2>
+        <div class="row g-4 text-start">
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>🔐 Registrazione e Accesso</h5>
+                    <p>Gestisci più leghe con un unico account Admin. Attivazione immediata via mail.</p>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                                            </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>📥 Importazione Listone Ufficiale</h5>
+                    <p>Carica direttamente il file di Leghe FC, pronto all’uso con un click.</p>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                                            </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>🏆 Gestione Leghe e Squadre</h5>
+                    <ul class="mb-0">
+                        <li>Creazione e modifica leghe con alias univoco.</li>
+                        <li>Assegna crediti iniziali e slot rosa personalizzati.</li>
+                        <li>Registra le squadre: ogni partecipante riceve un link univoco.</li>
+                    </ul>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>🎙 Avvio e Gestione Asta</h5>
+                    <ul class="mb-0">
+                        <li>Timer e rilanci automatici.</li>
+                        <li>Monitoraggio in tempo reale.</li>
+                        <li>Riepilogo squadre sempre aggiornato.</li>
+                    </ul>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                       
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>⚡ Funzioni Avanzate</h5>
+                    <ul class="mb-0">
+                        <li>Blocco portieri automatico.</li>
+                        <li>Modalità Mantra.</li>
+                        <li>Sorteggio lettera casuale.</li>
+                        <li>Suggerimenti giocatori dagli utenti.</li>
+                        <li>Consultazione rose in diretta.</li>
+                        <li>Timer generale e personalizzato.</li>
+                    </ul>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                      
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>🛠 Gestione Admin</h5>
+                    <ul class="mb-0">
+                        <li>Avvio aste e assegnazione giocatori.</li>
+                        <li>Svincolo calciatori con riaccredito crediti.</li>
+                        <li>Stato connessione utenti in tempo reale.</li>
+                    </ul>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                     
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>📱 Gestione Utente</h5>
+                    <ul class="mb-0">
+                        <li>Offerte rapide (+1, +5, ecc.) o personalizzate.</li>
+                        <li>Riepilogo crediti residui e puntata massima.</li>
+                        <li>Schermata ottimizzata tipo App.</li>
+                    </ul>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+                 
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <h5>📤 Export Rose</h5>
+                    <p>Scarica in CSV le rose finali pronte per l’import su Leghe FC.</p>
+                    <div class="feature-actions">
+                        <button class="btn btn-ghost btn-sm" data-bs-toggle="modal" data-bs-target="#videoModal" data-video-id="dQw4w9WgXcQ">Guarda demo</button>
+               
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOCIAL PROOF -->
+    <section class="section" id="social-proof">
+        <h2 class="mb-2">Scelto da chi organizza aste serie</h2>
+        <p class="muted mb-3">Alcune delle leghe che hanno già usato AstaLeghe FC</p>
+        <div class="logo-wall mb-3">
+            <div class="logo-box">Lega Amici FC</div>
+            <div class="logo-box">Serie A Legends</div>
+            <div class="logo-box">Fantasia 2000</div>
+            <div class="logo-box">Ultra League</div>
+        </div>
+        <div class="testi">
+            <div class="quote">
+                “Finalmente un’asta senza litigi: tutto fluido e cronometrato. Ci ha fatto risparmiare ore.”
+                <div class="who">— Marco R., Admin</div>
+            </div>
+            <div class="quote">
+                “Da mobile è comodissima. Ho fatto tutta l’asta dal telefono senza perdere un colpo.”
+                <div class="who">— Giulia P., Partecipante</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PREZZI -->
+    <section class="section" id="pricing">
+        <h2 class="mb-3">Prezzi</h2>
+        <div class="prices">
+            <div class="cardx pricing">
+                <h3>Mensile</h3>
+                <div class="price">€ 4,90</div>
+                <div class="period">1 Mese</div>
+                <ul class="mt-2">
+                    <li>Accesso completo</li>
+                    <li>Aggiornamenti inclusi</li>
+                </ul>
+                <button class="btn btn-primary mt-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#activateModal"
+                        data-plan="1M">
+                    Attiva
+                </button>
+            </div>
+
+            <div class="cardx pricing">
+                <span class="badge-reco">Consigliato</span>
+                <h3>Annuale</h3>
+                <div class="price">€ 39,90</div>
+                <div class="period">12 Mesi</div>
+                <ul class="mt-2">
+                    <li>Tutte le funzionalità</li>
+                    <li>Priorità assistenza</li>
+                </ul>
+                <button class="btn btn-primary mt-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#activateModal"
+                        data-plan="12M">
+                    Attiva
+                </button>
+            </div>
+
+            <div class="cardx pricing">
+                <h3>Semestrale</h3>
+                <div class="price">€ 24,90</div>
+                <div class="period">6 Mesi</div>
+                <ul class="mt-2">
+                    <li>Risparmio rispetto al mensile</li>
+                    <li>Supporto via mail</li>
+                </ul>
+                <button class="btn btn-primary mt-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#activateModal"
+                        data-plan="6M">
+                    Attiva
+                </button>
+            </div>
+
+            <div class="cardx pricing">
+                <h3>A vita</h3>
+                <div class="price">€ 79,00</div>
+                <div class="period">Licenza perpetua</div>
+                <ul class="mt-2">
+                    <li>Nessuna scadenza</li>
+                    <li>Aggiornamenti inclusi</li>
+                </ul>
+                <button class="btn btn-primary mt-2"
+                        data-bs-toggle="modal"
+                        data-bs-target="#activateModal"
+                        data-plan="LIFE">
+                    Attiva
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA FINALE -->
+    <section class="section">
+        <div class="cta-final">
+            <h3>Pronto a rendere epica la tua asta fantacalcio?</h3>
+            <p class="muted mb-2">Niente complicazioni, niente sorprese. AstaLeghe FC è pronta a partire con te.</p>
+            <a href="/Support/Create" class="btn btn-primary">Contattaci per l’attivazione</a>
+        </div>
+    </section>
+
+
+    <!-- CONTATTI -->
+    <section class="section" id="contatti">
+        <h2>Contatti</h2>
+        <p class="muted">Compila il modulo per ricevere supporto o informazioni commerciali.</p>
+
+        <form method="post" asp-action="SendContact" asp-controller="Site" class="row g-3 mt-3">
+            @Html.AntiForgeryToken()
+
+            <div class="col-md-6">
+                <label class="form-label">Nome</label>
+                <input type="text" name="Name" class="form-control" required />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Email</label>
+                <input type="email" name="Email" class="form-control" required />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Oggetto</label>
+                <input type="text" name="Subject" class="form-control" required />
+            </div>
+
+            <div class="col-12">
+                <label class="form-label">Messaggio</label>
+                <textarea name="Message" rows="5" class="form-control" required></textarea>
+            </div>
+
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary">Invia</button>
+            </div>
+        </form>
+
+        @if (TempData["ContactOk"] != null)
+        {
+            <div class="alert alert-success mt-3">@TempData["ContactOk"]</div>
+        }
+        @if (TempData["ContactErr"] != null)
+        {
+            <div class="alert alert-danger mt-3">@TempData["ContactErr"]</div>
+        }
+    </section>
+    <div class="modal fade modal-dark" id="activateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Attiva abbonamento</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-3">Scegli il metodo di pagamento:</p>
+                    <div class="d-grid gap-2">
+                        <a id="payStripeLink" class="btn btn-primary" href="#">Carta di credito (Stripe)</a>
+                        <a id="payPayPalLink" class="btn btn-outline-light" href="#">PayPal</a>
+                    </div>
+                    <p class="small text-muted mb-0 mt-3">
+                        Effettuando il pagamento accetti i Termini e l’Informativa Privacy.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+          const activateModal = document.getElementById('activateModal');
+          const stripeLink = document.getElementById('payStripeLink');
+          const paypalLink = document.getElementById('payPayPalLink');
+
+          // quando apro da un bottone delle card, prendo il piano
+          activateModal.addEventListener('show.bs.modal', ev => {
+            const btn = ev.relatedTarget;
+            const plan = (btn?.getAttribute('data-plan') || '12M').toUpperCase();
+            stripeLink.href = `/Payment/Begin?plan=${encodeURIComponent(plan)}&provider=stripe`;
+            paypalLink.href = `/Payment/Begin?plan=${encodeURIComponent(plan)}&provider=paypal`;
+          });
+
+          // se vengo rimandato con needPlan=1, apro automaticamente (default 12M)
+          const usp = new URLSearchParams(window.location.search);
+          if (usp.get('needPlan') === '1') {
+            const plan = '12M';
+            stripeLink.href = `/Payment/Begin?plan=${encodeURIComponent(plan)}&provider=stripe`;
+            paypalLink.href = `/Payment/Begin?plan=${encodeURIComponent(plan)}&provider=paypal`;
+
+            const m = new bootstrap.Modal(activateModal);
+            m.show();
+          }
+        })();
+    </script>
+
+
+
+<!-- ====== MODAL VIDEO (Bootstrap) ====== -->
+<div class="modal fade modal-dark" id="videoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Demo funzionalità</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+            <div class="modal-body">
+                <div class="video-wrap" id="videoContainer">
+                    <!-- YouTube embed -->
+                    <iframe id="ytFrame" src="" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+                    <!-- In alternativa a YouTube, usa una GIF/MP4 locale:
+                    <img src="~/video/demo_import.gif" alt="Demo" />
+                    oppure
+                    <video src="~/video/demo_import.mp4" autoplay muted loop playsinline></video>
+                    -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (() => {
+      const modal = document.getElementById('videoModal');
+      const frame = document.getElementById('ytFrame');
+      modal.addEventListener('show.bs.modal', ev => {
+        const btn = ev.relatedTarget;
+        const id = btn?.getAttribute('data-video-id') || '';
+        // autoplay 1, modestbranding per player pulito
+        frame.src = id ? `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1` : '';
+      });
+      modal.addEventListener('hidden.bs.modal', () => {
+        frame.src = ''; // stop video quando chiudi
+      });
+    })();
+</script>

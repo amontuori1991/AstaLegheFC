@@ -27,6 +27,9 @@ builder.Services.AddScoped<LegaService>();
 builder.Services.AddRazorPages();
 builder.Services.Configure<GmailSettings>(builder.Configuration.GetSection("Gmail"));
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<AstaLegheFC.Services.IReleaseNotesService, AstaLegheFC.Services.GitHubReleaseNotesService>();
+
 // using System;
 builder.Services.AddSession(o =>
 {
