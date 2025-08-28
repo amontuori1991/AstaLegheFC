@@ -1,0 +1,67 @@
+﻿@using AstaLegheFC.Models
+@model SupportRequestViewModel
+@{
+    ViewData["Title"] = "Assistenza / Richieste";
+}
+
+<style>
+    .support-card {
+        background: #223245;
+        border: 1px solid #314257;
+        border-radius: 12px;
+        padding: 22px;
+    }
+
+    .help-text {
+        color: #aab4c0;
+        font-size: .9rem;
+    }
+
+    .btn-primary {
+        background: #e91e63;
+        border: none;
+    }
+
+        .btn-primary:hover {
+            background: #c2185b;
+        }
+</style>
+
+<div class="container my-4">
+    <h2 class="mb-3">@ViewData["Title"]</h2>
+
+    @if (TempData["SupportOk"] != null)
+    {
+        <div class="alert alert-success">@TempData["SupportOk"]</div>
+    }
+
+    <div class="support-card">
+        <form asp-action="Create" asp-controller="Support" method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label asp-for="Subject" class="form-label">Oggetto *</label>
+                <input asp-for="Subject" class="form-control" />
+                <span asp-validation-for="Subject" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Message" class="form-label">Richiesta *</label>
+                <textarea asp-for="Message" class="form-control" rows="7" placeholder="Descrivi il problema o la richiesta in modo chiaro…"></textarea>
+                <span asp-validation-for="Message" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Allega immagini (max 5, 4MB ciascuna)</label>
+                <input type="file" name="Files" accept="image/*" class="form-control" multiple />
+                <div class="help-text mt-1">Sono permessi solo file immagine. Dimensione totale max 12MB.</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Invia richiesta</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
