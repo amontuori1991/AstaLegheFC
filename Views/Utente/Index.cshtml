@@ -553,18 +553,81 @@
         --right-block: 220px; /* spazio fisso per le due badge */
     }
 
-    /* fallback responsive su schermi stretti */
+    /* ======= MOBILE FIX DEFINITIVO (≤576px) ======= */
     @@media (max-width: 576px) {
-        : root
+        /* layout verticale, niente tagli */
+        .header-grid
 
     {
-        --nick-width: 110px;
-        --role-col: 50px;
-        --left-block: 360px;
-        --right-block: 200px;
+        display: flex;
+        flex-direction: column;
+        row-gap: 6px;
+        width: 100%;
     }
 
+    /* nickname su riga a sé, i ruoli sotto */
+    .hg-left {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
     }
+
+    .nick-clip {
+        max-width: 100%;
+    }
+
+    /* ruoli compatti: “P: 0   D: 0   C: 0   A: 0” */
+    .role-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px; /* spazio tra i blocchi ruolo */
+        font-size: 0.95rem;
+    }
+
+        .role-grid .rg {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px; /* spazio minimo tra “P:” e numero */
+            line-height: 1.2;
+        }
+        /* se nel markup esiste .lbl */
+        .role-grid .lbl {
+            margin-right: 0;
+        }
+
+        .role-grid .num {
+            min-width: 0;
+            width: auto;
+            text-align: left; /* niente allineamento a destra in mobile */
+        }
+
+    /* “La tua” resta centrato */
+    .hg-center {
+        text-align: center;
+        order: 2;
+    }
+
+    /* badge Crediti/Max sotto ai ruoli e centrati */
+    .hg-right {
+        order: 3;
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        width: 100%;
+    }
+
+    .badge-credits, .badge-max {
+        min-width: 42px;
+        text-align: center;
+    }
+
+    /* padding più stretto per l’accordion */
+    .accordion-button {
+        padding: .5rem .75rem;
+    }
+
+    
 </style>
 
 <div class="row mt-md-4">
