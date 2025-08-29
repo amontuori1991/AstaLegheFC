@@ -455,8 +455,8 @@
 
     .badge-credits, .badge-max {
         display: inline-block;
-        min-width: 45px; /* così tutti i numeri occupano lo stesso spazio */
-        text-align: right; /* allineamento a destra */
+        min-width: 45px;
+        text-align: right;
     }
 
     .role-counts {
@@ -468,17 +468,17 @@
 
         .role-counts .rc {
             display: inline-block;
-            min-width: 40px; /* larghezza fissa per ogni colonna */
+            min-width: 40px;
         }
 
         .role-counts .num {
             display: inline-block;
             min-width: 16px;
-            text-align: right; /* allinea i numeri a destra */
+            text-align: right;
             font-weight: 600;
             color: #fff;
         }
-    /* griglia uniforme dell’header di ogni squadra */
+
     .header-grid {
         display: grid;
         grid-template-columns: var(--left-block) 1fr var(--right-block);
@@ -487,7 +487,6 @@
         gap: 8px;
     }
 
-    /* blocco sinistro = nickname (fisso) + ruoli (griglia fissa) */
     .hg-left {
         display: grid;
         grid-template-columns: var(--nick-width) 1fr;
@@ -495,7 +494,6 @@
         gap: 12px;
     }
 
-    /* nickname con ellissi se lungo */
     .nick-clip {
         display: inline-block;
         max-width: var(--nick-width);
@@ -504,7 +502,6 @@
         white-space: nowrap;
     }
 
-    /* griglia ruoli a colonne fisse */
     .role-grid {
         display: grid;
         grid-template-columns: repeat(4, var(--role-col));
@@ -526,9 +523,9 @@
             color: #fff;
         }
 
-    /* Badge ruolo nel riepilogo rose */
     .role-badge {
         display: inline-block;
+        padding: 0 8px;
         min-width: 22px;
         height: 22px;
         line-height: 22px;
@@ -536,29 +533,26 @@
         font-weight: 800;
         border-radius: 6px;
         color: #fff;
-        margin-right: 6px; /* spazio fra badge e numero */
+        margin-right: 6px;
         font-size: .9rem;
     }
 
-    /* Colori per ruolo */
     .role-P {
         background: #d9822b;
     }
-    /* arancione */
+
     .role-D {
         background: #2da44e;
     }
-    /* verde */
+
     .role-C {
         background: #2563eb;
     }
-    /* blu */
+
     .role-A {
         background: #c0353a;
     }
-    /* rosso */
 
-    /* Allineamento più compatto nella griglia ruoli */
     .role-grid .rg {
         display: flex;
         align-items: center;
@@ -570,42 +564,35 @@
         align-items: center;
     }
 
-    /* Badge ruolo nella lista giocatori del riepilogo */
     .pl-role .role-badge {
         margin-left: 6px;
         transform: translateY(-1px);
     }
 
-    /* blocco centrale (per “La tua”) */
     .hg-center {
         text-align: center;
     }
 
-    /* blocco destro: badge allineate a destra */
     .hg-right {
         display: flex;
         justify-content: flex-end;
         gap: 8px;
     }
 
-    /* numeri nelle badge destra allineati a dx e larghezza costante */
     .badge-credits, .badge-max {
         display: inline-block;
         min-width: 45px;
         text-align: right;
     }
 
-    /* dimensioni (puoi ritoccarle) */
     :root {
-        --nick-width: 140px; /* larghezza fissa nickname */
-        --role-col: 56px; /* larghezza singola colonna P/D/C/A */
-        --left-block: 420px; /* = nick-width + (4 * role-col) + gap approx */
-        --right-block: 220px; /* spazio fisso per le due badge */
+        --nick-width: 140px;
+        --role-col: 56px;
+        --left-block: 420px;
+        --right-block: 220px;
     }
 
-    /* ======= MOBILE FIX DEFINITIVO (≤576px) ======= */
     @@media (max-width: 576px) {
-        /* layout verticale, niente tagli */
         .header-grid
 
     {
@@ -615,7 +602,6 @@
         width: 100%;
     }
 
-    /* nickname su riga a sé, i ruoli sotto */
     .hg-left {
         display: flex;
         flex-direction: column;
@@ -626,21 +612,20 @@
         max-width: 100%;
     }
 
-    /* ruoli compatti: “P: 0   D: 0   C: 0   A: 0” */
     .role-grid {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px 14px; /* spazio tra i blocchi ruolo */
+        gap: 8px 14px;
         font-size: 0.95rem;
     }
 
         .role-grid .rg {
             display: inline-flex;
             align-items: center;
-            gap: 4px; /* spazio minimo tra “P:” e numero */
+            gap: 4px;
             line-height: 1.2;
         }
-        /* se nel markup esiste .lbl */
+
         .role-grid .lbl {
             margin-right: 0;
         }
@@ -648,16 +633,14 @@
         .role-grid .num {
             min-width: 0;
             width: auto;
-            text-align: left; /* niente allineamento a destra in mobile */
+            text-align: left;
         }
 
-    /* “La tua” resta centrato */
     .hg-center {
         text-align: center;
         order: 2;
     }
 
-    /* badge Crediti/Max sotto ai ruoli e centrati */
     .hg-right {
         order: 3;
         display: flex;
@@ -672,12 +655,11 @@
         text-align: center;
     }
 
-    /* padding più stretto per l’accordion */
     .accordion-button {
         padding: .5rem .75rem;
     }
 
-    
+    }
 </style>
 
 <div class="row mt-md-4">
@@ -792,7 +774,6 @@
     <div id="pausa-box">
         <h3>Asta in pausa</h3>
         <p>Attendi che l’amministratore riprenda l’asta.</p>
-        <p class="mt-2">Tempo rimanente al momento della pausa: <span id="pausa-remaining">--</span>s</p>
     </div>
 </div>
 
@@ -809,8 +790,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-
-            // --- VARIABILI DI STATO ---
+            // === Stato ===
             let listoneCompleto = [];
             const nickname = "@Model.Nickname";
             const legaAlias = new URLSearchParams(window.location.search).get('lega');
@@ -819,7 +799,7 @@
             let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
             let timerSecondi = @Model.TimerAsta;
             let fineUtcCorrente = null;
-            let lastFineUtcStr = null; // idempotenza timer
+            let lastFineUtcStr = null;
             let countdownTimerUtente = null;
             let finalizeGuard = false;
 
@@ -832,14 +812,30 @@
             let centrocampistiAttuali = @Model.CentrocampistiAcquistati;
             let attaccantiAttuali = @Model.AttaccantiAcquistati;
 
-            // Stato pausa lato client
             let pausaAttivaClient = false;
+            let pauseLockUntil = 0; // finestra anti-race dopo ripresa
 
-            // === RECONNECT ===
+                    let resumePollId = null;
+        function startResumePolling() {
+          if (resumePollId) return;
+          console.debug('[RESUME] start polling stato…');
+          resumePollId = setInterval(async () => {
+            try { await connection.invoke("RichiediStatoAttuale"); } catch {}
+          }, 2000);
+        }
+        function stopResumePolling() {
+          if (!resumePollId) return;
+          console.debug('[RESUME] stop polling stato');
+          clearInterval(resumePollId);
+          resumePollId = null;
+        }
+
+
+            // === Reconnect ===
             let pingIntervalId = null;
             let manualReconnectTimer = null;
             let manualAttempts = 0;
-            const MAX_AUTO_ATTEMPTS = 120; // 120s
+            const MAX_AUTO_ATTEMPTS = 120;
             const reconnectOverlay = document.getElementById('reconnect-overlay');
             const reconnectAttemptEl = document.getElementById('reconnect-attempt');
 
@@ -859,14 +855,27 @@
                 .withAutomaticReconnect({
                     nextRetryDelayInMilliseconds: (ctx) => {
                         if (ctx.previousRetryCount < MAX_AUTO_ATTEMPTS) return 1000;
-                        return null; // stop auto; fallback manuale
+                        return null;
                     }
                 })
                 .build();
 
-            /* =======================
-               UTILS
-            ======================= */
+            // ===== Utils =====
+            function setPauseUI(isPaused){
+              const overlay = document.getElementById('pausa-overlay');
+              if (!overlay) return;
+
+              if (isPaused) {
+                overlay.classList.add('visible');
+                setBidControlsEnabled(false);
+                stopCountdown();
+              } else {
+                const hide = () => overlay.classList.remove('visible');
+                hide(); setTimeout(hide, 0); setTimeout(hide, 150); setTimeout(hide, 400);
+                aggiornaStatoPulsantiBazzer();
+              }
+            }
+
             function setBidControlsEnabled(enabled){
                 document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata")
                     .forEach(el => el.disabled = !enabled);
@@ -879,15 +888,10 @@
                                 && hubState === signalR.HubConnectionState.Connected;
                 let messaggio = "";
                 if (abilitato) {
-                    if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) {
-                        abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di portieri (${maxPortieri}).`;
-                    } else if (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) {
-                        abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di difensori (${maxDifensori}).`;
-                    } else if (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) {
-                        abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di centrocampisti (${maxCentrocampisti}).`;
-                    } else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti) {
-                        abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`;
-                    }
+                    if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di portieri (${maxPortieri}).`; }
+                    else if (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di difensori (${maxDifensori}).`; }
+                    else if (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di centrocampisti (${maxCentrocampisti}).`; }
+                    else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`; }
                 }
                 setBidControlsEnabled(abilitato);
                 const avvisoDiv = document.getElementById('avviso-ruolo-completo');
@@ -895,44 +899,44 @@
                 else { avvisoDiv.style.display = 'none'; }
             }
 
-            function stopCountdown(){ clearInterval(countdownTimerUtente); countdownTimerUtente = null; }
-
-            function richiestaChiusuraAstaSafeguard() {
-                if (finalizeGuard) return;
-                finalizeGuard = true;
-                const tryFinalize = async () => {
-                    try {
-                        if (typeof connection.invoke === 'function') {
-                            await connection.invoke("VerificaScadenza", idListoneAttuale);
-                        }
-                    } catch (e) {
-                        try { await connection.invoke("RichiediStatoAttuale"); } catch(_){}
-                    } finally {
-                        setTimeout(()=> finalizeGuard = false, 600);
-                    }
-                };
-                setTimeout(tryFinalize, 250);
+            function stopCountdown(){
+              clearTimeout(countdownTimerUtente);
+              countdownTimerUtente = null;
             }
 
             function aggiornaCountdownDaFineUtc() {
-                const timerEl = document.getElementById("timer");
-                stopCountdown();
-                if (!idListoneAttuale || !fineUtcCorrente) { if (timerEl) timerEl.textContent = "-"; return; }
-                const end = new Date(fineUtcCorrente);
-                const tick = () => {
-                    const msLeft = end.getTime() - Date.now();
-                    let sec = Math.ceil((msLeft -200) / 1000);
-                    if (sec <= 0) {
-                        timerEl.textContent = 0;
-                        stopCountdown();
-                        setBidControlsEnabled(false);
-                        richiestaChiusuraAstaSafeguard();
-                        return;
-                    }
-                    timerEl.textContent = sec;
-                };
-                tick();
-                countdownTimerUtente = setInterval(tick, 1000);
+              const timerEl = document.getElementById("timer");
+              stopCountdown();
+
+              if (!idListoneAttuale || !fineUtcCorrente) {
+                if (timerEl) timerEl.textContent = "-";
+                return;
+              }
+
+              const end = new Date(fineUtcCorrente);
+              let prevSec = -1;
+
+              const tick = () => {
+                const msLeft = end.getTime() - Date.now();
+                const sec = Math.max(0, Math.ceil(msLeft / 1000));
+
+                if (sec !== prevSec) {
+                  timerEl.textContent = sec;
+                  prevSec = sec;
+
+                  if (sec === 0) {
+                    stopCountdown();
+                    setBidControlsEnabled(false);
+                    if (typeof richiestaChiusuraAstaSafeguard === 'function') richiestaChiusuraAstaSafeguard();
+                    return;
+                  }
+                }
+
+                const nextDelay = Math.max(50, msLeft - (sec - 1) * 1000);
+                countdownTimerUtente = setTimeout(tick, nextDelay);
+              };
+
+              tick();
             }
 
             async function aggiornaCrediti() {
@@ -947,85 +951,84 @@
                 } catch (e) { console.error("Errore aggiornamento crediti:", e); }
             }
 
-        async function caricaListone() {
-            try {
-                const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
-                if (!res.ok) return;
+            async function caricaListone() {
+                try {
+                    const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
+                    if (!res.ok) return;
+                    const raw = await res.json();
 
-                const raw = await res.json();
-
-                // Normalizza stringhe per un confronto robusto
-                const norm = (s) => (s || "")
-                    .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-                    .toLowerCase().trim();
-
-                // Deduplica per (nome, ruolo, squadra)
-                const seen = new Set();
-                listoneCompleto = raw.filter(g => {
-                    const nome = norm(g.nome);
-                    const ruolo = norm(g.ruolo);
-                    // nell’API può essere "squadra" o "squadraReale": uso quello che c’è
-                    const squadra = norm(g.squadra ?? g.squadraReale);
-                    const key = `${nome}|${ruolo}|${squadra}`;
-                    if (seen.has(key)) return false;
-                    seen.add(key);
-                    return true;
-                });
-
-            } catch (e) { console.error("Errore nel caricamento del listone:", e); }
-        }
-
+                    const norm = (s) => (s || "").normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+                    const seen = new Set();
+                    listoneCompleto = raw.filter(g => {
+                        const nome = norm(g.nome);
+                        const ruolo = norm(g.ruolo);
+                        const squadra = norm(g.squadra ?? g.squadraReale);
+                        const key = `${nome}|${ruolo}|${squadra}`;
+                        if (seen.has(key)) return false;
+                        seen.add(key);
+                        return true;
+                    });
+                } catch (e) { console.error("Errore nel caricamento del listone:", e); }
+            }
 
             function modalRoseAperto(){
                 const el = document.getElementById('modalRiepilogo');
                 return !!el && el.classList.contains('show');
             }
 
-            /* =======================
-               RIEPILOGO ROSE (tutte)
-            ======================= */
             const modalEl = document.getElementById('modalRiepilogo');
             const riepilogoContainer = document.getElementById('riepilogoContainer');
             const riepilogoLoading = document.getElementById('riepilogo-loading');
 
-                    function renderListaGiocatori(titolo, arr, mantraAttivo) {
-            const roleBadgeHtml = (r) => {
-                if (!r || r.length !== 1) return null;
-                const L = r.toUpperCase();
-                if (!['P','D','C','A'].includes(L)) return null;
-                const cls = `role-${L}`;
-                return `<span class="role-badge ${cls}">${L}</span>`;
-            };
+            function renderListaGiocatori(titolo, arr, mantraAttivo) {
+                const colorClassFromOriginal = (roleOriginal) => {
+                    const L = (roleOriginal || '').toString().trim().toUpperCase().charAt(0);
+                    if (['P','D','C','A'].includes(L)) return `role-${L}`;
+                    return null;
+                };
+                const makeBadge = (textToShow, roleOriginal) => {
+                    const colorCls = colorClassFromOriginal(roleOriginal);
+                    if (!colorCls) return null;
+                    return `<span class="role-badge ${colorCls}">${textToShow}</span>`;
+                };
+                const items = (arr || []).map(p => {
+                    const ruoloOriginale = p.ruolo;
+                    const ruoloMantra = p.ruoloMantra;
+                    const ruoloVisibile = mantraAttivo ? (ruoloMantra || ruoloOriginale) : ruoloOriginale;
 
-            const items = (arr || []).map(p => {
-                const ruoloVisibile = mantraAttivo ? (p.ruoloMantra || p.ruolo) : p.ruolo;
-                const badge = roleBadgeHtml(ruoloVisibile);
-                // Se c’è il badge (ruolo singola lettera), mostro SOLO il badge.
-                // Altrimenti mantengo il testo del ruolo com’è ora.
-                const ruoloMarkup = badge
-                    ? `<span class="pl-role">${badge}</span>`
-                    : `<span class="pl-role">${ruoloVisibile || ''}</span>`;
+                    let ruoloMarkup;
+                    if (mantraAttivo) {
+                        const badge = makeBadge(ruoloVisibile, ruoloOriginale);
+                        ruoloMarkup = badge ? `<span class="pl-role">${badge}</span>` : `<span class="pl-role">${ruoloVisibile || ''}</span>`;
+                    } else {
+                        const L = (ruoloVisibile || '').toString().trim().toUpperCase();
+                        if (L.length === 1 && ['P','D','C','A'].includes(L)) {
+                            const badge = makeBadge(L, L);
+                            ruoloMarkup = `<span class="pl-role">${badge}</span>`;
+                        } else {
+                            ruoloMarkup = `<span class="pl-role">${ruoloVisibile || ''}</span>`;
+                        }
+                    }
+
+                    return `
+                      <div class="pl-item">
+                        <div class="pl-left">
+                          <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
+                          <span class="pl-name">${p.nome}</span>
+                          ${ruoloMarkup}
+                        </div>
+                        <span class="pl-cred">(${p.crediti})</span>
+                      </div>
+                    `;
+                }).join('') || `<div class="text-muted small">Nessuno</div>`;
 
                 return `
-                  <div class="pl-item">
-                    <div class="pl-left">
-                      <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
-                      <span class="pl-name">${p.nome}</span>
-                      ${ruoloMarkup}
-                    </div>
-                    <span class="pl-cred">(${p.crediti})</span>
+                  <div class="role-col">
+                    <div class="role-title">${titolo}</div>
+                    ${items}
                   </div>
                 `;
-            }).join('') || `<div class="text-muted small">Nessuno</div>`;
-
-            return `
-              <div class="role-col">
-                <div class="role-title">${titolo}</div>
-                ${items}
-              </div>
-            `;
-        }
-
+            }
 
             function renderAccordionSquadre(data) {
                 const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
@@ -1049,51 +1052,26 @@
                     return `
                       <div class="accordion-item ${myTeamClass}">
                         <h2 class="accordion-header" id="${headingId}">
-        <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
-                data-bs-toggle="collapse" data-bs-target="#${collapseId}"
-                aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
-          <div class="header-grid">
-            <!-- SINISTRA: Nickname + ruoli (colonne fisse) -->
-            <div class="hg-left">
-              <span class="team-chip nick-clip" title="${s.nickname}">${s.nickname}</span>
-              <div class="role-grid">
-        <span class="rg">
-          <span class="lbl"><span class="role-badge role-P">P</span></span>
-          <span class="num">${counts.P}</span>
-        </span>
-        <span class="rg">
-          <span class="lbl"><span class="role-badge role-D">D</span></span>
-          <span class="num">${counts.D}</span>
-        </span>
-        <span class="rg">
-          <span class="lbl"><span class="role-badge role-C">C</span></span>
-          <span class="num">${counts.C}</span>
-        </span>
-        <span class="rg">
-          <span class="lbl"><span class="role-badge role-A">A</span></span>
-          <span class="num">${counts.A}</span>
-        </span>
-
-              </div>
-            </div>
-
-            <!-- CENTRO: "La tua" centrato (solo se tua squadra) -->
-            <div class="hg-center">
-              ${s.isMe ? '<span class="badge bg-info">La tua</span>' : ''}
-            </div>
-
-            <!-- DESTRA: Crediti / Max allineati a destra -->
-            <div class="hg-right">
-              <span class="badge bg-secondary">
-                Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span>
-              </span>
-              <span class="badge bg-secondary">
-                Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span>
-              </span>
-            </div>
-          </div>
-        </button>
-
+                          <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
+                                  data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                                  aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
+                            <div class="header-grid">
+                              <div class="hg-left">
+                                <span class="team-chip nick-clip" title="${s.nickname}">${s.nickname}</span>
+                                <div class="role-grid">
+                                  <span class="rg"><span class="lbl"><span class="role-badge role-P">P</span></span><span class="num">${counts.P}</span></span>
+                                  <span class="rg"><span class="lbl"><span class="role-badge role-D">D</span></span><span class="num">${counts.D}</span></span>
+                                  <span class="rg"><span class="lbl"><span class="role-badge role-C">C</span></span><span class="num">${counts.C}</span></span>
+                                  <span class="rg"><span class="lbl"><span class="role-badge role-A">A</span></span><span class="num">${counts.A}</span></span>
+                                </div>
+                              </div>
+                              <div class="hg-center">${s.isMe ? '<span class="badge bg-info">La tua</span>' : ''}</div>
+                              <div class="hg-right">
+                                <span class="badge bg-secondary">Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span></span>
+                                <span class="badge bg-secondary">Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span></span>
+                              </div>
+                            </div>
+                          </button>
                         </h2>
                         <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
                           <div class="accordion-body">
@@ -1136,38 +1114,31 @@
                 apriRiepilogo();
             });
 
-            /* =======================
-               SUGGERIMENTO
-            ======================= */
+            // ===== Suggerimento =====
             const inputRicerca = document.getElementById('input-ricerca-giocatore');
             const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
 
-                    inputRicerca.addEventListener('input', () => {
-            const norm = (s) => (s || "")
-                .normalize('NFD').replace(/\p{Diacritic}/gu, '')
-                .toLowerCase();
+            inputRicerca.addEventListener('input', () => {
+                const norm = (s) => (s || "").normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                const testo = norm(inputRicerca.value);
+                risultatiRicercaDiv.innerHTML = '';
+                if (testo.length < 2) return;
 
-            const testo = norm(inputRicerca.value);
-            risultatiRicercaDiv.innerHTML = '';
-            if (testo.length < 2) return;
-
-            const filtrati = listoneCompleto.filter(g => norm(g.nome).includes(testo));
-
-            filtrati.slice(0, 10).forEach(g => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'risultato-item';
-                const spanInfo = document.createElement('span');
-                spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra ?? g.squadraReale ?? ''})`;
-                const suggestButton = document.createElement('button');
-                suggestButton.className = 'btn btn-sm btn-info';
-                suggestButton.textContent = 'Suggerisci';
-                suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
-                itemDiv.appendChild(spanInfo);
-                itemDiv.appendChild(suggestButton);
-                risultatiRicercaDiv.appendChild(itemDiv);
+                const filtrati = listoneCompleto.filter(g => norm(g.nome).includes(testo));
+                filtrati.slice(0, 10).forEach(g => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'risultato-item';
+                    const spanInfo = document.createElement('span');
+                    spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra ?? g.squadraReale ?? ''})`;
+                    const suggestButton = document.createElement('button');
+                    suggestButton.className = 'btn btn-sm btn-info';
+                    suggestButton.textContent = 'Suggerisci';
+                    suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
+                    itemDiv.appendChild(spanInfo);
+                    itemDiv.appendChild(suggestButton);
+                    risultatiRicercaDiv.appendChild(itemDiv);
+                });
             });
-        });
-
 
             function suggerisciGiocatore(giocatore) {
                 connection.invoke("SuggerisciGiocatore", giocatore.id, nickname, legaAlias)
@@ -1198,12 +1169,10 @@
                 const hide = () => el.classList.remove('show');
                 const closeBtn = el.querySelector('.toast-close');
                 if (closeBtn) closeBtn.onclick = hide;
-                setTimeout(hide, 4000);
+                setTimeout(hide, 2000);
             }
 
-            /* =======================
-               SIGNALR
-            ======================= */
+            // ===== SignalR Handlers =====
             connection.on("MostraGiocatoreInAsta", (giocatore) => {
                 const logoImg = document.getElementById("logo-giocatore-in-asta");
                 idListoneAttuale = giocatore.id;
@@ -1227,7 +1196,6 @@
                 document.getElementById("offerta").textContent = offerta || 0;
                 offertaAttuale = offerta || 0;
 
-                // riavvia countdown solo se cambia davvero l'end
                 if (fineUtc && fineUtc !== lastFineUtcStr) {
                     lastFineUtcStr = fineUtc;
                     fineUtcCorrente = fineUtc;
@@ -1271,40 +1239,69 @@
                 aggiornaStatoPulsantiBazzer();
             });
 
-            // ► Pausa / Ripresa / Stato iniziale
-            connection.on("AstaPausa", (payload)=>{
-                pausaAttivaClient = true;
-                setBidControlsEnabled(false);
-                stopCountdown();
-                const rem = (typeof payload?.remainingSec === 'number') ? payload.remainingSec : (document.getElementById('timer').textContent || '--');
-                document.getElementById('pausa-remaining').textContent = rem;
-                document.getElementById('timer').textContent = rem;
-                document.getElementById('pausa-overlay').classList.add('visible');
-            });
+            // ► Pausa
+        connection.on("AstaPausa", (payload) => {
+          console.debug('[HUB] AstaPausa', payload);
+          pausaAttivaClient = true;
+          pauseLockUntil = 0;
 
-            connection.on("AstaRipresa", ({ fineUtc })=>{
-                pausaAttivaClient = false;
-                document.getElementById('pausa-overlay').classList.remove('visible');
-                if (fineUtc){
-                    lastFineUtcStr = fineUtc;
-                    fineUtcCorrente = fineUtc;
-                    aggiornaCountdownDaFineUtc();
-                }
-                aggiornaStatoPulsantiBazzer();
-            });
+          const rem = (typeof payload?.remainingSec === 'number')
+            ? payload.remainingSec
+            : (document.getElementById('timer').textContent || '--');
 
-            connection.on("StatoAsta", (stato)=>{
-                if (stato?.pausaAttiva){
-                    pausaAttivaClient = true;
-                    setBidControlsEnabled(false);
-                    stopCountdown();
-                    document.getElementById('pausa-overlay').classList.add('visible');
-                } else {
-                    pausaAttivaClient = false;
-                    document.getElementById('pausa-overlay').classList.remove('visible');
-                    aggiornaStatoPulsantiBazzer();
-                }
-            });
+          const remEl = document.getElementById('pausa-remaining');
+          if (remEl) remEl.textContent = rem;
+
+          const tEl = document.getElementById('timer');
+          if (tEl) tEl.textContent = rem;
+
+          setPauseUI(true);
+          startResumePolling(); // <<< aggiunta
+        });
+
+
+            // ► Ripresa
+        connection.on("AstaRipresa", (arg) => {
+          console.debug('[HUB] AstaRipresa', arg);
+          pausaAttivaClient = false;
+          pauseLockUntil = Date.now() + 5000;
+          stopResumePolling();           // <<< aggiunta
+          setPauseUI(false);
+
+          const fineUtc = (typeof arg === 'string') ? arg : (arg && arg.fineUtc);
+          if (fineUtc){
+            lastFineUtcStr  = fineUtc;
+            fineUtcCorrente = fineUtc;
+            aggiornaCountdownDaFineUtc();
+          } else {
+            try { connection.invoke("RichiediStatoAttuale"); } catch {}
+          }
+          aggiornaStatoPulsantiBazzer();
+        });
+
+
+            // ► Sync stato
+        connection.on("StatoAsta", (stato) => {
+          console.debug('[HUB] StatoAsta', stato);
+
+          if (Date.now() < pauseLockUntil && stato?.pausaAttiva === true) return;
+
+          if (stato?.pausaAttiva) {
+            pausaAttivaClient = true;
+            setPauseUI(true);
+            startResumePolling();         // <<< aggiunta (idempotente)
+          } else {
+            pausaAttivaClient = false;
+            stopResumePolling();          // <<< aggiunta
+            setPauseUI(false);
+            if (stato?.fineUtc){
+              lastFineUtcStr  = stato.fineUtc;
+              fineUtcCorrente = stato.fineUtc;
+              aggiornaCountdownDaFineUtc();
+            }
+          }
+        });
+
 
             // === Riepilogo & crediti live ===
             connection.on("RiepilogoAggiornato", (data) => {
@@ -1329,9 +1326,7 @@
                 aggiornaStatoPulsantiBazzer();
             });
 
-            /* =======================
-               CLICK OFFERTE (guard pausa)
-            ======================= */
+            // ===== Offerte (guard pausa) =====
             document.querySelectorAll(".bazzer").forEach(btn => {
                 btn.addEventListener("click", async () => {
                     if (pausaAttivaClient){
@@ -1376,9 +1371,7 @@
                 inputOfferta.value = "";
             });
 
-            /* =======================
-               GESTIONE RECONNECT
-            ======================= */
+            // ===== Reconnect =====
             function clearPing() { if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; } }
             function startPing() {
                 clearPing();
@@ -1429,15 +1422,11 @@
                         hideReconnectOverlay();
                         await postConnectedSetup();
                         aggiornaStatoPulsantiBazzer();
-                    } catch (e) {
-                        // resta in loop 1s
-                    }
+                    } catch (e) { /* retry 1s */ }
                 }, 1000);
             }
 
-            function stopManualLoop() {
-                if (manualReconnectTimer) { clearInterval(manualReconnectTimer); manualReconnectTimer = null; }
-            }
+            function stopManualLoop() { if (manualReconnectTimer) { clearInterval(manualReconnectTimer); manualReconnectTimer = null; } }
 
             connection.onreconnecting((err) => {
                 console.warn("Reconnecting…", err);
@@ -1446,14 +1435,16 @@
                 stopCountdown();
             });
 
-            connection.onreconnected((_id) => {
-                console.info("Reconnected");
-                hideReconnectOverlay();
-                stopManualLoop();
-                manualAttempts = 0;
-                postConnectedSetup();
-                aggiornaStatoPulsantiBazzer();
-            });
+        connection.onreconnected((_id) => {
+          console.info("Reconnected");
+          hideReconnectOverlay();
+          stopManualLoop();
+          manualAttempts = 0;
+          postConnectedSetup();
+          try { connection.invoke("RichiediStatoAttuale"); } catch {} // <<< aggiunta
+          aggiornaStatoPulsantiBazzer();
+        });
+
 
             connection.onclose((err) => {
                 console.warn("Connessione chiusa:", err);
@@ -1462,16 +1453,13 @@
                 startManualReconnectLoop();
             });
 
-            /* =======================
-               AVVIO
-            ======================= */
+            // ===== Avvio =====
             startConnectionInitial();
 
             // Evita leak se si lascia la pagina
             window.addEventListener('beforeunload', () => {
                 try { clearPing(); stopManualLoop(); connection.stop(); } catch(_) {}
             });
-
         });
 
         // persistenza ultima URL utente

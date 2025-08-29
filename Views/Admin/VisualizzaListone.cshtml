@@ -128,7 +128,7 @@
         margin-top: 30px
     }
 
-    /* ===== Presence ===== */
+    /* Presence */
     .status-dot {
         display: inline-block;
         width: 10px;
@@ -151,7 +151,7 @@
         background: #f1c40f
     }
 
-    /* ===== Top bar ===== */
+    /* Top bar */
     .auction-bar {
         background: rgba(44,62,80,.5);
         border: 1px solid #34495e;
@@ -160,7 +160,7 @@
         box-shadow: inset 2px 2px 6px rgba(0,0,0,.25), inset -2px -2px 6px rgba(255,255,255,.06)
     }
 
-    /* ===== Neumorphic buttons (3D/pressed) ===== */
+    /* Buttons */
     .btn-neo {
         border: none !important;
         position: relative;
@@ -170,8 +170,8 @@
         padding: .5rem .9rem !important;
         color: #fff !important;
         background: #2d3b4d;
-        box-shadow: 6px 6px 12px rgba(0,0,0,.35), -6px -6px 12px rgba(255,255,255,.04);
-        transition: transform .07s ease, box-shadow .07s ease, filter .15s ease;
+        box-shadow: 6px 6px 12px rgba(0,0,0,.35),-6px -6px 12px rgba(255,255,255,.04);
+        transition: transform .07s ease, box-shadow .07s ease, filter .15s ease
     }
 
         .btn-neo:hover {
@@ -180,7 +180,7 @@
 
         .btn-neo:active {
             transform: translateY(1px);
-            box-shadow: inset 6px 6px 12px rgba(0,0,0,.35), inset -6px -6px 12px rgba(255,255,255,.04)
+            box-shadow: inset 6px 6px 12px rgba(0,0,0,.35),inset -6px -6px 12px rgba(255,255,255,.04)
         }
 
     .btn-neo-warning {
@@ -216,10 +216,10 @@
         filter: none;
         cursor: not-allowed;
         transform: none;
-        box-shadow: 6px 6px 12px rgba(0,0,0,.35), -6px -6px 12px rgba(255,255,255,.04) !important
+        box-shadow: 6px 6px 12px rgba(0,0,0,.35),-6px -6px 12px rgba(255,255,255,.04) !important
     }
 
-    /* ===== Letter chips ===== */
+    /* Letters */
     .letters-bar .letter-chip {
         border: none;
         background: #2d3b4d;
@@ -229,8 +229,8 @@
         font-weight: 700;
         line-height: 1;
         cursor: pointer;
-        box-shadow: 4px 4px 10px rgba(0,0,0,.35), -4px -4px 10px rgba(255,255,255,.04);
-        transition: transform .07s ease, box-shadow .07s ease, filter .15s ease;
+        box-shadow: 4px 4px 10px rgba(0,0,0,.35),-4px -4px 10px rgba(255,255,255,.04);
+        transition: transform .07s ease, box-shadow .07s ease, filter .15s ease
     }
 
         .letters-bar .letter-chip:hover {
@@ -320,7 +320,6 @@
                             <button class="btn btn-sm btn-warning btn-toggle-rosa" type="button" onclick="toggleLista('portieri-@s.Nickname')">
                                 @s.PortieriAssegnati.Count +/-
                             </button>
-
                             <ul id="portieri-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.PortieriAssegnati)
                                 {
@@ -341,7 +340,6 @@
                             <button class="btn btn-sm btn-success btn-toggle-rosa" type="button" onclick="toggleLista('difensori-@s.Nickname')">
                                 @s.DifensoriAssegnati.Count +/-
                             </button>
-
                             <ul id="difensori-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.DifensoriAssegnati)
                                 {
@@ -362,7 +360,6 @@
                             <button class="btn btn-sm btn-primary btn-toggle-rosa" type="button" onclick="toggleLista('centro-@s.Nickname')">
                                 @s.CentrocampistiAssegnati.Count +/-
                             </button>
-
                             <ul id="centro-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.CentrocampistiAssegnati)
                                 {
@@ -383,7 +380,6 @@
                             <button class="btn btn-sm btn-danger btn-toggle-rosa" type="button" onclick="toggleLista('attaccanti-@s.Nickname')">
                                 @s.AttaccantiAssegnati.Count +/-
                             </button>
-
                             <ul id="attaccanti-@s.Nickname" class="mt-2 d-none list-unstyled small text-start">
                                 @foreach (var g in s.AttaccantiAssegnati)
                                 {
@@ -428,8 +424,8 @@
 <div class="row mb-3 align-items-center">
     <div class="col-auto">
         <form id="formTimer" class="d-flex" onsubmit="return false;">
-            <input type="number" class="form-control me-2" id="secondiTimer" value="5" min="2" placeholder="Secondi Timer" />
-            <button type="submit" class="btn-neo btn-neo-secondary">Imposta Timer</button>
+            <input type="number" class="form-control me-2" id="secondiTimer" value="@(ViewBag.DurataTimer ?? 5)" min="2" placeholder="Secondi Timer" />
+            <button type="submit" class="btn-neo btn-neo-primary">Imposta Timer</button>
         </form>
     </div>
     <div class="col-auto">
@@ -531,9 +527,7 @@
                 <hr />
                 <input type="hidden" id="idGiocatoreSvincola" />
                 <div class="mb-3 text-start">
-                    <label for="creditiSvincoloInput" class="form-label">
-                        Crediti da restituire (costo originale: <span id="costoOriginaleSvincolo"></span>):
-                    </label>
+                    <label for="creditiSvincoloInput" class="form-label">Crediti da restituire (costo originale: <span id="costoOriginaleSvincolo"></span>):</label>
                     <input type="number" id="creditiSvincoloInput" class="form-control" value="1" min="0" />
                 </div>
             </div>
@@ -597,7 +591,7 @@
     </div>
 </div>
 
-<!-- ===== Modale Messaggi generici (mostraMessaggio) ===== -->
+<!-- ===== Modale Messaggi generici ===== -->
 <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content text-white" style="background-color:#2c3e50;border:1px solid #3498db;">
@@ -621,721 +615,631 @@
 @section Scripts {
     @Html.AntiForgeryToken()
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
-    <!-- Assicuriamo Bootstrap JS per le modali -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         (function(){
-            // ====== VAR GLOBALI ======
-            let debounceTimer;
-            let durataTimer = @ViewBag.DurataTimer;
-            let countdownTimerAdmin = null;
-            let closeTimeoutAdmin = null;
-            let lastOffertaAdmin = 0;
+          // ===== VAR =====
+          let debounceTimer;
+          let durataTimer = @ViewBag.DurataTimer;
+          let countdownTimerAdmin = null;
+          let closeTimeoutAdmin   = null;
+          let lastOffertaAdmin = 0;
 
-            const legaAliasAdmin = "@ViewBag.LegaAlias";
-            const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+          const legaAliasAdmin = "@ViewBag.LegaAlias";
+          const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
 
-            const LS_START = `asta:start:${legaAliasAdmin}`;
-            const LS_PAUSE_ACC = `asta:pauseAcc:${legaAliasAdmin}`;
-            const LS_PAUSE_AT = `asta:pauseAt:${legaAliasAdmin}`;
-            const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
+          const LS_START        = `asta:start:${legaAliasAdmin}`;
+          const LS_PAUSE_ACC    = `asta:pauseAcc:${legaAliasAdmin}`;
+          const LS_PAUSE_AT     = `asta:pauseAt:${legaAliasAdmin}`;
+          const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
+          const LS_STOP_ACTIVE  = `asta:stopActive:${legaAliasAdmin}`;
+          const LS_STOP_SEC     = `asta:stopSec:${legaAliasAdmin}`;
+          const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+          const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
+          const LS_DEFAULT_TIMER = `asta:defaultTimer:${legaAliasAdmin}`;
 
-            /* STOP locale (nessun segnale server) */
-            const LS_STOP_ACTIVE = `asta:stopActive:${legaAliasAdmin}`;
-            const LS_STOP_SEC = `asta:stopSec:${legaAliasAdmin}`;
+          // ====== UTILS ======
+          function getArchivedLetters(){ try{ return JSON.parse(localStorage.getItem(LS_LETTERS)||'[]'); }catch{ return []; } }
+          function setArchivedLetters(arr){ localStorage.setItem(LS_LETTERS, JSON.stringify(arr)); renderLettersChips(); }
+          function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+          function submitFormDebounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>document.getElementById("filtroForm").submit(),500); }
+          function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
+          window.toggleLista=toggleLista;
 
-            const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-            const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
+          // Messaggi modali
+          window.mostraMessaggio = function (titolo, corpo, conferma = false) {
+            const mEl = document.getElementById('messaggioModale');
+            if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
+            const titleEl = document.getElementById('messaggioModaleTitolo');
+            const bodyEl  = document.getElementById('messaggioModaleCorpo');
+            let   btnOk   = document.getElementById('messaggioModaleBtnOk');
+            let   btnAnn  = document.getElementById('messaggioModaleBtnAnnulla');
 
-            // ====== UTILS ======
-            function getArchivedLetters(){ try{ return JSON.parse(localStorage.getItem(LS_LETTERS)||'[]'); }catch{ return []; } }
-            function setArchivedLetters(arr){ localStorage.setItem(LS_LETTERS, JSON.stringify(arr)); renderLettersChips(); }
-            function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
-            function submitFormDebounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>document.getElementById("filtroForm").submit(),500); }
-            function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
-            window.toggleLista = toggleLista;
+            titleEl.textContent = titolo || 'Info';
+            bodyEl.textContent  = corpo  || '';
+            btnAnn.style.display = conferma ? '' : 'none';
 
-            // Messaggi modali
-                    // Sostituisci questa funzione nel tuo script:
-              // sostituisci TUTTA la funzione con questa
-        window.mostraMessaggio = function (titolo, corpo, conferma = false) {
-          const mEl = document.getElementById('messaggioModale');
-          if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
+            const bs = bootstrap.Modal.getOrCreateInstance(mEl);
+            btnOk.replaceWith(btnOk.cloneNode(true));
+            btnAnn.replaceWith(btnAnn.cloneNode(true));
+            btnOk  = document.getElementById('messaggioModaleBtnOk');
+            btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
 
-          const titleEl = document.getElementById('messaggioModaleTitolo');
-          const bodyEl  = document.getElementById('messaggioModaleCorpo');
-          let   btnOk   = document.getElementById('messaggioModaleBtnOk');
-          let   btnAnn  = document.getElementById('messaggioModaleBtnAnnulla');
-
-          titleEl.textContent = titolo || 'Info';
-          bodyEl.textContent  = corpo  || '';
-
-          btnAnn.style.display = conferma ? '' : 'none';
-
-          const bs = bootstrap.Modal.getOrCreateInstance(mEl);
-
-          // reset listeners (clone trick)
-          btnOk.replaceWith(btnOk.cloneNode(true));
-          btnAnn.replaceWith(btnAnn.cloneNode(true));
-          btnOk  = document.getElementById('messaggioModaleBtnOk');
-          btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
-
-          return new Promise((resolve) => {
-            let decided = false;
-
-            const cleanup = () => {
-              mEl.removeEventListener('hidden.bs.modal', onHidden);
-            };
-
-            const onHidden = () => {
-              // se arrivo qui senza onOk/onAnn ⇒ chiusura con X/backdrop
-              if (!decided) { decided = true; resolve(false); }
-              cleanup();
-            };
-
-            const onOk = () => {
-              if (decided) return;
-              decided = true;
-              // risolvo true DOPO la chiusura reale
-              mEl.addEventListener('hidden.bs.modal', () => { resolve(true); cleanup(); }, { once: true });
-              bs.hide();
-            };
-
-            const onAnn = () => {
-              if (decided) return;
-              decided = true;
-              mEl.addEventListener('hidden.bs.modal', () => { resolve(false); cleanup(); }, { once: true });
-              bs.hide();
-            };
-
-            btnOk.addEventListener('click', onOk,  { once: true });
-            if (conferma) btnAnn.addEventListener('click', onAnn, { once: true });
-
-            // fallback SOLO se l’utente chiude con X / backdrop
-            mEl.addEventListener('hidden.bs.modal', onHidden);
-            bs.show();
-          });
-        };
-
-
-            /* Audio warm-up una sola volta */
-            let audioUnlocked = false;
-            document.addEventListener('click', () => {
-                if (audioUnlocked) return;
-                audioUnlocked = true;
-                ['suono-offerta','suono-countdown','suono-vittoria'].forEach(id => {
-                    const a = document.getElementById(id);
-                    if (!a) return;
-                    a.muted = true;
-                    a.play().catch(()=>{}).finally(() => {
-                      try { a.pause(); a.currentTime = 0; } catch {}
-                      a.muted = false;
-                    });
-                });
-            }, { once:true });
-
-            // ====== DURATA GLOBALE ======
-            function computeElapsedSec(){
-                const startIso=localStorage.getItem(LS_START);
-                if(!startIso) return 0;
-                const start=new Date(startIso).getTime();
-                const pauseAcc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-                const pauseActive=(localStorage.getItem(LS_PAUSE_ACTIVE)==="true");
-                const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
-                const extra=pauseActive && pauseAtIso ? Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)) : 0;
-                return Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extra));
-            }
-
-            function paintDurata(){
-                const out=document.getElementById('durata-asta');
-                const badge=document.getElementById('stato-pausa');
-                const startIso=localStorage.getItem(LS_START);
-                if(!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
-
-                // STOP locale
-                if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
-                    const frozen = parseInt(localStorage.getItem(LS_STOP_SEC)||"0");
-                    out.textContent = fmt(frozen);
-                    badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
-                    return;
-                }
-
-                const sec = computeElapsedSec();
-                out.textContent=fmt(sec);
-                badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
-            }
-            let durataInterval=null;
-            function startDurataLoop(){ if(durataInterval) clearInterval(durataInterval); paintDurata(); durataInterval=setInterval(paintDurata,1000); }
-            function stopDurataLoop(){ if(durataInterval){ clearInterval(durataInterval); durataInterval=null; } }
-            function resetDurataLocal(){
-                localStorage.removeItem(LS_START);
-                localStorage.removeItem(LS_PAUSE_AT);
-                localStorage.setItem(LS_PAUSE_ACC,"0");
-                localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-                localStorage.setItem(LS_STOP_ACTIVE,"false");
-                localStorage.removeItem(LS_STOP_SEC);
-                stopDurataLoop();
-                const out=document.getElementById('durata-asta'); const badge=document.getElementById('stato-pausa');
-                if(out) out.textContent='00:00'; if(badge) badge.classList.add('d-none');
-                const stopBtn = document.getElementById('btn-stop');
-                if(stopBtn){ stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; }
-            }
-
-            function toggleStop(){
-                const stopBtn = document.getElementById('btn-stop');
-                if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
-                    localStorage.setItem(LS_STOP_ACTIVE,"false");
-                    stopBtn.dataset.state='go';
-                    stopBtn.textContent='Stop';
-                    startDurataLoop();
-                } else {
-                    const sec = computeElapsedSec();
-                    localStorage.setItem(LS_STOP_ACTIVE,"true");
-                    localStorage.setItem(LS_STOP_SEC,String(sec));
-                    stopBtn.dataset.state='stop';
-                    stopBtn.textContent='Riprendi Timer';
-                    paintDurata();
-                    stopDurataLoop();
-                }
-            }
-
-            function applyInitialFilter(letter){
-                const inizialeInput=document.getElementById('inizialeInput');
-                const nomeInput=document.getElementById('nomeFilterInput');
-                const squadraInput=document.getElementById('squadraFilterInput');
-                const sorteggioInput=document.getElementById('sorteggioInput');
-                if (sorteggioInput) sorteggioInput.value='true';
-                if (inizialeInput) inizialeInput.value=letter||'';
-                if (nomeInput) nomeInput.value='';
-                if (squadraInput) squadraInput.value='';
-                document.getElementById('filtroForm').submit();
-            }
-
-            function renderLettersChips(){
-                const cont=document.getElementById('lettersChips');
-                if(!cont) return;
-                const archived=getArchivedLetters();
-                const selected=(new URLSearchParams(window.location.search).get('iniziale')||'').toUpperCase();
-                cont.innerHTML='';
-                ALPH.forEach(l=>{
-                    const btn=document.createElement('button');
-                    btn.type='button'; btn.className='letter-chip btn btn-sm';
-                    if(archived.includes(l)) btn.classList.add('letter-archived');
-                    if(selected===l) btn.classList.add('letter-selected');
-                    btn.textContent=l;
-                    btn.title=archived.includes(l)?'Lettera estratta (clic per renderla disponibile)':'Filtra per '+l;
-                    btn.addEventListener('click', ()=>{
-                        if(archived.includes(l)) setArchivedLetters(archived.filter(x=>x!==l));
-                        applyInitialFilter(l);
-                    });
-                    cont.appendChild(btn);
-                });
-            }
-
-            document.addEventListener('DOMContentLoaded', function(){
-                // pulizia ?bp=
-                try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
-
-                // dati squadre per modale Assegna
-                let squadreArr = [];
-                try { squadreArr = JSON.parse('@Html.Raw(squadreJson)') || []; } catch (e) { console.error('Errore parse squadreJson', e); squadreArr = []; }
-
-                const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-                const SLOT_TOTALI = parseInt("@(ViewBag.SlotTotali ?? 0)") || 0;
-
-                // FILTRI
-                const urlParams=new URLSearchParams(window.location.search);
-                const nomeFilter=document.getElementById('nomeFilterInput');
-                if (urlParams.has('nome') && urlParams.get('nome')!=='' && nomeFilter){
-                    nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
-                }
-                const squadraFilter=document.getElementById('squadraFilterInput');
-                nomeFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
-                squadraFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
-
-                // Toggle liste nel riepilogo
-                        // Toggle liste nel riepilogo (robusto ai cambi di colore)
-        document.querySelectorAll('table.table-bordered.table-sm button.btn-toggle-rosa').forEach(btn=>{
-            if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
-            btn.addEventListener('click', (ev)=>{
-                ev.preventDefault(); ev.stopPropagation();
-                const td = btn.closest('td');
-                const ul = td?.querySelector('ul');
-                if (ul) ul.classList.toggle('d-none');
+            return new Promise((resolve) => {
+              let decided = false;
+              const cleanup = () => { mEl.removeEventListener('hidden.bs.modal', onHidden); };
+              const onHidden = () => { if (!decided) { decided = true; resolve(false); } cleanup(); };
+              const onOk  = () => { if (decided) return; decided = true; mEl.addEventListener('hidden.bs.modal', () => { resolve(true); cleanup(); }, { once: true }); bs.hide(); };
+              const onAnn = () => { if (decided) return; decided = true; mEl.addEventListener('hidden.bs.modal', () => { resolve(false); cleanup(); }, { once: true }); bs.hide(); };
+              btnOk.addEventListener('click', onOk, { once:true });
+              if (conferma) btnAnn.addEventListener('click', onAnn, { once:true });
+              mEl.addEventListener('hidden.bs.modal', onHidden);
+              bs.show();
             });
-        });
+          };
 
+          // Audio warmup
+          let audioUnlocked=false;
+          document.addEventListener('click',()=>{ if(audioUnlocked) return; audioUnlocked=true; ['suono-offerta','suono-countdown','suono-vittoria'].forEach(id=>{ const a=document.getElementById(id); if(!a) return; a.muted=true; a.play().catch(()=>{}).finally(()=>{ try{a.pause();a.currentTime=0;}catch{} a.muted=false; }); }); }, { once:true });
 
-                // ====== PULSANTI "ASTA" / "ASSEGNA" con delegation ======
-                document.addEventListener('click', async (ev) => {
-                    const btnAsta = ev.target.closest('.btn-avvia-asta');
-                    const btnAssegna = ev.target.closest('.btn-assegna');
-
-                    // === AVVIA ASTA ===
-                    if (btnAsta) {
-                        ev.preventDefault();
-                        try {
-                            const id = btnAsta.dataset.id;
-                            const mantra = btnAsta.dataset.mantra === 'true';
-                            const body = `id=${encodeURIComponent(id)}&mantra=${mantra}`;
-
-                            const r = await fetch('/Admin/AvviaAsta', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                                    'RequestVerificationToken': antiToken
-                                },
-                                body
-                            });
-
-                            if (!r.ok) {
-                                const t = await r.text().catch(() => '-');
-                                console.error('AvviaAsta fallita', r.status, t);
-                                await mostraMessaggio?.('Errore', 'Errore avvio asta.');
-                                return;
-                            }
-
-                            // Feedback immediato
-                            const overlay = document.getElementById('asta-overlay');
-                            if (overlay) {
-                                document.getElementById('overlay-nome-giocatore').innerText = '…';
-                                document.getElementById('overlay-dettagli-giocatore').innerText = 'In attesa…';
-                                document.getElementById('overlay-offerta').innerText = '0';
-                                document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
-                                document.getElementById('overlay-timer').innerText = '--';
-                                overlay.classList.add('visible');
-                            }
-                            // nudge
-                            try { if (window.connection) await window.connection.invoke("RichiediStatoAttuale"); } catch {}
-                        } catch (err) {
-                            console.error('AvviaAsta errore:', err);
-                            await mostraMessaggio?.('Errore','Impossibile avviare l’asta.');
-                        }
-                        return;
-                    }
-
-                    // === ASSEGNA (modale) ===
-                    if (btnAssegna) {
-                        ev.preventDefault();
-                        try {
-                            const id = btnAssegna.dataset.id;
-                            const nome = btnAssegna.dataset.nome || '';
-                            const ruolo = btnAssegna.dataset.ruolo || '';
-                            const squadra = btnAssegna.dataset.squadra || '';
-                            const logo = btnAssegna.dataset.logo || '';
-
-                            document.getElementById('idGiocatoreModale').value = id;
-                            document.getElementById('nomeGiocatoreModale').innerText = nome;
-                            document.getElementById('dettagliGiocatoreAssegna').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
-                            const img = document.getElementById('logoGiocatoreAssegna');
-                            if (img) img.src = logo;
-
-                            const sel = document.getElementById('squadraSelect');
-                            sel.innerHTML = '';
-                            (squadreArr || []).forEach(s => {
-                                const o = document.createElement('option');
-                                o.value = s.SquadraId;
-                                o.innerText = s.Nickname;
-                                sel.appendChild(o);
-                            });
-
-                            const modalEl = document.getElementById('assegnaModal');
-                            const modal = bootstrap?.Modal?.getOrCreateInstance?.(modalEl);
-                            if (modal) modal.show();
-                            else {
-                                modalEl?.classList.add('show');
-                                modalEl?.setAttribute('style','display:block');
-                            }
-                        } catch (e) {
-                            console.error('Errore apertura modale Assegna', e);
-                            await mostraMessaggio?.('Errore', 'Impossibile aprire la modale di assegnazione.');
-                        }
-                        return;
-                    }
-                });
-
-                // ====== SVINCOLO ======
-                window.apriModaleSvincolo = function(btn){
-                    const id = btn.dataset.id;
-                    const nome = btn.dataset.nome || '';
-                    const costo = parseInt(btn.dataset.costo) || 0;
-                    const squadra = btn.dataset.squadra || '';
-                    const logo = btn.dataset.logo || '';
-                    const ruolo = btn.dataset.ruolo || '';
-
-                    document.getElementById('idGiocatoreSvincola').value = id;
-                    document.getElementById('costoOriginaleSvincolo').innerText = costo;
-                    const input = document.getElementById('creditiSvincoloInput');
-                    if (input) { input.min = 0; input.removeAttribute('max'); input.value = String(costo); }
-
-                    document.getElementById('logoGiocatoreSvincola').src = logo;
-                    document.getElementById('nomeGiocatoreSvincolo').innerText = nome;
-                    document.getElementById('dettagliGiocatoreSvincolo').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
-
-                    const modalEl = document.getElementById('svincolaModal');
-                    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                    modal.show();
-                };
-
-                document.getElementById('btnConfermaSvincolo')?.addEventListener('click', ()=>{
-                    const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
-                    let crediti = parseInt(document.getElementById('creditiSvincoloInput').value);
-                    if (isNaN(crediti) || crediti < 0) crediti = 0;
-
-                    fetch('/Admin/SvincolaGiocatore',{
-                        method:'POST',
-                        headers:{ 'Content-Type':'application/json' },
-                        body: JSON.stringify({ id, creditiRestituiti: crediti })
-                    }).then(r=>{
-                        if(r.ok){ location.reload(); }
-                        else { mostraMessaggio("Errore","Errore durante lo svincolo."); }
-                    });
-                });
-
-                // === BONUS CREDITI ===
-                let bonusModal, bonusDeltaInput;
-                function calcolaPuntataMax(creditiDisponibili, giocatoriCount) {
-                    const SLOT_TOTALI = parseInt("@(ViewBag.SlotTotali ?? 0)") || 0;
-                    const slotRimasti = Math.max(0, SLOT_TOTALI - (parseInt(giocatoriCount) || 0));
-                    const pmax = creditiDisponibili - (slotRimasti > 0 ? slotRimasti - 1 : 0);
-                    return Math.max(0, pmax);
-                }
-                function aggiornaPreviewBonus() {
-                    const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
-                    const giocatoriCount = parseInt(document.getElementById('bonusGiocatoriCount').value) || 0;
-                    const delta = parseInt(bonusDeltaInput.value) || 0;
-                    const afterCred = currCred + delta;
-                    const afterPMax = calcolaPuntataMax(afterCred, giocatoriCount);
-                    document.getElementById('bonusCreditiDopo').textContent = afterCred;
-                    document.getElementById('bonusPMaxDopo').textContent = afterPMax;
-                }
-                document.querySelectorAll('.btn-bonus').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const sId = parseInt(btn.dataset.squadraid);
-                        const nick = btn.dataset.nickname || '';
-                        const cred = parseInt(btn.dataset.crediti) || 0;
-                        const pmax = parseInt(btn.dataset.pmax) || 0;
-                        const giocatoriCount = parseInt(btn.dataset.giocatori) || 0;
-
-                        document.getElementById('bonusSquadraId').value = sId;
-                        document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
-                        document.getElementById('bonusNick').textContent = nick;
-                        document.getElementById('bonusCreditiAttuali').textContent = cred;
-                        document.getElementById('bonusPMaxAttuale').textContent = pmax;
-
-                        bonusDeltaInput = document.getElementById('bonusDeltaInput');
-                        bonusDeltaInput.value = "0";
-                        aggiornaPreviewBonus();
-
-                        if (!bonusModal) {
-                            bonusModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
-                        }
-                        bonusModal.show();
-                    });
-                });
-                document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
-                document.getElementById('btnConfermaBonus')?.addEventListener('click', async () => {
-                    const sId = parseInt(document.getElementById('bonusSquadraId').value);
-                    const delta = parseInt(document.getElementById('bonusDeltaInput').value) || 0;
-                    try {
-                        const r = await fetch('/Admin/AggiornaCreditiBonus', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'RequestVerificationToken': antiToken
-                            },
-                            body: JSON.stringify({ squadraId: sId, delta })
-                        });
-                        if (!r.ok) throw new Error('HTTP ' + r.status);
-                        bonusModal?.hide();
-                    } catch (e) {
-                        console.error(e);
-                        await mostraMessaggio?.('Errore', 'Impossibile applicare il bonus.');
-                    }
-                });
-
-                // TIMER / SWITCHES
-                document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
-                    e.preventDefault();
-                    const s=parseInt(document.getElementById('secondiTimer').value||"0");
-                    const r = await fetch('/Admin/ImpostaTimer', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ secondi:s }) });
-                    if (r.ok){ durataTimer=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
-                    else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
-                });
-                document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
-                    try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
-                    const isAttivo=this.checked;
-                    const r=await fetch('/Admin/ImpostaBloccoPortieri',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ attivo:isAttivo }) });
-                    if (r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri ' + (isAttivo ? 'ATTIVATO' : 'DISATTIVATO'));
-                    else await mostraMessaggio('Errore','Errore aggiornamento regola.');
-                });
-                document.getElementById('mantraSwitch')?.addEventListener('change', function(){
-                    const hidden = document.getElementById('mantraInput');
-                    if (hidden) hidden.value = this.checked ? 'true' : 'false';
-                    const url=new URL(window.location.href);
-                    url.searchParams.set('mantra', this.checked);
-                    window.location.href=url.toString();
-                });
-                document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
-                    const sorteggioInput=document.getElementById('sorteggioInput');
-                    const isAttivo=this.checked;
-                    if (sorteggioInput) sorteggioInput.value=isAttivo?'true':'false';
-                    const url=new URL(window.location.href);
-                    url.searchParams.set('sorteggio', isAttivo);
-                    if(!isAttivo) url.searchParams.delete('iniziale');
-                    window.location.href=url.toString();
-                });
-        document.getElementById('btnAnnullaAsta')?.addEventListener('click', async () => {
-          const ok = await mostraMessaggio('Annulla Asta', 'Sei sicuro?', true);
-          if (!ok) return;
-          try {
-            const r = await fetch('/Admin/AnnullaAsta', {
-              method: 'POST',
-              headers: { 'RequestVerificationToken': antiToken }
-            });
-            if (!r.ok) {
-              const t = await r.text().catch(() => '');
-              console.error('AnnullaAsta HTTP', r.status, t);
-              await mostraMessaggio('Errore', 'Errore annullamento asta.');
-            }
-          } catch (e) {
-            console.error(e);
-            await mostraMessaggio('Errore', 'Errore di rete durante l’annullamento.');
-          }
-        });
-
-                // LETTERE
-                renderLettersChips();
-                document.getElementById('btnSorteggiaLettera')?.addEventListener('click', ()=>{
-                    const archived=getArchivedLetters(); const pool=ALPH.filter(l=>!archived.includes(l));
-                    if(pool.length===0){ mostraMessaggio('Sorteggio lettera','Tutte le lettere sono già state estratte. Premi "Reset lettere" o riabilita un singolo chip.'); return; }
-                    const letter=pool[Math.floor(Math.random()*pool.length)];
-                    setArchivedLetters([...archived, letter]);
-                    applyInitialFilter(letter);
-                });
-                document.getElementById('btnResetLettere')?.addEventListener('click', ()=>{
-                    setArchivedLetters([]);
-                    const inizialeInput=document.getElementById('inizialeInput'); if (inizialeInput) inizialeInput.value='';
-                    document.getElementById('filtroForm').submit();
-                });
-
-                // ====== SIGNALR ======
-                const connection = new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-                window.connection = connection; // per eventuale nudge nel click Asta
-
-                connection.on("StatoAsta",(stato)=>{
-                    if(stato?.startUtc){ localStorage.setItem(LS_START, stato.startUtc); }
-                    if(typeof stato?.pausaAccumulataSec==='number'){ localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec)); }
-                    else if(!localStorage.getItem(LS_PAUSE_ACC)){ localStorage.setItem(LS_PAUSE_ACC, "0"); }
-
-                    const pauseActive=!!stato?.pausaAttiva;
-                    localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
-                    if(pauseActive){
-                        if(!localStorage.getItem(LS_PAUSE_AT)){ localStorage.setItem(LS_PAUSE_AT, new Date().toISOString()); }
-                        document.getElementById('btn-pausa').disabled=true;
-                        document.getElementById('btn-riprendi').disabled=false;
-                    }else{
-                        localStorage.removeItem(LS_PAUSE_AT);
-                        document.getElementById('btn-pausa').disabled=false;
-                        document.getElementById('btn-riprendi').disabled=true;
-                    }
-                    startDurataLoop();
-                });
-
-                connection.on("RiepilogoAggiornato", (data) => {
-                    const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
-                    squads.forEach(s => {
-                        const cred = document.getElementById(`cred-${s.squadraId}`);
-                        const pmax = document.getElementById(`pmax-${s.squadraId}`);
-                        if (cred) cred.textContent = s.creditiDisponibili;
-                        if (pmax) pmax.textContent = s.puntataMassima;
-                        const btn = document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
-                        if (btn) { btn.dataset.crediti = s.creditiDisponibili; btn.dataset.pmax = s.puntataMassima; }
-                    });
-                });
-
-                connection.on("MostraGiocatoreInAsta",(giocatore)=>{
-                    if(!localStorage.getItem(LS_START)){
-                        localStorage.setItem(LS_START, new Date().toISOString());
-                        localStorage.setItem(LS_PAUSE_ACC,"0");
-                        localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-                        localStorage.removeItem(LS_PAUSE_AT);
-                        startDurataLoop();
-                    }
-                    document.getElementById('overlay-nome-giocatore').innerText=giocatore.nome;
-                    document.getElementById('overlay-dettagli-giocatore').innerText=`${giocatore.ruolo} - ${giocatore.squadraReale}`;
-                    document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
-                    document.getElementById('overlay-offerta').innerText='0';
-                    const offEl=document.getElementById('overlay-offerente'); offEl.innerText='In attesa di offerte...'; offEl.style.color='';
-                    document.getElementById('overlay-log').innerHTML='';
-                    const timerEl=document.getElementById('overlay-timer');
-                    timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-                    document.querySelector('.asta-box-footer').style.display='block';
-                    document.getElementById('asta-overlay').classList.add('visible');
-
-                    lastOffertaAdmin=0;
-                    clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
-                });
-
-                connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
-                    document.getElementById('overlay-offerente').innerText = offerente || '-';
-                    document.getElementById('overlay-offerta').innerText = offerta || 0;
-
-                    clearInterval(countdownTimerAdmin);
-                    clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
-
-                    const timerEl=document.getElementById('overlay-timer');
-                    if(!fineUtc || !offerta || offerta<=0){
-                        timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); lastOffertaAdmin=offerta||0; return;
-                    }
-
-                    const isRealBid = (offerta > (lastOffertaAdmin||0));
-                    if(isRealBid){
-                        try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch(_){}
-                        const log=document.getElementById('overlay-log'); if(log){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; log.prepend(p); }
-                    }
-                    lastOffertaAdmin=offerta;
-
-                    const end=new Date(fineUtc);
-                    const paint=(sec)=>{ timerEl.innerText = sec >= 0 ? sec : 0; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); if(sec>5) timerEl.classList.add('timer-green'); else if(sec>=4) timerEl.classList.add('timer-yellow'); else timerEl.classList.add('timer-red'); };
-                    const tick=()=>{
-                        const sec = Math.max(0, Math.ceil((end.getTime() - Date.now()) / 1000));
-                        paint(sec);
-                        if(sec>=0){ try{ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play().catch(()=>{}); }catch(_){}} else { clearInterval(countdownTimerAdmin); }
-                    };
-                    tick(); countdownTimerAdmin=setInterval(tick,1000);
-
-                    const msRemaining=end.getTime()-Date.now();
-                    if(msRemaining>0){
-                        closeTimeoutAdmin=setTimeout(()=>{ connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString())); }, msRemaining+50);
-                    }else{
-                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
-                    }
-                });
-
-                connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
-                    clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null;
-                    try{ const v=document.getElementById('suono-vittoria'); v.currentTime=0; v.play().catch(()=>{}); }catch(_){}
-                    const offEl=document.getElementById('overlay-offerente'); offEl.innerText=`AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color='#2ecc71';
-                    document.getElementById('overlay-offerta').innerText=prezzo||0;
-                    const log=document.getElementById('overlay-log'); if(log){ const ts=new Date().toLocaleTimeString(); const row=document.createElement('p'); row.innerText=`[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`; log.prepend(row); }
-                    document.querySelector('.asta-box-footer').style.display='none';
-                    setTimeout(()=>{ document.getElementById('asta-overlay').classList.remove('visible'); setTimeout(()=>location.reload(),300); },4000);
-                });
-
-                connection.on("AstaAnnullata",()=>{ clearInterval(countdownTimerAdmin); clearTimeout(closeTimeoutAdmin); closeTimeoutAdmin=null; document.getElementById('asta-overlay').classList.remove('visible'); });
-
-                connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
-                connection.on("AstaPausa",()=>{
-                    localStorage.setItem(LS_PAUSE_ACTIVE,"true");
-                    localStorage.setItem(LS_PAUSE_AT,new Date().toISOString());
-                    document.getElementById('btn-pausa').disabled=true;
-                    document.getElementById('btn-riprendi').disabled=false;
-                    paintDurata();
-                });
-                connection.on("AstaRipresa",()=>{
-                    const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
-                    const acc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-                    if(pauseAtIso){
-                        const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
-                        localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
-                    }
-                    localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-                    localStorage.removeItem(LS_PAUSE_AT);
-                    document.getElementById('btn-pausa').disabled=false;
-                    document.getElementById('btn-riprendi').disabled=true;
-                    paintDurata();
-                });
-                connection.on("DurataResettata", resetDurataLocal);
-                connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
-                    mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
-                    const inputNome=document.querySelector('#filtroForm input[name="nome"]');
-                    if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
-                });
-
-                connection.start().then(()=>{
-                    connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
-                    setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
-                    connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin);
-                    connection.invoke("RichiediStatoAttuale");
-                }).catch(err=>console.error(err));
-
-                // Bottoni top bar
-                document.getElementById('btn-pausa')?.addEventListener('click', ()=>{ connection.invoke("PausaAsta", legaAliasAdmin).catch(()=>{}); });
-                document.getElementById('btn-riprendi')?.addEventListener('click', ()=>{ connection.invoke("RiprendiAsta", legaAliasAdmin).catch(()=>{}); });
-                document.getElementById('btn-reset')?.addEventListener('click', async ()=>{ resetDurataLocal(); try{ await connection.invoke("ResetDurataAsta", legaAliasAdmin); }catch{} });
-                document.getElementById('btn-stop')?.addEventListener('click', toggleStop);
-
-                        document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async () => {
-          const idGioc = parseInt(document.getElementById('idGiocatoreModale').value);
-          const squadraId = parseInt(document.getElementById('squadraSelect').value);
-          const costo = parseInt(document.getElementById('costoInput').value);
-
-          if (!idGioc || !squadraId || isNaN(costo) || costo < 0) {
-            await mostraMessaggio('Dati mancanti', 'Controlla squadra e costo.');
-            return;
+          // ====== DURATA GLOBALE ======
+          function computeElapsedSec(){
+            const startIso=localStorage.getItem(LS_START);
+            if(!startIso) return 0;
+            const start=new Date(startIso).getTime();
+            const pauseAcc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+            const pauseActive=(localStorage.getItem(LS_PAUSE_ACTIVE)==="true");
+            const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
+            const extra=pauseActive && pauseAtIso ? Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)) : 0;
+            return Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extra));
           }
 
-          // chiudo SUBITO la modale per evitare che rimanga bloccata
-          const modalEl = document.getElementById('assegnaModal');
-          bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+          function paintDurata(){
+            const out=document.getElementById('durata-asta');
+            const badge=document.getElementById('stato-pausa');
+            const startIso=localStorage.getItem(LS_START);
+            if(!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
 
-          try {
-            const r = await fetch('/Admin/AssegnaManualmente', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': antiToken
-              },
-              body: JSON.stringify({ giocatoreId: idGioc, squadraId, costo })
-            });
-
-            if (!r.ok) {
-              const t = await r.text().catch(() => '');
-              console.error('AssegnaManualmente HTTP', r.status, t);
-              await mostraMessaggio('Errore', 'Errore durante l’assegnazione.');
+            if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
+              const frozen = parseInt(localStorage.getItem(LS_STOP_SEC)||"0");
+              out.textContent = fmt(frozen);
+              badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
               return;
             }
 
-            // ok → ricarico per aggiornare riepilogo/rose
-            location.reload();
-          } catch (e) {
-            console.error(e);
-            await mostraMessaggio('Errore', 'Errore di rete durante l’assegnazione.');
+            const sec = computeElapsedSec();
+            out.textContent=fmt(sec);
+            badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
           }
-        });
+          let durataInterval=null;
+          function startDurataLoop(){ if(durataInterval) clearInterval(durataInterval); paintDurata(); durataInterval=setInterval(paintDurata,1000); }
+          function stopDurataLoop(){ if(durataInterval){ clearInterval(durataInterval); durataInterval=null; } }
+          function resetDurataLocal(){
+            localStorage.removeItem(LS_START);
+            localStorage.removeItem(LS_PAUSE_AT);
+            localStorage.setItem(LS_PAUSE_ACC,"0");
+            localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+            localStorage.setItem(LS_STOP_ACTIVE,"false");
+            localStorage.removeItem(LS_STOP_SEC);
+            stopDurataLoop();
+            const out=document.getElementById('durata-asta'); const badge=document.getElementById('stato-pausa');
+            if(out) out.textContent='00:00'; if(badge) badge.classList.add('d-none');
+            const stopBtn=document.getElementById('btn-stop'); if(stopBtn){ stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; }
+          }
 
-                // inizializza stato Stop al load
-                (function initStopUI(){
-                    const stopBtn=document.getElementById('btn-stop');
-                    if(!stopBtn) return;
-                    if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
-                        stopBtn.dataset.state='stop';
-                        stopBtn.textContent='Riprendi Timer';
-                        stopDurataLoop();
-                        paintDurata();
-                    } else {
-                        stopBtn.dataset.state='go';
-                        stopBtn.textContent='Stop';
-                        startDurataLoop();
-                    }
-                })();
+          function toggleStop(){
+            const stopBtn=document.getElementById('btn-stop');
+            if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
+              localStorage.setItem(LS_STOP_ACTIVE,"false");
+              stopBtn.dataset.state='go'; stopBtn.textContent='Stop';
+              startDurataLoop();
+            } else {
+              const sec=computeElapsedSec();
+              localStorage.setItem(LS_STOP_ACTIVE,"true");
+              localStorage.setItem(LS_STOP_SEC,String(sec));
+              stopBtn.dataset.state='stop'; stopBtn.textContent='Riprendi Timer';
+              paintDurata(); stopDurataLoop();
+            }
+          }
 
-                // helper paint partecipanti
-                window.paintPartecipanti=function(list){
-                    list.forEach(p=>{
-                        const nick=(p.nick||p.Nick||'').toString();
-                        const el=document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) || document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
-                        if(!el) return;
-                        el.classList.remove('dot-online','dot-offline','dot-waiting');
-                        const stato=(p.stato||p.Stato||'offline').toLowerCase();
-                        if(stato==='waiting') el.classList.add('dot-waiting');
-                        else if(stato==='online') el.classList.add('dot-online');
-                        else el.classList.add('dot-offline');
-                    });
-                };
+          function applyInitialFilter(letter){
+            const inizialeInput=document.getElementById('inizialeInput');
+            const nomeInput=document.getElementById('nomeFilterInput');
+            const squadraInput=document.getElementById('squadraFilterInput');
+            const sorteggioInput=document.getElementById('sorteggioInput');
+            if (sorteggioInput) sorteggioInput.value='true';
+            if (inizialeInput) inizialeInput.value=letter||'';
+            if (nomeInput) nomeInput.value='';
+            if (squadraInput) squadraInput.value='';
+            document.getElementById('filtroForm').submit();
+          }
+
+          function renderLettersChips(){
+            const cont=document.getElementById('lettersChips');
+            if(!cont) return;
+            const archived=getArchivedLetters();
+            const selected=(new URLSearchParams(window.location.search).get('iniziale')||'').toUpperCase();
+            cont.innerHTML='';
+            ALPH.forEach(l=>{
+              const btn=document.createElement('button');
+              btn.type='button'; btn.className='letter-chip btn btn-sm';
+              if(archived.includes(l)) btn.classList.add('letter-archived');
+              if(selected===l) btn.classList.add('letter-selected');
+              btn.textContent=l;
+              btn.title=archived.includes(l)?'Lettera estratta (clic per renderla disponibile)':'Filtra per '+l;
+              btn.addEventListener('click', ()=>{
+                if(archived.includes(l)) setArchivedLetters(archived.filter(x=>x!==l));
+                applyInitialFilter(l);
+              });
+              cont.appendChild(btn);
             });
+          }
+
+          // ===== SignalR: crea connessione SUBITO =====
+          const connection=new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+          window.connection=connection;
+
+          // === HANDLERS HUB ===
+          connection.on("StatoAsta", (stato) => {
+            if (stato?.startUtc) {
+              const curr = localStorage.getItem(LS_START);
+              const incoming = new Date(stato.startUtc).getTime();
+              if (!curr || incoming < new Date(curr).getTime()) {
+                // imposta solo se non c'è o se è più vecchio (evita reset in avanti)
+                localStorage.setItem(LS_START, stato.startUtc);
+              }
+            }
+
+            if (typeof stato?.pausaAccumulataSec === 'number') {
+              localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec));
+            } else if (!localStorage.getItem(LS_PAUSE_ACC)) {
+              localStorage.setItem(LS_PAUSE_ACC, "0");
+            }
+
+            const pauseActive = !!stato?.pausaAttiva;
+            localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
+            if (pauseActive) {
+              if (!localStorage.getItem(LS_PAUSE_AT)) {
+                localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
+              }
+              document.getElementById('btn-pausa').disabled = true;
+              document.getElementById('btn-riprendi').disabled = false;
+            } else {
+              localStorage.removeItem(LS_PAUSE_AT);
+              document.getElementById('btn-pausa').disabled = false;
+              document.getElementById('btn-riprendi').disabled = true;
+            }
+
+            startDurataLoop();
+          });
+
+          connection.on("RiepilogoAggiornato",(data)=>{
+            const squads=(data&&(data.squads||data.squadre))?(data.squads||data.squadre):[];
+            squads.forEach(s=>{
+              const cred=document.getElementById(`cred-${s.squadraId}`);
+              const pmax=document.getElementById(`pmax-${s.squadraId}`);
+              if(cred) cred.textContent=s.creditiDisponibili;
+              if(pmax) pmax.textContent=s.puntataMassima;
+              const btn=document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
+              if(btn){ btn.dataset.crediti=s.creditiDisponibili; btn.dataset.pmax=s.puntataMassima; }
+            });
+          });
+
+          connection.on("MostraGiocatoreInAsta",(giocatore)=>{
+            // NON tocchiamo LS_START qui: lo gestisce StatoAsta
+            document.getElementById('overlay-nome-giocatore').innerText=giocatore.nome;
+            document.getElementById('overlay-dettagli-giocatore').innerText=`${giocatore.ruolo} - ${giocatore.squadraReale}`;
+            document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
+            document.getElementById('overlay-offerta').innerText='0';
+            const offEl=document.getElementById('overlay-offerente'); offEl.innerText='In attesa di offerte...'; offEl.style.color='';
+            document.getElementById('overlay-log').innerHTML='';
+            const timerEl=document.getElementById('overlay-timer');
+            timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+            document.querySelector('.asta-box-footer').style.display='block';
+            document.getElementById('asta-overlay').classList.add('visible');
+
+            lastOffertaAdmin=0;
+            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+          });
+
+          connection.on("AggiornaDurataTimer",(nuoviSecondi)=>{
+            const s=parseInt(nuoviSecondi)||0;
+            if(s>0){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); const secInput=document.getElementById('secondiTimer'); if(secInput) secInput.value=s; }
+          });
+
+          connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
+            document.getElementById('overlay-offerente').innerText=offerente||'-';
+            document.getElementById('overlay-offerta').innerText=offerta||0;
+
+            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+
+            const timerEl=document.getElementById('overlay-timer');
+
+            if(!fineUtc || !offerta || offerta<=0){
+              timerEl.innerText='--';
+              timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+              lastOffertaAdmin=offerta||0; return;
+            }
+
+            const isRealBid=(offerta > (lastOffertaAdmin||0));
+            if(isRealBid){
+              try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch{}
+              const log=document.getElementById('overlay-log'); if(log){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; log.prepend(p); }
+            }
+            lastOffertaAdmin=offerta;
+
+            const end=new Date(fineUtc);
+
+            const paint=(sec)=>{
+              timerEl.innerText=sec;
+              timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+              if(sec>5) timerEl.classList.add('timer-green');
+              else if(sec>=4) timerEl.classList.add('timer-yellow');
+              else timerEl.classList.add('timer-red');
+            };
+
+            let prevSec=-1;
+            const tick=()=>{
+              const msLeft=end.getTime()-Date.now();
+              const sec=Math.max(0, Math.ceil(msLeft/1000));
+
+              if(sec!==prevSec){
+                paint(sec);
+                if(sec>0 && prevSec!==-1){
+                  try{ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play().catch(()=>{}); }catch{}
+                }
+                prevSec=sec;
+                if(sec===0){ clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null; return; }
+              }
+
+              const nextDelay=Math.max(20, msLeft - (sec-1)*1000 + 2);
+              countdownTimerAdmin=setTimeout(tick,nextDelay);
+            };
+            tick();
+
+            const msRemaining=end.getTime()-Date.now();
+            if(msRemaining>0){
+              closeTimeoutAdmin=setTimeout(()=>{ connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString())); }, msRemaining+2);
+            }else{
+              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
+            }
+          });
+
+          connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
+            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+            try{ const v=document.getElementById('suono-vittoria'); v.currentTime=0; v.play().catch(()=>{}); }catch{}
+            const offEl=document.getElementById('overlay-offerente'); offEl.innerText=`AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color='#2ecc71';
+            document.getElementById('overlay-offerta').innerText=prezzo||0;
+            const log=document.getElementById('overlay-log'); if(log){ const ts=new Date().toLocaleTimeString(); const row=document.createElement('p'); row.innerText=`[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`; log.prepend(row); }
+            document.querySelector('.asta-box-footer').style.display='none';
+            setTimeout(()=>{ document.getElementById('asta-overlay').classList.remove('visible'); setTimeout(()=>location.reload(), 600); }, 1600);
+          });
+
+          connection.on("AstaAnnullata",()=>{
+            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+            document.getElementById('asta-overlay').classList.remove('visible');
+            // niente reset della durata globale qui
+          });
+
+          connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
+
+          connection.on("AstaPausa",()=>{
+            localStorage.setItem(LS_PAUSE_ACTIVE,"true");
+            localStorage.setItem(LS_PAUSE_AT,new Date().toISOString());
+            document.getElementById('btn-pausa').disabled=true;
+            document.getElementById('btn-riprendi').disabled=false;
+
+            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+
+            const t=document.getElementById('overlay-timer'); if(t){ t.textContent='PAUSA'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
+            const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta in pausa…'; offEl.style.color='#f1c40f'; }
+            paintDurata();
+          });
+
+          connection.on("AstaRipresa",()=>{
+            const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
+            const acc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+            if(pauseAtIso){
+              const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
+              localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
+            }
+            localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+            localStorage.removeItem(LS_PAUSE_AT);
+            document.getElementById('btn-pausa').disabled=false;
+            document.getElementById('btn-riprendi').disabled=true;
+
+            const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta ripresa'; offEl.style.color=''; }
+            paintDurata();
+
+            try{ connection.invoke("RichiediStatoAttuale"); }catch{}
+          });
+
+          connection.on("DurataResettata", resetDurataLocal);
+
+          connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
+            mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
+            const inputNome=document.querySelector('#filtroForm input[name="nome"]');
+            if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
+          });
+
+          // ====== DOM READY ======
+          document.addEventListener('DOMContentLoaded', function(){
+            // pulizia ?bp=
+            try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
+
+            // squadre per modale Assegna
+            let squadreArr=[];
+            try { squadreArr = JSON.parse('@Html.Raw(squadreJson)') || []; } catch { squadreArr=[]; }
+
+            const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+            // Timer input init (server -> fallback localStorage)
+            (function initTimerInput(){
+              const secInput=document.getElementById('secondiTimer');
+              if (!secInput) return;
+              const s=(Number.isFinite(durataTimer) && durataTimer>0) ? durataTimer : parseInt(localStorage.getItem(LS_DEFAULT_TIMER)||'0');
+              if(s>0) secInput.value=s;
+            })();
+
+            // FILTRI
+            const urlParams=new URLSearchParams(window.location.search);
+            const nomeFilter=document.getElementById('nomeFilterInput');
+            if (urlParams.has('nome') && urlParams.get('nome')!=='' && nomeFilter){
+              nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
+            }
+            const squadraFilter=document.getElementById('squadraFilterInput');
+            nomeFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
+            squadraFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
+
+            // Toggle liste riepilogo
+            document.querySelectorAll('table.table-bordered.table-sm button.btn-toggle-rosa').forEach(btn=>{
+              if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
+              btn.addEventListener('click',(ev)=>{ ev.preventDefault(); ev.stopPropagation(); const td=btn.closest('td'); const ul=td?.querySelector('ul'); if(ul) ul.classList.toggle('d-none'); });
+            });
+
+            // Delegation Asta/Assegna
+            document.addEventListener('click', async (ev) => {
+              const btnAsta = ev.target.closest('.btn-avvia-asta');
+              const btnAssegna = ev.target.closest('.btn-assegna');
+
+              if (btnAsta) {
+                ev.preventDefault();
+                try{
+                  const id=btnAsta.dataset.id;
+                  const mantra=btnAsta.dataset.mantra==='true';
+                  const r=await fetch('/Admin/AvviaAsta',{
+                    method:'POST',
+                    headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','RequestVerificationToken':antiToken},
+                    body:`id=${encodeURIComponent(id)}&mantra=${mantra}`
+                  });
+                  if(!r.ok){ await mostraMessaggio('Errore','Errore avvio asta.'); return; }
+                  const overlay=document.getElementById('asta-overlay');
+                  if(overlay){
+                    document.getElementById('overlay-nome-giocatore').innerText='…';
+                    document.getElementById('overlay-dettagli-giocatore').innerText='In attesa…';
+                    document.getElementById('overlay-offerta').innerText='0';
+                    document.getElementById('overlay-offerente').innerText='In attesa di offerte...';
+                    document.getElementById('overlay-timer').innerText='--';
+                    overlay.classList.add('visible');
+                  }
+                  try{ if(window.connection) await window.connection.invoke("RichiediStatoAttuale"); }catch{}
+                }catch{ await mostraMessaggio('Errore','Impossibile avviare l’asta.'); }
+                return;
+              }
+
+              if (btnAssegna) {
+                ev.preventDefault();
+                try{
+                  const id=btnAssegna.dataset.id, nome=btnAssegna.dataset.nome||'', ruolo=btnAssegna.dataset.ruolo||'', squadra=btnAssegna.dataset.squadra||'', logo=btnAssegna.dataset.logo||'';
+                  document.getElementById('idGiocatoreModale').value=id;
+                  document.getElementById('nomeGiocatoreModale').innerText=nome;
+                  document.getElementById('dettagliGiocatoreAssegna').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
+                  document.getElementById('logoGiocatoreAssegna').src=logo;
+
+                  const sel=document.getElementById('squadraSelect'); sel.innerHTML=''; (squadreArr||[]).forEach(s=>{ const o=document.createElement('option'); o.value=s.SquadraId; o.innerText=s.Nickname; sel.appendChild(o); });
+
+                  bootstrap?.Modal?.getOrCreateInstance?.(document.getElementById('assegnaModal'))?.show();
+                }catch{ await mostraMessaggio('Errore','Impossibile aprire la modale di assegnazione.'); }
+                return;
+              }
+            });
+
+            // Svincolo
+            window.apriModaleSvincolo=function(btn){
+              const id=btn.dataset.id, nome=btn.dataset.nome||'', costo=parseInt(btn.dataset.costo)||0, squadra=btn.dataset.squadra||'', logo=btn.dataset.logo||'', ruolo=btn.dataset.ruolo||'';
+              document.getElementById('idGiocatoreSvincola').value=id;
+              document.getElementById('costoOriginaleSvincolo').innerText=costo;
+              const input=document.getElementById('creditiSvincoloInput'); if(input){ input.min=0; input.removeAttribute('max'); input.value=String(costo); }
+              document.getElementById('logoGiocatoreSvincola').src=logo;
+              document.getElementById('nomeGiocatoreSvincolo').innerText=nome;
+              document.getElementById('dettagliGiocatoreSvincolo').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
+              bootstrap.Modal.getOrCreateInstance(document.getElementById('svincolaModal')).show();
+            };
+
+            document.getElementById('btnConfermaSvincolo')?.addEventListener('click',()=>{
+              const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
+              let crediti=parseInt(document.getElementById('creditiSvincoloInput').value); if(isNaN(crediti)||crediti<0) crediti=0;
+              fetch('/Admin/SvincolaGiocatore',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ id, creditiRestituiti:crediti }) })
+                .then(r=>{ if(r.ok) location.reload(); else mostraMessaggio('Errore','Errore durante lo svincolo.'); });
+            });
+
+            // Bonus crediti
+            let bonusModal, bonusDeltaInput;
+            function calcolaPuntataMax(creditiDisponibili, giocatoriCount){
+              const SLOT_TOTALI=parseInt("@(ViewBag.SlotTotali ?? 0)")||0;
+              const slotRimasti=Math.max(0, SLOT_TOTALI-(parseInt(giocatoriCount)||0));
+              const pmax=creditiDisponibili - (slotRimasti>0 ? slotRimasti-1 : 0);
+              return Math.max(0,pmax);
+            }
+            function aggiornaPreviewBonus(){
+              const currCred=parseInt(document.getElementById('bonusCreditiAttuali').textContent)||0;
+              const giocatoriCount=parseInt(document.getElementById('bonusGiocatoriCount').value)||0;
+              const delta=parseInt(bonusDeltaInput.value)||0;
+              const afterCred=currCred+delta;
+              const afterPMax=calcolaPuntataMax(afterCred,giocatoriCount);
+              document.getElementById('bonusCreditiDopo').textContent=afterCred;
+              document.getElementById('bonusPMaxDopo').textContent=afterPMax;
+            }
+            document.querySelectorAll('.btn-bonus').forEach(btn=>{
+              btn.addEventListener('click',()=>{
+                const sId=parseInt(btn.dataset.squadraid), nick=btn.dataset.nickname||'', cred=parseInt(btn.dataset.crediti)||0, pmax=parseInt(btn.dataset.pmax)||0, giocatoriCount=parseInt(btn.dataset.giocatori)||0;
+                document.getElementById('bonusSquadraId').value = sId;
+                document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
+                document.getElementById('bonusNick').textContent = nick;
+                document.getElementById('bonusCreditiAttuali').textContent = cred;
+                document.getElementById('bonusPMaxAttuale').textContent = pmax;
+                bonusDeltaInput=document.getElementById('bonusDeltaInput'); bonusDeltaInput.value="0"; aggiornaPreviewBonus();
+                if(!bonusModal) bonusModal=bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
+                bonusModal.show();
+              });
+            });
+            document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
+            document.getElementById('btnConfermaBonus')?.addEventListener('click', async ()=>{
+              const sId=parseInt(document.getElementById('bonusSquadraId').value);
+              const delta=parseInt(document.getElementById('bonusDeltaInput').value)||0;
+              try{
+                const r=await fetch('/Admin/AggiornaCreditiBonus',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ squadraId:sId, delta }) });
+                if(!r.ok) throw new Error('HTTP '+r.status);
+                bonusModal?.hide();
+              }catch{ await mostraMessaggio('Errore','Impossibile applicare il bonus.'); }
+            });
+
+            // TIMER / SWITCHES
+            document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
+              e.preventDefault();
+              const s=parseInt(document.getElementById('secondiTimer').value||"0");
+              if(!Number.isFinite(s)||s<2){ await mostraMessaggio('Valore non valido','Inserisci un numero >= 2'); return; }
+              const r=await fetch('/Admin/ImpostaTimer',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ secondi:s }) });
+              if(r.ok){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); document.getElementById('secondiTimer').value=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
+              else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
+            });
+
+            document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
+              try{ const url=new URL(window.location.href); if(url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
+              const isAttivo=this.checked;
+              const r=await fetch('/Admin/ImpostaBloccoPortieri',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ attivo:isAttivo }) });
+              if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
+              else await mostraMessaggio('Errore','Errore aggiornamento regola.');
+            });
+
+            document.getElementById('mantraSwitch')?.addEventListener('change', function(){
+              const hidden=document.getElementById('mantraInput'); if(hidden) hidden.value=this.checked?'true':'false';
+              const url=new URL(window.location.href); url.searchParams.set('mantra',this.checked); window.location.href=url.toString();
+            });
+
+            document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
+              const sorteggioInput=document.getElementById('sorteggioInput'); const isAttivo=this.checked;
+              if (sorteggioInput) sorteggioInput.value=isAttivo?'true':'false';
+              const url=new URL(window.location.href); url.searchParams.set('sorteggio',isAttivo); if(!isAttivo) url.searchParams.delete('iniziale'); window.location.href=url.toString();
+            });
+
+            // Annulla asta (Hub con fallback HTTP)
+            document.getElementById('btnAnnullaAsta')?.addEventListener('click', async ()=>{
+              const ok=await mostraMessaggio('Annulla Asta','Sei sicuro?',true); if(!ok) return;
+              let done=false;
+              try{ await connection.invoke("AnnullaAsta", legaAliasAdmin); done=true; }catch{}
+              if(!done){ try{ await connection.invoke("AnnullaAsta"); done=true; }catch{} }
+              if(!done){
+                try{
+                  const r=await fetch('/Admin/AnnullaAsta',{ method:'POST', headers:{'RequestVerificationToken':antiToken} });
+                  if(!r.ok) throw 0;
+                }catch{ await mostraMessaggio('Errore','Errore durante l’annullamento dell’asta.'); }
+              }
+            });
+
+            // Assegna manuale (non tocca timer globale)
+            document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async ()=>{
+              const idGioc=parseInt(document.getElementById('idGiocatoreModale').value);
+              const squadraId=parseInt(document.getElementById('squadraSelect').value);
+              const costo=parseInt(document.getElementById('costoInput').value);
+              if(!idGioc||!squadraId||isNaN(costo)||costo<0){ await mostraMessaggio('Dati mancanti','Controlla squadra e costo.'); return; }
+              bootstrap.Modal.getOrCreateInstance(document.getElementById('assegnaModal')).hide();
+              try{
+                const r=await fetch('/Admin/AssegnaManualmente',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ giocatoreId:idGioc, squadraId, costo }) });
+                if(!r.ok){ await mostraMessaggio('Errore','Errore durante l’assegnazione.'); return; }
+                location.reload();
+              }catch{ await mostraMessaggio('Errore','Errore di rete durante l’assegnazione.'); }
+            });
+
+            // LETTERE
+            renderLettersChips();
+            document.getElementById('btnSorteggiaLettera')?.addEventListener('click', ()=>{
+              const archived=getArchivedLetters(); const pool=ALPH.filter(l=>!archived.includes(l));
+              if(pool.length===0){ mostraMessaggio('Sorteggio lettera','Tutte le lettere sono già state estratte. Premi "Reset lettere" o riabilita un singolo chip.'); return; }
+              const letter=pool[Math.floor(Math.random()*pool.length)];
+              setArchivedLetters([...archived, letter]); applyInitialFilter(letter);
+            });
+            document.getElementById('btnResetLettere')?.addEventListener('click', ()=>{
+              setArchivedLetters([]); const i=document.getElementById('inizialeInput'); if(i) i.value=''; document.getElementById('filtroForm').submit();
+            });
+
+            // Avvio connessione
+            connection.start().then(()=>{
+              connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
+              setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
+              connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin).catch(()=>{});
+              connection.invoke("RichiediStatoAttuale").catch(()=>{});
+            }).catch(err=>console.error(err));
+
+            // Bottoni top bar (Pausa/Riprendi con fallback, Reset, Stop)
+            document.getElementById('btn-pausa')?.addEventListener('click', async () => {
+              let ok=false;
+              try { await connection.invoke("PausaAsta", legaAliasAdmin); ok=true; } catch {}
+              if(!ok){ try { await connection.invoke("PausaAsta"); ok=true; } catch {} }
+              if(!ok){
+                try {
+                  await fetch('/Admin/PausaAsta', { method:'POST', headers:{ 'RequestVerificationToken': antiToken } });
+                } catch {}
+              }
+              try { await connection.invoke("RichiediStatoAttuale"); } catch {}
+            });
+
+            document.getElementById('btn-riprendi')?.addEventListener('click', async () => {
+              let ok=false;
+              try { await connection.invoke("RiprendiAsta", legaAliasAdmin); ok=true; } catch {}
+              if(!ok){ try { await connection.invoke("RiprendiAsta"); ok=true; } catch {} }
+              if(!ok){
+                try {
+                  await fetch('/Admin/RiprendiAsta', { method:'POST', headers:{ 'RequestVerificationToken': antiToken } });
+                } catch {}
+              }
+              try { await connection.invoke("RichiediStatoAttuale"); } catch {}
+            });
+
+            document.getElementById('btn-reset')?.addEventListener('click', async ()=>{
+              resetDurataLocal();
+              try{ await connection.invoke("ResetDurataAsta", legaAliasAdmin); }catch{}
+            });
+
+            document.getElementById('btn-stop')?.addEventListener('click', toggleStop);
+
+            // init Stop UI
+            (function initStopUI(){
+              const stopBtn=document.getElementById('btn-stop'); if(!stopBtn) return;
+              if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){ stopBtn.dataset.state='stop'; stopBtn.textContent='Riprendi Timer'; stopDurataLoop(); paintDurata(); }
+              else { stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; startDurataLoop(); }
+            })();
+
+            // paint partecipanti
+            window.paintPartecipanti=function(list){
+              list.forEach(p=>{
+                const nick=(p.nick||p.Nick||'').toString();
+                const el=document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) || document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
+                if(!el) return;
+                el.classList.remove('dot-online','dot-offline','dot-waiting');
+                const stato=(p.stato||p.Stato||'offline').toLowerCase();
+                if(stato==='waiting') el.classList.add('dot-waiting');
+                else if(stato==='online') el.classList.add('dot-online');
+                else el.classList.add('dot-offline');
+              });
+            };
+          });
         })();
     </script>
 }

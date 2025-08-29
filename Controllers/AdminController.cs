@@ -18,6 +18,8 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using OfficeOpenXml;
 using AstaLegheFC.Filters;
+using Microsoft.AspNetCore.SignalR;
+
 
 namespace AstaLegheFC.Controllers
 {
@@ -30,6 +32,8 @@ namespace AstaLegheFC.Controllers
         private readonly LegaService _legaService;
         private readonly IHubContext<BazzerHub> _hubContext;
         private readonly UserManager<ApplicationUser> _userManager;
+
+        private readonly IHubContext<BazzerHub> _hub;
 
         // Costruttore aggiornato per ricevere UserManager
         public AdminController(AppDbContext context, BazzerService bazzerService, LegaService legaService, IHubContext<BazzerHub> hubContext, UserManager<ApplicationUser> userManager)
@@ -461,6 +465,31 @@ namespace AstaLegheFC.Controllers
             public int Delta { get; set; }       // può essere negativo
             public string? Nota { get; set; }    // opzionale, per futuro log
         }
+        // Fallback HTTP: pausa
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PausaAsta()
+        {
+            _bazzerService.MettiInPausa(DateTime.UtcNow);
+
+            // Fallback: broadcast semplice (tutti i client). 
+            // Va benissimo perché il caso "buono" è già coperto dalla chiamata SignalR dell'admin.
+            await _hub.Clients.All.SendAsync("AstaPausa");
+
+            return Ok();
+        }
+
+        // Fallback HTTP: riprendi
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RiprendiAsta()
+        {
+            _bazzerService.Riprendi(DateTime.UtcNow);
+
+            await _hub.Clients.All.SendAsync("AstaRipresa");
+
+            return Ok();
+        }
 
         [HttpPost]
         public async Task<IActionResult> AggiornaCreditiBonus([FromBody] BonusRequest request)
@@ -507,6 +536,7 @@ namespace AstaLegheFC.Controllers
 
             return Ok(new { ok = true });
         }
+
 
     }
 }

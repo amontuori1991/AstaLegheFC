@@ -310,41 +310,79 @@ namespace AstaLegheFC.Hubs
             }
         }
 
+        // BazzerHub.cs
+        // ...
         public async Task PausaAsta(string legaAlias)
         {
             var legaLower = NormalizeLega(legaAlias);
+
+            // 1) Stato applicativo
             _bazzerService.MettiInPausa(DateTime.UtcNow);
 
+            // 2) Snapshot utili (come facevi già)
             var elapsed = (int)Math.Max(0, Math.Floor(_bazzerService.GetDurataAsta(DateTime.UtcNow).TotalSeconds));
             var remaining = _bazzerService.GetRemainingOfferta(DateTime.UtcNow);
             var partecipanti = BuildPartecipantiSnapshot(legaLower);
 
-            await Clients.All.SendAsync("AstaPausa", new
-            {
-                elapsedSec = elapsed,
-                remainingSec = remaining,
-                partecipanti
-            });
+            // 3) Broadcast tecnico (admin + utenti che già ascoltano "AstaPausa")
+            await Clients.Group(legaLower) // ✅ Corretto: ora il messaggio va a tutti nella lega
+                         .SendAsync("AstaPausa", new
+                         {
+                             elapsedSec = elapsed,
+                             remainingSec = remaining,
+                             partecipanti
+                         });
 
+            // 4) Messaggio visibile SOLO agli utenti (non admin)
+            // Se vuoi separare gli admin dagli utenti normali, devi implementare una logica di gruppi più granulare,
+            // ad esempio un gruppo "utenti" e un gruppo "admin".
+            // Dato che gli utenti si registrano solo al gruppo `legaLower`, questo riga è stata modificata per inviare
+            // il messaggio a tutti gli utenti della lega.
+
+            await Clients.Group(legaLower) // ✅ Corretto: ora il messaggio va a tutti nella lega
+                         .SendAsync("MostraMessaggio",
+                             "⏸️ Asta in pausa",
+                             "L'admin ha messo in pausa l'asta. Attendere la ripresa per poter offrire.");
+
+
+            // 5) (facoltativo) micro notifica agli admin
+            // La riga è stata commentata perché non ha un gruppo a cui fa riferimento
+            // await Clients.Group($"lega:{legaLower}:admin")
+            //              .SendAsync("MostraMessaggio",
+            //                  "Asta in pausa",
+            //                  "Messaggio inviato ai partecipanti.");
+
+            // 6) Presenze/stati
             await BroadcastStatoPartecipantiAsync(legaLower);
         }
+        // ...
 
         public async Task RiprendiAsta(string legaAlias)
         {
             var legaLower = NormalizeLega(legaAlias);
+
             _bazzerService.Riprendi(DateTime.UtcNow);
 
             var fineUtc = _bazzerService.FineOffertaUtc?.ToUniversalTime().ToString("o");
             var partecipanti = BuildPartecipantiSnapshot(legaLower);
 
-            await Clients.All.SendAsync("AstaRipresa", new
-            {
-                fineUtc,
-                partecipanti
-            });
+            await Clients.Group($"lega:{legaLower}")
+                         .SendAsync("AstaRipresa", new
+                         {
+                             fineUtc,
+                             partecipanti
+                         });
+
+            // Messaggio SOLO agli utenti: "ripresa"
+            await Clients.Group($"lega:{legaLower}:utenti")
+                         .SendAsync("MostraMessaggio",
+                             "▶️ Asta ripresa",
+                             "È di nuovo possibile fare offerte.");
 
             await BroadcastStatoPartecipantiAsync(legaLower);
         }
+
+
 
         public async Task ResetDurataAsta(string legaAlias)
         {

@@ -11,7 +11,7 @@ namespace AstaLegheFC.Services
         private bool _astaConclusa = false;
 
         public int DurataTimer { get; private set; } = 5;
-        public bool BloccoPortieriAttivo { get; private set; } = true;
+        public bool BloccoPortieriAttivo { get; private set; } = false;
         public bool MantraAttivo { get; private set; } = false;
 
         // ===== Nuovo stato per durata complessiva e pausa =====
