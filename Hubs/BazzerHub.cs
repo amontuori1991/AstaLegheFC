@@ -17,7 +17,6 @@ namespace AstaLegheFC.Hubs
         private readonly AppDbContext _context;
         private readonly LegaService _legaService;
 
-        // 🔒 lock per prevenire doppie esecuzioni concorrenti di TerminaAsta
         private static readonly object _finishLock = new();
 
         public BazzerHub(BazzerService bazzerService, AppDbContext context, LegaService legaService)
@@ -26,8 +25,6 @@ namespace AstaLegheFC.Hubs
             _context = context;
             _legaService = legaService;
         }
-
-        // ========= Presence & stato partecipanti =========
 
         private class Partecipante
         {
@@ -58,18 +55,29 @@ namespace AstaLegheFC.Hubs
         private static string AdminGroup(string legaLower) => $"admin_{legaLower}";
         private static bool IsOnline(Partecipante p, DateTime nowUtc) => (nowUtc - p.LastSeenUtc) <= TimeSpan.FromSeconds(45);
 
+        private bool TryGetCallerLega(out string legaLower)
+        {
+            if (_connMap.TryGetValue(Context.ConnectionId, out var info))
+            {
+                legaLower = info.lega;
+                return true;
+            }
+            legaLower = string.Empty;
+            return false;
+        }
+
         private List<ParticipantSnapshot> BuildPartecipantiSnapshot(string legaLower)
         {
             var now = DateTime.UtcNow;
-
             if (_presence.TryGetValue(legaLower, out var dict))
             {
+                var pausa = _bazzerService.PausaAttiva(legaLower);
                 return dict.Values
                     .OrderBy(p => p.Nick, StringComparer.OrdinalIgnoreCase)
                     .Select(p =>
                     {
                         var online = IsOnline(p, now);
-                        var stato = _bazzerService.PausaAttiva ? "waiting" : (online ? "online" : "offline");
+                        var stato = pausa ? "waiting" : (online ? "online" : "offline");
                         return new ParticipantSnapshot
                         {
                             Nick = p.Nick,
@@ -101,7 +109,7 @@ namespace AstaLegheFC.Hubs
             if (isAdmin) await Groups.AddToGroupAsync(Context.ConnectionId, AdminGroup(legaLower));
 
             var dict = _presence.GetOrAdd(legaLower, _ => new ConcurrentDictionary<string, Partecipante>(StringComparer.OrdinalIgnoreCase));
-            var p = dict.AddOrUpdate(nickname,
+            dict.AddOrUpdate(nickname,
                 _ => new Partecipante { Nick = nickname, IsAdmin = isAdmin, LastSeenUtc = DateTime.UtcNow },
                 (_, old) => { old.IsAdmin = isAdmin || old.IsAdmin; old.LastSeenUtc = DateTime.UtcNow; return old; });
 
@@ -161,48 +169,46 @@ namespace AstaLegheFC.Hubs
 
         public async Task InviaOfferta(string offerente, int offerta, int? baseOfferta = null)
         {
-            if (_bazzerService.PausaAttiva) return;
+            // recupero lega del chiamante
+            if (!TryGetCallerLega(out var legaLower) || string.IsNullOrEmpty(legaLower)) return;
+            if (_bazzerService.PausaAttiva(legaLower)) return;
 
-            var (_, attOfferta) = _bazzerService.GetOffertaAttuale();
+            var (_, attOfferta) = _bazzerService.GetOffertaAttuale(legaLower);
             if (baseOfferta.HasValue && baseOfferta.Value != attOfferta) return;
             if (offerta <= attOfferta) return;
 
-            _bazzerService.AggiornaOfferta(offerente, offerta);
+            _bazzerService.AggiornaOfferta(legaLower, offerente, offerta);
 
-            var fineUtc = _bazzerService.FineOffertaUtc?.ToUniversalTime().ToString("o");
-            await Clients.All.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
+            var fineUtc = _bazzerService.GetFineOffertaUtc(legaLower)?.ToUniversalTime().ToString("o");
+            await Clients.Group(legaLower).SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
         }
 
         public async Task TerminaAsta(string legaAlias)
         {
+            var legaLower = NormalizeLega(legaAlias);
             try
             {
                 var now = DateTime.UtcNow;
 
-                if (_bazzerService.PausaAttiva) return;
-                if (_bazzerService.FineOffertaUtc.HasValue && now < _bazzerService.FineOffertaUtc.Value) return;
+                if (_bazzerService.PausaAttiva(legaLower)) return;
+                var fine = _bazzerService.GetFineOffertaUtc(legaLower);
+                if (fine.HasValue && now < fine.Value) return;
 
-                // ========== SEZIONE CRITICA ==========
                 lock (_finishLock)
                 {
-                    if (_bazzerService.AstaConclusa()) return; // già processata
-                    _bazzerService.SegnaAstaConclusa();        // prenota l’esecuzione
+                    if (_bazzerService.AstaConclusa(legaLower)) return;
+                    _bazzerService.SegnaAstaConclusa(legaLower);
                 }
-                // =====================================
 
-                var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
-                var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
-
-                if (giocatoreInAsta == null || offerente == "-" || offerta <= 0 || string.IsNullOrEmpty(legaAlias))
-                    return;
+                var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta(legaLower);
+                var (offerente, offerta) = _bazzerService.GetOffertaAttuale(legaLower);
+                if (giocatoreInAsta == null || offerente == "-" || offerta <= 0) return;
 
                 var squadraVincitrice = await _context.Squadre
                     .Include(s => s.Lega)
-                    .FirstOrDefaultAsync(s => s.Nickname == offerente && s.Lega.Alias.ToLower() == legaAlias.ToLower());
-
+                    .FirstOrDefaultAsync(s => s.Nickname == offerente && s.Lega.Alias.ToLower() == legaLower);
                 if (squadraVincitrice == null) return;
 
-                // Winner (idempotente)
                 bool winnerGiaAssegnato = await _context.Giocatori
                     .AnyAsync(g => g.SquadraId == squadraVincitrice.Id && g.IdListone == giocatoreInAsta.IdListone);
                 if (!winnerGiaAssegnato)
@@ -219,8 +225,7 @@ namespace AstaLegheFC.Hubs
                     });
                 }
 
-                // Blocco portieri: aggiungi SOLO i compagni di squadra (idempotente + distinct)
-                if (_bazzerService.BloccoPortieriAttivo && giocatoreInAsta.Ruolo == "P")
+                if (_bazzerService.IsBloccoPortieriAttivo(legaLower) && giocatoreInAsta.Ruolo == "P")
                 {
                     var idAssegnatiLega = await _context.Giocatori
                         .Where(g => g.Squadra.LegaId == squadraVincitrice.LegaId)
@@ -236,10 +241,8 @@ namespace AstaLegheFC.Hubs
                                     && !assegnatiSet.Contains(p.IdListone))
                         .ToListAsync();
 
-                    foreach (var portiere in altriPortieri
-                        .GroupBy(p => p.IdListone).Select(g => g.First())) // distinct by IdListone
+                    foreach (var portiere in altriPortieri.GroupBy(p => p.IdListone).Select(g => g.First()))
                     {
-                        // ulteriore check idempotente per la SQUADRA vincitrice
                         bool giaAssegnato = await _context.Giocatori
                             .AnyAsync(g => g.SquadraId == squadraVincitrice.Id && g.IdListone == portiere.IdListone);
                         if (giaAssegnato) continue;
@@ -259,10 +262,10 @@ namespace AstaLegheFC.Hubs
 
                 await _context.SaveChangesAsync();
 
-                await Clients.All.SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
+                await Clients.Group(legaLower).SendAsync("AstaTerminata", giocatoreInAsta.Id, giocatoreInAsta.Nome, offerente, offerta);
                 await _legaService.BroadcastAggiornamentiLegaAsync(squadraVincitrice.LegaId);
 
-                _bazzerService.AnnullaAstaCorrente();
+                _bazzerService.AnnullaAstaCorrente(legaLower);
             }
             catch (Exception ex)
             {
@@ -273,8 +276,11 @@ namespace AstaLegheFC.Hubs
 
         public async Task RichiediStatoAttuale()
         {
-            var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta();
-            var (offerente, offerta) = _bazzerService.GetOffertaAttuale();
+            if (!TryGetCallerLega(out var legaLower) || string.IsNullOrEmpty(legaLower))
+                return;
+
+            var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta(legaLower);
+            var (offerente, offerta) = _bazzerService.GetOffertaAttuale(legaLower);
 
             if (giocatoreInAsta != null)
             {
@@ -282,111 +288,64 @@ namespace AstaLegheFC.Hubs
                 {
                     id = giocatoreInAsta.Id,
                     nome = giocatoreInAsta.Nome,
-                    ruolo = _bazzerService.MantraAttivo ? giocatoreInAsta.RuoloMantra : giocatoreInAsta.Ruolo,
+                    ruolo = _bazzerService.IsMantraAttivo(legaLower) ? giocatoreInAsta.RuoloMantra : giocatoreInAsta.Ruolo,
                     squadraReale = giocatoreInAsta.Squadra,
                     logoUrl = AstaLegheFC.Helpers.LogoHelper.GetLogoUrl(giocatoreInAsta.Squadra)
                 });
             }
 
-            var fineUtc = _bazzerService.FineOffertaUtc?.ToUniversalTime().ToString("o");
+            var fineUtc = _bazzerService.GetFineOffertaUtc(legaLower)?.ToUniversalTime().ToString("o");
             await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
-            var stato = _bazzerService.GetStato();
+
+            var st = _bazzerService.GetStato(legaLower);
             await Clients.Caller.SendAsync("StatoAsta", new
             {
-                startUtc = stato.astaStartUtc?.ToUniversalTime().ToString("o"),
-                pausaAccumulataSec = (int)stato.pausaAccumulata.TotalSeconds,
-                pausaAttiva = stato.pausaAttiva
+                startUtc = st.astaStartUtc?.ToUniversalTime().ToString("o"),
+                pausaAccumulataSec = (int)st.pausaAccumulata.TotalSeconds,
+                pausaAttiva = st.pausaAttiva,
+                fineUtc = st.fineOffertaUtc?.ToUniversalTime().ToString("o")
             });
 
-            if (_bazzerService.PausaAttiva)
+            if (_bazzerService.PausaAttiva(legaLower))
             {
-                var elapsed = (int)Math.Max(0, Math.Floor(_bazzerService.GetDurataAsta(DateTime.UtcNow).TotalSeconds));
-                var remaining = _bazzerService.GetRemainingOfferta(DateTime.UtcNow);
-                await Clients.Caller.SendAsync("AstaPausa", new
-                {
-                    elapsedSec = elapsed,
-                    remainingSec = remaining
-                });
+                var elapsed = (int)Math.Max(0, Math.Floor(_bazzerService.GetDurataAsta(legaLower, DateTime.UtcNow).TotalSeconds));
+                var remaining = _bazzerService.GetRemainingOfferta(legaLower, DateTime.UtcNow);
+                await Clients.Caller.SendAsync("AstaPausa", new { elapsedSec = elapsed, remainingSec = remaining });
             }
         }
 
-        // BazzerHub.cs
-        // ...
         public async Task PausaAsta(string legaAlias)
         {
             var legaLower = NormalizeLega(legaAlias);
+            _bazzerService.MettiInPausa(legaLower, DateTime.UtcNow);
 
-            // 1) Stato applicativo
-            _bazzerService.MettiInPausa(DateTime.UtcNow);
-
-            // 2) Snapshot utili (come facevi già)
-            var elapsed = (int)Math.Max(0, Math.Floor(_bazzerService.GetDurataAsta(DateTime.UtcNow).TotalSeconds));
-            var remaining = _bazzerService.GetRemainingOfferta(DateTime.UtcNow);
+            var elapsed = (int)Math.Max(0, Math.Floor(_bazzerService.GetDurataAsta(legaLower, DateTime.UtcNow).TotalSeconds));
+            var remaining = _bazzerService.GetRemainingOfferta(legaLower, DateTime.UtcNow);
             var partecipanti = BuildPartecipantiSnapshot(legaLower);
 
-            // 3) Broadcast tecnico (admin + utenti che già ascoltano "AstaPausa")
-            await Clients.Group(legaLower) // ✅ Corretto: ora il messaggio va a tutti nella lega
-                         .SendAsync("AstaPausa", new
-                         {
-                             elapsedSec = elapsed,
-                             remainingSec = remaining,
-                             partecipanti
-                         });
-
-            // 4) Messaggio visibile SOLO agli utenti (non admin)
-            // Se vuoi separare gli admin dagli utenti normali, devi implementare una logica di gruppi più granulare,
-            // ad esempio un gruppo "utenti" e un gruppo "admin".
-            // Dato che gli utenti si registrano solo al gruppo `legaLower`, questo riga è stata modificata per inviare
-            // il messaggio a tutti gli utenti della lega.
-
-            await Clients.Group(legaLower) // ✅ Corretto: ora il messaggio va a tutti nella lega
-                         .SendAsync("MostraMessaggio",
-                             "⏸️ Asta in pausa",
-                             "L'admin ha messo in pausa l'asta. Attendere la ripresa per poter offrire.");
-
-
-            // 5) (facoltativo) micro notifica agli admin
-            // La riga è stata commentata perché non ha un gruppo a cui fa riferimento
-            // await Clients.Group($"lega:{legaLower}:admin")
-            //              .SendAsync("MostraMessaggio",
-            //                  "Asta in pausa",
-            //                  "Messaggio inviato ai partecipanti.");
-
-            // 6) Presenze/stati
+            await Clients.Group(legaLower).SendAsync("AstaPausa", new { elapsedSec = elapsed, remainingSec = remaining, partecipanti });
+            await Clients.Group(AdminGroup(legaLower)).SendAsync("MostraMessaggio", "⏸️ Asta in pausa", "Messaggio inviato ai partecipanti.");
             await BroadcastStatoPartecipantiAsync(legaLower);
         }
-        // ...
 
         public async Task RiprendiAsta(string legaAlias)
         {
             var legaLower = NormalizeLega(legaAlias);
 
-            _bazzerService.Riprendi(DateTime.UtcNow);
+            _bazzerService.Riprendi(legaLower, DateTime.UtcNow);
 
-            var fineUtc = _bazzerService.FineOffertaUtc?.ToUniversalTime().ToString("o");
+            var fineUtc = _bazzerService.GetFineOffertaUtc(legaLower)?.ToUniversalTime().ToString("o");
             var partecipanti = BuildPartecipantiSnapshot(legaLower);
 
-            await Clients.Group($"lega:{legaLower}")
-                         .SendAsync("AstaRipresa", new
-                         {
-                             fineUtc,
-                             partecipanti
-                         });
-
-            // Messaggio SOLO agli utenti: "ripresa"
-            await Clients.Group($"lega:{legaLower}:utenti")
-                         .SendAsync("MostraMessaggio",
-                             "▶️ Asta ripresa",
-                             "È di nuovo possibile fare offerte.");
-
+            await Clients.Group(legaLower).SendAsync("AstaRipresa", new { fineUtc, partecipanti });
+            await Clients.Group(AdminGroup(legaLower)).SendAsync("MostraMessaggio", "▶️ Asta ripresa", "È di nuovo possibile fare offerte.");
             await BroadcastStatoPartecipantiAsync(legaLower);
         }
 
-
-
         public async Task ResetDurataAsta(string legaAlias)
         {
-            await Clients.Group($"admin_{legaAlias?.Trim().ToLower()}").SendAsync("DurataResettata");
+            var legaLower = NormalizeLega(legaAlias);
+            await Clients.Group(AdminGroup(legaLower)).SendAsync("DurataResettata");
         }
     }
 }

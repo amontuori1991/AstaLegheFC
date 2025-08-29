@@ -40,7 +40,8 @@ namespace AstaLegheFC.Services
 
             // prepara payload "riepilogo" (stesso shape dell'endpoint /utente/riepilogo, senza isMe)
             var slotTotali = legaInfo.MaxPortieri + legaInfo.MaxDifensori + legaInfo.MaxCentrocampisti + legaInfo.MaxAttaccanti;
-            var mantraAttivo = _bazzerService.MantraAttivo;
+            var mantraAttivo = _bazzerService.IsMantraAttivo(legaInfo.Alias);
+
 
             var squads = await _context.Squadre
                 .Include(s => s.Giocatori)
@@ -198,7 +199,8 @@ namespace AstaLegheFC.Services
             };
             _context.Giocatori.Add(nuovoGiocatore);
 
-            if (_bazzerService.BloccoPortieriAttivo && calciatoreDaListone.Ruolo == "P")
+            if (_bazzerService.IsBloccoPortieriAttivo(squadra.Lega?.Alias ?? string.Empty)
+    && calciatoreDaListone.Ruolo == "P")
             {
                 var idGiocatoriAcquistatiLega = await _context.Giocatori
                     .Where(g => g.Squadra.LegaId == squadra.LegaId)

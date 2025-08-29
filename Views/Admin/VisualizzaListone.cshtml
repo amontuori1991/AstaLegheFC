@@ -626,6 +626,26 @@
           let closeTimeoutAdmin   = null;
           let lastOffertaAdmin = 0;
 
+                  // Chiude subito l’overlay admin e azzera i timer locali
+        function closeAdminOverlayImmediate() {
+          try { clearTimeout(countdownTimerAdmin); } catch {}
+          try { clearTimeout(closeTimeoutAdmin); } catch {}
+          countdownTimerAdmin = null;
+          closeTimeoutAdmin   = null;
+
+          const overlay = document.getElementById('asta-overlay');
+          if (overlay) overlay.classList.remove('visible');
+
+          // reset UI overlay (opzionale)
+          const t = document.getElementById('overlay-timer');
+          if (t) { t.textContent = '--'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
+          const offEl = document.getElementById('overlay-offerente');
+          if (offEl) { offEl.textContent = '—'; offEl.style.color = ''; }
+          const offVal = document.getElementById('overlay-offerta');
+          if (offVal) offVal.textContent = '0';
+        }
+
+
           const legaAliasAdmin = "@ViewBag.LegaAlias";
           const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
 
@@ -1013,11 +1033,17 @@
                 try{
                   const id=btnAsta.dataset.id;
                   const mantra=btnAsta.dataset.mantra==='true';
-                  const r=await fetch('/Admin/AvviaAsta',{
-                    method:'POST',
-                    headers:{'Content-Type':'application/x-www-form-urlencoded; charset=UTF-8','RequestVerificationToken':antiToken},
-                    body:`id=${encodeURIComponent(id)}&mantra=${mantra}`
-                  });
+        const r = await fetch('/Admin/AvviaAsta', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+            'RequestVerificationToken': antiToken
+          },
+          body: `id=${encodeURIComponent(id)}&mantra=${mantra}&lega=${encodeURIComponent(legaAliasAdmin)}`
+        });
+
+
+
                   if(!r.ok){ await mostraMessaggio('Errore','Errore avvio asta.'); return; }
                   const overlay=document.getElementById('asta-overlay');
                   if(overlay){
@@ -1115,18 +1141,28 @@
               e.preventDefault();
               const s=parseInt(document.getElementById('secondiTimer').value||"0");
               if(!Number.isFinite(s)||s<2){ await mostraMessaggio('Valore non valido','Inserisci un numero >= 2'); return; }
-              const r=await fetch('/Admin/ImpostaTimer',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ secondi:s }) });
+                      const r=await fetch('/Admin/ImpostaTimer',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken},
+         body: JSON.stringify({ secondi: s, lega: legaAliasAdmin })
+        });
+
               if(r.ok){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); document.getElementById('secondiTimer').value=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
               else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
             });
 
-            document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
-              try{ const url=new URL(window.location.href); if(url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
-              const isAttivo=this.checked;
-              const r=await fetch('/Admin/ImpostaBloccoPortieri',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ attivo:isAttivo }) });
-              if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
-              else await mostraMessaggio('Errore','Errore aggiornamento regola.');
-            });
+         document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
+          try{ const url=new URL(window.location.href); if(url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
+          const isAttivo=this.checked;
+          const r=await fetch('/Admin/ImpostaBloccoPortieri',{
+            method:'POST',
+            headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken},
+            body:JSON.stringify({ attivo:isAttivo, lega: legaAliasAdmin })
+          });
+          if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
+          else await mostraMessaggio('Errore','Errore aggiornamento regola.');
+        });
+
 
             document.getElementById('mantraSwitch')?.addEventListener('change', function(){
               const hidden=document.getElementById('mantraInput'); if(hidden) hidden.value=this.checked?'true':'false';
@@ -1140,32 +1176,95 @@
             });
 
             // Annulla asta (Hub con fallback HTTP)
-            document.getElementById('btnAnnullaAsta')?.addEventListener('click', async ()=>{
-              const ok=await mostraMessaggio('Annulla Asta','Sei sicuro?',true); if(!ok) return;
-              let done=false;
-              try{ await connection.invoke("AnnullaAsta", legaAliasAdmin); done=true; }catch{}
-              if(!done){ try{ await connection.invoke("AnnullaAsta"); done=true; }catch{} }
-              if(!done){
-                try{
-                  const r=await fetch('/Admin/AnnullaAsta',{ method:'POST', headers:{'RequestVerificationToken':antiToken} });
-                  if(!r.ok) throw 0;
-                }catch{ await mostraMessaggio('Errore','Errore durante l’annullamento dell’asta.'); }
-              }
-            });
+                   // Annulla asta (SignalR con fallback HTTP) — chiusura ottimistica
+        document.getElementById('btnAnnullaAsta')?.addEventListener('click', async () => {
+          const ok = await mostraMessaggio('Annulla Asta', 'Sei sicuro?', true);
+          if (!ok) return;
+
+          let done = false;
+
+          // 1) Prova SignalR con alias lega
+          try { await connection.invoke("AnnullaAsta", legaAliasAdmin); done = true; } catch {}
+
+          // 2) Prova SignalR senza alias (vecchi client/Hub)
+          if (!done) { try { await connection.invoke("AnnullaAsta"); done = true; } catch {} }
+
+          // 3) Fallback HTTP: passa anche l'alias di lega
+          if (!done) {
+            try {
+              const r = await fetch(`/Admin/AnnullaAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
+                method: 'POST',
+                headers: { 'RequestVerificationToken': antiToken }
+              });
+              if (r.ok) done = true;
+            } catch {}
+          }
+
+          if (done) {
+            // Chiudi SUBITO l’overlay lato admin; il broadcast farà il resto altrove
+            const overlay = document.getElementById('asta-overlay');
+            if (overlay) overlay.classList.remove('visible');
+          } else {
+            await mostraMessaggio('Errore', 'Errore durante l’annullamento dell’asta.');
+          }
+        });
+
+
+
 
             // Assegna manuale (non tocca timer globale)
-            document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async ()=>{
-              const idGioc=parseInt(document.getElementById('idGiocatoreModale').value);
-              const squadraId=parseInt(document.getElementById('squadraSelect').value);
-              const costo=parseInt(document.getElementById('costoInput').value);
-              if(!idGioc||!squadraId||isNaN(costo)||costo<0){ await mostraMessaggio('Dati mancanti','Controlla squadra e costo.'); return; }
-              bootstrap.Modal.getOrCreateInstance(document.getElementById('assegnaModal')).hide();
-              try{
-                const r=await fetch('/Admin/AssegnaManualmente',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ giocatoreId:idGioc, squadraId, costo }) });
-                if(!r.ok){ await mostraMessaggio('Errore','Errore durante l’assegnazione.'); return; }
-                location.reload();
-              }catch{ await mostraMessaggio('Errore','Errore di rete durante l’assegnazione.'); }
+        document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async () => {
+          const idGioc   = parseInt(document.getElementById('idGiocatoreModale').value);
+          const squadraId= parseInt(document.getElementById('squadraSelect').value);
+          const costo    = parseInt(document.getElementById('costoInput').value);
+
+          if (!idGioc || !squadraId || isNaN(costo) || costo < 0) {
+            await mostraMessaggio('Dati mancanti', 'Controlla squadra e costo.');
+            return;
+          }
+
+          // Chiudo la modale prima di inviare (come ora)
+          const modalEl = document.getElementById('assegnaModal');
+          bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+
+          try {
+            const r = await fetch('/Admin/AssegnaManualmente', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': antiToken
+              },
+              body: JSON.stringify({ giocatoreId: idGioc, squadraId, costo })
             });
+
+            if (!r.ok) {
+              // Provo a leggere un messaggio dettagliato dal server (es. 409 Conflict)
+              let msg = 'Errore durante l’assegnazione.';
+              try {
+                const data = await r.json();
+                if (data && (data.message || data.error)) {
+                  msg = data.message || data.error;
+                }
+              } catch (_) {
+                // se non è JSON, tengo il messaggio generico
+              }
+
+              await mostraMessaggio('Operazione bloccata', msg);
+
+              // opzionale: riapro la modale per permettere correzioni senza perdere il contesto
+              bootstrap.Modal.getOrCreateInstance(modalEl).show();
+              return;
+            }
+
+            // OK -> ricarico per aggiornare la vista
+            location.reload();
+          } catch {
+            await mostraMessaggio('Errore', 'Errore di rete durante l’assegnazione.');
+            // opzionale: riapro la modale
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+          }
+        });
+
 
             // LETTERE
             renderLettersChips();
@@ -1194,7 +1293,12 @@
               if(!ok){ try { await connection.invoke("PausaAsta"); ok=true; } catch {} }
               if(!ok){
                 try {
-                  await fetch('/Admin/PausaAsta', { method:'POST', headers:{ 'RequestVerificationToken': antiToken } });
+        // Fallback HTTP
+        await fetch(`/Admin/PausaAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
+          method: 'POST',
+          headers: { 'RequestVerificationToken': antiToken }
+        });
+
                 } catch {}
               }
               try { await connection.invoke("RichiediStatoAttuale"); } catch {}
@@ -1205,9 +1309,16 @@
               try { await connection.invoke("RiprendiAsta", legaAliasAdmin); ok=true; } catch {}
               if(!ok){ try { await connection.invoke("RiprendiAsta"); ok=true; } catch {} }
               if(!ok){
-                try {
-                  await fetch('/Admin/RiprendiAsta', { method:'POST', headers:{ 'RequestVerificationToken': antiToken } });
-                } catch {}
+        // fallback HTTP
+        try {
+          await fetch(`/Admin/RiprendiAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
+            method: 'POST',
+            headers: { 'RequestVerificationToken': antiToken }
+          });
+        } catch {}
+
+
+
               }
               try { await connection.invoke("RichiediStatoAttuale"); } catch {}
             });

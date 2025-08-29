@@ -1,207 +1,188 @@
 ﻿using AstaLegheFC.Models;
+using System.Collections.Concurrent;
 
 namespace AstaLegheFC.Services
 {
     public class BazzerService
     {
-        // ===== Stato d'asta “classico” =====
-        private CalciatoreListone? _giocatoreInAsta;
-        private string _offerenteAttuale = "-";
-        private int _offertaAttuale = 0;
-        private bool _astaConclusa = false;
-
-        public int DurataTimer { get; private set; } = 5;
-        public bool BloccoPortieriAttivo { get; private set; } = false;
-        public bool MantraAttivo { get; private set; } = false;
-
-        // ===== Nuovo stato per durata complessiva e pausa =====
-        private DateTime? _astaStartUtc;              // quando è partita l’asta corrente
-        private bool _pausaAttiva = false;
-        private DateTime? _pausaStartUtc;             // inizio della pausa corrente
-        private TimeSpan _pausaAccumulata = TimeSpan.Zero; // somma di tutte le pause fatte
-
-        // ===== End-time countdown offerta (autorevole lato server) =====
-        private DateTime? _fineOffertaUtc;            // quando scade l’offerta corrente (se non in pausa)
-        private TimeSpan? _remainingAtPause;          // quanto mancava quando abbiamo messo in pausa
-
-        // Espongo in sola lettura quel che serve agli altri layer
-        public DateTime? AstaStartUtc => _astaStartUtc;
-        public bool PausaAttiva => _pausaAttiva;
-        public DateTime? FineOffertaUtc => _fineOffertaUtc;
-
-        // ========= Impostazioni base =========
-        public void ImpostaDurataTimer(int secondi)
+        // Stato per-lega
+        private class StatoAsta
         {
-            DurataTimer = Math.Max(2, secondi);
+            public CalciatoreListone? GiocatoreInAsta;
+            public string OfferenteAttuale = "-";
+            public int OffertaAttuale = 0;
+            public bool AstaConclusa = false;
+
+            public int DurataTimer = 5;
+            public bool BloccoPortieriAttivo = false;
+            public bool MantraAttivo = false;
+
+            public DateTime? AstaStartUtc;
+            public bool PausaAttiva = false;
+            public DateTime? PausaStartUtc;
+            public TimeSpan PausaAccumulata = TimeSpan.Zero;
+
+            public DateTime? FineOffertaUtc;
+            public TimeSpan? RemainingAtPause;
         }
 
-        public void ImpostaBloccoPortieri(bool attivo)
+        private static string Key(string lega) => (lega ?? "").Trim().ToLowerInvariant();
+        private readonly ConcurrentDictionary<string, StatoAsta> _byLega = new(StringComparer.Ordinal);
+
+        private StatoAsta S(string lega) => _byLega.GetOrAdd(Key(lega), _ => new StatoAsta());
+
+        // ===== Impostazioni =====
+        public void ImpostaDurataTimer(string lega, int secondi)
         {
-            BloccoPortieriAttivo = attivo;
+            var s = S(lega);
+            s.DurataTimer = Math.Max(2, secondi);
+        }
+        public int GetDurataTimer(string lega) => S(lega).DurataTimer;
+
+        public void ImpostaBloccoPortieri(string lega, bool attivo) => S(lega).BloccoPortieriAttivo = attivo;
+        public bool IsBloccoPortieriAttivo(string lega) => S(lega).BloccoPortieriAttivo;
+
+        public void ImpostaModalitaMantra(string lega, bool attivo) => S(lega).MantraAttivo = attivo;
+        public bool IsMantraAttivo(string lega) => S(lega).MantraAttivo;
+
+        // ===== Avvio/Annullamento =====
+        public void ImpostaGiocatoreInAsta(string lega, CalciatoreListone giocatore, bool mantraAttivo)
+            => AvviaAsta(lega, giocatore, mantraAttivo, DateTime.UtcNow);
+
+        public void AvviaAsta(string lega, CalciatoreListone giocatore, bool mantraAttivo, DateTime nowUtc)
+        {
+            var s = S(lega);
+            s.GiocatoreInAsta = giocatore;
+            s.OfferenteAttuale = "-";
+            s.OffertaAttuale = 0;
+            s.AstaConclusa = false;
+
+            s.MantraAttivo = mantraAttivo;
+
+            s.AstaStartUtc = nowUtc;
+            s.PausaAttiva = false;
+            s.PausaStartUtc = null;
+            s.PausaAccumulata = TimeSpan.Zero;
+
+            s.FineOffertaUtc = null;
+            s.RemainingAtPause = null;
         }
 
-        public void ImpostaModalitaMantra(bool attivo)
+        public void AnnullaAstaCorrente(string lega)
         {
-            MantraAttivo = attivo;
+            var s = S(lega);
+            s.GiocatoreInAsta = null;
+            s.OfferenteAttuale = "-";
+            s.OffertaAttuale = 0;
+            s.AstaConclusa = false;
+
+            s.AstaStartUtc = null;
+            s.PausaAttiva = false;
+            s.PausaStartUtc = null;
+            s.PausaAccumulata = TimeSpan.Zero;
+
+            s.FineOffertaUtc = null;
+            s.RemainingAtPause = null;
         }
 
-        // ========= Avvio/Annullamento asta =========
-
-        /// <summary>
-        /// Wrapper compatibile con il codice esistente.
-        /// </summary>
-        public void ImpostaGiocatoreInAsta(CalciatoreListone giocatore, bool mantraAttivo)
-            => AvviaAsta(giocatore, mantraAttivo, DateTime.UtcNow);
-
-        /// <summary>
-        /// Nuovo entry-point che inizializza anche i campi per durata e pause.
-        /// </summary>
-        public void AvviaAsta(CalciatoreListone giocatore, bool mantraAttivo, DateTime nowUtc)
+        // ===== Pausa / Ripresa =====
+        public void MettiInPausa(string lega, DateTime nowUtc)
         {
-            _giocatoreInAsta = giocatore;
-            _offerenteAttuale = "-";
-            _offertaAttuale = 0;
-            _astaConclusa = false;
+            var s = S(lega);
+            if (s.PausaAttiva) return;
+            s.PausaAttiva = true;
+            s.PausaStartUtc = nowUtc;
 
-            MantraAttivo = mantraAttivo;
-
-            _astaStartUtc = nowUtc;
-            _pausaAttiva = false;
-            _pausaStartUtc = null;
-            _pausaAccumulata = TimeSpan.Zero;
-
-            _fineOffertaUtc = null;     // partirà alla prima offerta
-            _remainingAtPause = null;
-        }
-
-        /// <summary>
-        /// Azzera completamente lo stato dell’asta corrente.
-        /// </summary>
-        public void AnnullaAstaCorrente()
-        {
-            _giocatoreInAsta = null;
-            _offerenteAttuale = "-";
-            _offertaAttuale = 0;
-            _astaConclusa = false;
-
-            _astaStartUtc = null;
-            _pausaAttiva = false;
-            _pausaStartUtc = null;
-            _pausaAccumulata = TimeSpan.Zero;
-
-            _fineOffertaUtc = null;
-            _remainingAtPause = null;
-        }
-
-        // ========= Pausa / Ripresa =========
-
-        /// <summary>
-        /// Mette in pausa l’asta: congela il countdown e accumula la pausa.
-        /// </summary>
-        public void MettiInPausa(DateTime nowUtc)
-        {
-            if (_pausaAttiva) return;
-            _pausaAttiva = true;
-            _pausaStartUtc = nowUtc;
-
-            // Salva quanto manca alla scadenza e azzera l’end-time finché siamo in pausa
-            if (_fineOffertaUtc.HasValue)
+            if (s.FineOffertaUtc.HasValue)
             {
-                var remaining = _fineOffertaUtc.Value - nowUtc;
-                _remainingAtPause = remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
+                var remaining = s.FineOffertaUtc.Value - nowUtc;
+                s.RemainingAtPause = remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
             }
-            else
-            {
-                _remainingAtPause = null;
-            }
+            else s.RemainingAtPause = null;
 
-            _fineOffertaUtc = null;
+            s.FineOffertaUtc = null;
         }
 
-        /// <summary>
-        /// Riprende l’asta: ripristina countdown con il tempo rimanente salvato.
-        /// </summary>
-        public void Riprendi(DateTime nowUtc)
+        public void Riprendi(string lega, DateTime nowUtc)
         {
-            if (!_pausaAttiva) return;
+            var s = S(lega);
+            if (!s.PausaAttiva) return;
 
-            if (_pausaStartUtc.HasValue)
-                _pausaAccumulata += (nowUtc - _pausaStartUtc.Value);
+            if (s.PausaStartUtc.HasValue)
+                s.PausaAccumulata += (nowUtc - s.PausaStartUtc.Value);
 
-            _pausaAttiva = false;
-            _pausaStartUtc = null;
+            s.PausaAttiva = false;
+            s.PausaStartUtc = null;
 
-            if (_remainingAtPause.HasValue)
-            {
-                _fineOffertaUtc = nowUtc + _remainingAtPause.Value;
-            }
-            _remainingAtPause = null;
+            if (s.RemainingAtPause.HasValue)
+                s.FineOffertaUtc = nowUtc + s.RemainingAtPause.Value;
+
+            s.RemainingAtPause = null;
         }
 
-        // ========= Info utili al resto del sistema =========
-
-        /// <summary>
-        /// Durata dell’asta dall’avvio, al netto delle pause (se in pausa, include anche la pausa corrente).
-        /// </summary>
-        public TimeSpan GetDurataAsta(DateTime nowUtc)
+        // ===== Info stato =====
+        public TimeSpan GetDurataAsta(string lega, DateTime nowUtc)
         {
-            if (!_astaStartUtc.HasValue) return TimeSpan.Zero;
+            var s = S(lega);
+            if (!s.AstaStartUtc.HasValue) return TimeSpan.Zero;
 
-            var elapsed = nowUtc - _astaStartUtc.Value - _pausaAccumulata;
-            if (_pausaAttiva && _pausaStartUtc.HasValue)
-                elapsed -= (nowUtc - _pausaStartUtc.Value);
+            var elapsed = nowUtc - s.AstaStartUtc.Value - s.PausaAccumulata;
+            if (s.PausaAttiva && s.PausaStartUtc.HasValue)
+                elapsed -= (nowUtc - s.PausaStartUtc.Value);
 
             return elapsed < TimeSpan.Zero ? TimeSpan.Zero : elapsed;
         }
 
-        /// <summary>
-        /// Secondi rimanenti per l’offerta corrente, considerando la pausa.
-        /// </summary>
-        public int GetRemainingOfferta(DateTime nowUtc)
+        public int GetRemainingOfferta(string lega, DateTime nowUtc)
         {
-            if (_pausaAttiva)
-                return (int)Math.Ceiling((_remainingAtPause ?? TimeSpan.Zero).TotalSeconds);
+            var s = S(lega);
+            if (s.PausaAttiva)
+                return (int)Math.Ceiling((s.RemainingAtPause ?? TimeSpan.Zero).TotalSeconds);
 
-            if (_fineOffertaUtc.HasValue)
+            if (s.FineOffertaUtc.HasValue)
             {
-                var sec = (_fineOffertaUtc.Value - nowUtc).TotalSeconds;
+                var sec = (s.FineOffertaUtc.Value - nowUtc).TotalSeconds;
                 return (int)Math.Max(0, Math.Ceiling(sec));
             }
             return 0;
         }
 
-        /// <summary>
-        /// Stato sintetico per broadcast/diagnostica.
-        /// </summary>
-        public (bool pausaAttiva, DateTime? astaStartUtc, TimeSpan pausaAccumulata, DateTime? pausaStartUtc, DateTime? fineOffertaUtc) GetStato()
-            => (_pausaAttiva, _astaStartUtc, _pausaAccumulata, _pausaStartUtc, _fineOffertaUtc);
-
-        /// <summary>
-        /// Permette (se non in pausa) di reimpostare l’end-time come “ora + durata” (es. dopo una nuova offerta).
-        /// </summary>
-        public void ReimpostaFineAstaDaOra(int durataSecondi, DateTime nowUtc)
+        public (bool pausaAttiva, DateTime? astaStartUtc, TimeSpan pausaAccumulata, DateTime? pausaStartUtc, DateTime? fineOffertaUtc, bool mantraAttivo)
+            GetStato(string lega)
         {
-            if (_pausaAttiva) return;
-            _fineOffertaUtc = nowUtc.AddSeconds(Math.Max(1, durataSecondi));
+            var s = S(lega);
+            return (s.PausaAttiva, s.AstaStartUtc, s.PausaAccumulata, s.PausaStartUtc, s.FineOffertaUtc, s.MantraAttivo);
         }
 
-        // ========= Metodi “classici” già usati dal resto dell’app =========
-        public CalciatoreListone? GetGiocatoreInAsta() => _giocatoreInAsta;
-        public (string offerente, int offerta) GetOffertaAttuale() => (_offerenteAttuale, _offertaAttuale);
-
-        public void AggiornaOfferta(string offerente, int offerta)
+        public void ReimpostaFineAstaDaOra(string lega, int durataSecondi, DateTime nowUtc)
         {
-            _offerenteAttuale = offerente;
-            _offertaAttuale = offerta;
-
-            // Se non siamo in pausa, allineiamo subito l’end-time lato server.
-            if (!_pausaAttiva)
-            {
-                ReimpostaFineAstaDaOra(DurataTimer, DateTime.UtcNow);
-            }
+            var s = S(lega);
+            if (s.PausaAttiva) return;
+            s.FineOffertaUtc = nowUtc.AddSeconds(Math.Max(1, durataSecondi));
         }
 
-        public bool AstaConclusa() => _astaConclusa;
-        public void SegnaAstaConclusa() => _astaConclusa = true;
+        // ===== Metodi classici per-lega =====
+        public CalciatoreListone? GetGiocatoreInAsta(string lega) => S(lega).GiocatoreInAsta;
+        public (string offerente, int offerta) GetOffertaAttuale(string lega)
+        {
+            var s = S(lega);
+            return (s.OfferenteAttuale, s.OffertaAttuale);
+        }
+
+        public void AggiornaOfferta(string lega, string offerente, int offerta)
+        {
+            var s = S(lega);
+            s.OfferenteAttuale = offerente;
+            s.OffertaAttuale = offerta;
+
+            if (!s.PausaAttiva)
+                ReimpostaFineAstaDaOra(lega, s.DurataTimer, DateTime.UtcNow);
+        }
+
+        public bool AstaConclusa(string lega) => S(lega).AstaConclusa;
+        public void SegnaAstaConclusa(string lega) => S(lega).AstaConclusa = true;
+
+        public DateTime? GetFineOffertaUtc(string lega) => S(lega).FineOffertaUtc;
+        public bool PausaAttiva(string lega) => S(lega).PausaAttiva;
     }
 }
