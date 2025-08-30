@@ -156,32 +156,46 @@
                                                 <td>@u.UserName</td>
                                                 <td>@fmt(u.LicenseExpiresAt)</td>
                                                 <td>
-                                                    <form method="post" asp-action="UpdateLicense" class="d-flex flex-wrap gap-2 align-items-center">
-                                                        @Html.AntiForgeryToken()
-                                                        <input type="hidden" name="userId" value="@u.Id" />
+                                                    <div class="d-flex flex-wrap align-items-center gap-2">
+                                                        <!-- Form aggiornamento licenza (come già avevi) -->
+                                                        <form method="post" asp-action="UpdateLicense" class="d-flex flex-wrap gap-2 align-items-center">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="userId" value="@u.Id" />
 
-                                                        <select id="@planId" class="form-select plan-select"
-                                                                aria-label="Piano licenza"
-                                                                onchange="applyPlanToDate(this, '@dateId')">
-                                                            <option value="">Piano…</option>
-                                                            <option value="1M">1 M</option>
-                                                            <option value="6M">6 M</option>
-                                                            <option value="12M">12 M</option>
-                                                            <option value="LIFE">A vita</option>
-                                                        </select>
+                                                            <select id="plan_@u.Id" class="form-select plan-select"
+                                                                    aria-label="Piano licenza"
+                                                                    onchange="applyPlanToDate(this, 'date_@u.Id')">
+                                                                <option value="">Piano…</option>
+                                                                <option value="1M">1 M</option>
+                                                                <option value="6M">6 M</option>
+                                                                <option value="12M">12 M</option>
+                                                                <option value="LIFE">A vita</option>
+                                                            </select>
 
-                                                        <input id="@dateId" type="date" name="newDate" class="form-control"
-                                                               value="@(u.LicenseExpiresAt.HasValue? u.LicenseExpiresAt.Value.ToString("yyyy-MM-dd") : "")"
-                                                               placeholder="yyyy-mm-dd" />
+                                                            <input id="date_@u.Id" type="date" name="newDate" class="form-control"
+                                                                   value="@(u.LicenseExpiresAt.HasValue? u.LicenseExpiresAt.Value.ToString("yyyy-MM-dd") : "")"
+                                                                   placeholder="yyyy-mm-dd" />
 
-                                                        <button class="btn btn-primary">Salva</button>
+                                                            <button class="btn btn-primary">Salva</button>
 
-                                                        <button type="button" class="btn btn-outline-secondary"
-                                                                onclick="setForever('@planId', '@dateId'); this.form.submit();">
-                                                            Per sempre
-                                                        </button>
-                                                    </form>
+                                                            <button type="button" class="btn btn-outline-secondary"
+                                                                    onclick="setForever('plan_@u.Id', 'date_@u.Id'); this.form.submit();">
+                                                                Per sempre
+                                                            </button>
+                                                        </form>
+
+                                                        <!-- NUOVO: Form eliminazione utente -->
+                                                        <form method="post" asp-action="DeleteAdmin"
+                                                              onsubmit="return confirm('Confermi l\\'eliminazione definitiva di @u.Email? L\\'operazione rimuoverà utente, leghe, squadre, giocatori e listone correlati.');">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="userId" value="@u.Id" />
+                                                            <button class="btn btn-outline-danger">
+                                                                Elimina utente
+                                                            </button>
+                                                        </form>
+                                                    </div>
                                                 </td>
+
                                             </tr>
                                         }
                                     </tbody>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AstaLegheFC.Data;
 using AstaLegheFC.Filters;
 using AstaLegheFC.Models;
 using AstaLegheFC.Models.ViewModels;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Http;
 
 namespace AstaLegheFC.Controllers
 {
@@ -15,15 +17,20 @@ namespace AstaLegheFC.Controllers
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly IConfiguration _config;
+        private readonly AppDbContext _db;
 
         // Per ora usiamo le credenziali “richieste”.
         private const string DefaultUser = "system_admin";
         private const string DefaultPass = "Samsung1991";
 
-        public SuperAdminController(UserManager<ApplicationUser> userManager, IConfiguration config)
+        public SuperAdminController(
+            UserManager<ApplicationUser> userManager,
+            IConfiguration config,
+            AppDbContext db)
         {
             _userManager = userManager;
             _config = config;
+            _db = db;
         }
 
         [HttpGet]
@@ -91,7 +98,7 @@ namespace AstaLegheFC.Controllers
                 Active = active,
                 Expiring = expiring,
                 Expired = expired,
-                TodayUtcDate = today
+                TodayUtcDate = today.Date
             };
 
             return View(vm);
@@ -121,6 +128,93 @@ namespace AstaLegheFC.Controllers
             else
             {
                 TempData["ok"] = "Licenza aggiornata.";
+            }
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        /// <summary>
+        /// Elimina definitivamente:
+        /// 1) AspNetUser
+        /// 2) Leghe con AdminId == userId
+        /// 3) Squadre delle leghe cancellate (e relativi Giocatori)
+        /// 4) ListoneCalciatori con AdminId == userId
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SuperAdminAuthorize]
+        public async Task<IActionResult> DeleteAdmin(string userId)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                TempData["err"] = "Parametro mancante (userId).";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                TempData["err"] = "Utente non trovato.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            try
+            {
+                await using var tx = await _db.Database.BeginTransactionAsync();
+
+                // 2) Leghe di questo admin
+                var legaIds = await _db.Leghe
+                    .Where(l => l.AdminId == userId)
+                    .Select(l => l.Id)
+                    .ToListAsync();
+
+                if (legaIds.Count > 0)
+                {
+                    // 4) Squadre delle leghe
+                    var squadreIds = await _db.Squadre
+                        .Where(s => legaIds.Contains(s.LegaId))
+                        .Select(s => s.Id)
+                        .ToListAsync();
+
+                    if (squadreIds.Count > 0)
+                    {
+                        // Prima i giocatori (se non c'è cascade)
+                        var squadreIdsNullable = squadreIds.Select(i => (int?)i).ToList();
+                        var giocatori = _db.Giocatori
+                            .Where(g => squadreIdsNullable.Contains(g.SquadraId));
+
+                        _db.Giocatori.RemoveRange(giocatori);
+                        await _db.SaveChangesAsync();
+
+                        // Poi le squadre
+                        var squadre = _db.Squadre.Where(s => squadreIds.Contains(s.Id));
+                        _db.Squadre.RemoveRange(squadre);
+                        await _db.SaveChangesAsync();
+                    }
+
+                    // Poi le leghe
+                    var leghe = _db.Leghe.Where(l => legaIds.Contains(l.Id));
+                    _db.Leghe.RemoveRange(leghe);
+                    await _db.SaveChangesAsync();
+                }
+
+                // 3) Listone per admin (NB: nel codice progetto è ListoneCalciatori)
+                var listone = _db.ListoneCalciatori.Where(x => x.AdminId == userId);
+                _db.ListoneCalciatori.RemoveRange(listone);
+                await _db.SaveChangesAsync();
+
+                // 1) infine l'utente Identity (dopo aver rimosso le FK su Leghe)
+                _db.Users.Remove(user);
+                await _db.SaveChangesAsync();
+
+                await tx.CommitAsync();
+                TempData["ok"] = $"Utente '{user.Email}' e dati associati eliminati correttamente.";
+            }
+            catch (Exception ex)
+            {
+                // se il BeginTransactionAsync è stato aperto, rollback
+                try { await _db.Database.RollbackTransactionAsync(); } catch { /* ignore */ }
+                TempData["err"] = "Errore durante l'eliminazione: " + ex.Message;
             }
 
             return RedirectToAction(nameof(Index));
