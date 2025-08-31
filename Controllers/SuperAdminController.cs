@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Linq;
 using System.Threading.Tasks;
-using AstaLegheFC.Data;
+using System.Collections.Generic;
 using AstaLegheFC.Filters;
 using AstaLegheFC.Models;
 using AstaLegheFC.Models.ViewModels;
+using AstaLegheFC.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -98,7 +99,7 @@ namespace AstaLegheFC.Controllers
                 Active = active,
                 Expiring = expiring,
                 Expired = expired,
-                TodayUtcDate = today.Date
+                TodayUtcDate = today
             };
 
             return View(vm);
@@ -133,91 +134,103 @@ namespace AstaLegheFC.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        /// <summary>
-        /// Elimina definitivamente:
-        /// 1) AspNetUser
-        /// 2) Leghe con AdminId == userId
-        /// 3) Squadre delle leghe cancellate (e relativi Giocatori)
-        /// 4) ListoneCalciatori con AdminId == userId
-        /// </summary>
-        [HttpPost]
-        [ValidateAntiForgeryToken]
+        // ========== NUOVO: Riepilogo attività aste ==========
+        // Definizioni:
+        // - "Aste" = numero di leghe (per admin e totale)
+        // - "Giocatori assegnati" = numero totale di record in Giocatori associati alle squadre
+        // - Raggruppamento dei giocatori per RUOLO (Ruolo), NON RuoloMantra
+        [HttpGet]
         [SuperAdminAuthorize]
-        public async Task<IActionResult> DeleteAdmin(string userId)
+        public async Task<IActionResult> ActivitySummary()
         {
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                TempData["err"] = "Parametro mancante (userId).";
-                return RedirectToAction(nameof(Index));
-            }
+            var leghe = await _db.Leghe
+                .AsNoTracking()
+                .Include(l => l.Squadre)
+                    .ThenInclude(s => s.Giocatori)
+                .ToListAsync();
 
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null)
-            {
-                TempData["err"] = "Utente non trovato.";
-                return RedirectToAction(nameof(Index));
-            }
+            var adminNames = await _userManager.Users
+                .AsNoTracking()
+                .Select(u => new { u.Id, u.UserName })
+                .ToDictionaryAsync(x => x.Id, x => x.UserName);
 
-            try
-            {
-                await using var tx = await _db.Database.BeginTransactionAsync();
+            var totalLeagues = leghe.Count;
+            var totalAssignedPlayers = leghe.Sum(l => l.Squadre.Sum(s => s.Giocatori.Count));
 
-                // 2) Leghe di questo admin
-                var legaIds = await _db.Leghe
-                    .Where(l => l.AdminId == userId)
-                    .Select(l => l.Id)
-                    .ToListAsync();
-
-                if (legaIds.Count > 0)
+            // GroupBy Admin
+            var admins = leghe
+                .GroupBy(l => l.AdminId)
+                .Select(g =>
                 {
-                    // 4) Squadre delle leghe
-                    var squadreIds = await _db.Squadre
-                        .Where(s => legaIds.Contains(s.LegaId))
-                        .Select(s => s.Id)
-                        .ToListAsync();
+                    var adminId = g.Key;
+                    adminNames.TryGetValue(adminId, out var adminEmail);
+                    adminEmail ??= "(utente sconosciuto)";
 
-                    if (squadreIds.Count > 0)
+                    var leagues = g.Select(l =>
                     {
-                        // Prima i giocatori (se non c'è cascade)
-                        var squadreIdsNullable = squadreIds.Select(i => (int?)i).ToList();
-                        var giocatori = _db.Giocatori
-                            .Where(g => squadreIdsNullable.Contains(g.SquadraId));
+                        var legaName = !string.IsNullOrWhiteSpace(l.Nome) ? l.Nome :
+                                       !string.IsNullOrWhiteSpace(l.Alias) ? l.Alias :
+                                       $"Lega {l.Id}";
 
-                        _db.Giocatori.RemoveRange(giocatori);
-                        await _db.SaveChangesAsync();
+                        var leagueDto = new
+                        {
+                            legaId = l.Id,
+                            nome = legaName,
+                            alias = l.Alias,
+                            squadsCount = l.Squadre.Count,
+                            assignedCount = l.Squadre.Sum(s => s.Giocatori.Count),
+                            squadre = l.Squadre
+                                .OrderBy(s => s.Nome)
+                                .Select(s => new
+                                {
+                                    squadraId = s.Id,
+                                    nome = s.Nome,
+                                    pCount = s.Giocatori.Count(x => x.Ruolo == "P"),
+                                    dCount = s.Giocatori.Count(x => x.Ruolo == "D"),
+                                    cCount = s.Giocatori.Count(x => x.Ruolo == "C"),
+                                    aCount = s.Giocatori.Count(x => x.Ruolo == "A"),
+                                    assignedCount = s.Giocatori.Count,
+                                    players = s.Giocatori
+                                        .OrderBy(x => x.Ruolo) // RUOLO, non Mantra
+                                        .ThenByDescending(x => x.CreditiSpesi ?? 0)
+                                        .ThenBy(x => x.Nome)
+                                        .Select(x => new
+                                        {
+                                            nome = x.Nome,
+                                            ruolo = x.Ruolo,               // <- usiamo Ruolo
+                                            squadraReale = x.SquadraReale,
+                                            crediti = x.CreditiSpesi ?? 0
+                                        })
+                                        .ToList()
+                                })
+                                .ToList()
+                        };
 
-                        // Poi le squadre
-                        var squadre = _db.Squadre.Where(s => squadreIds.Contains(s.Id));
-                        _db.Squadre.RemoveRange(squadre);
-                        await _db.SaveChangesAsync();
-                    }
+                        return leagueDto;
+                    })
+                    .OrderBy(l => l.nome)
+                    .ToList();
 
-                    // Poi le leghe
-                    var leghe = _db.Leghe.Where(l => legaIds.Contains(l.Id));
-                    _db.Leghe.RemoveRange(leghe);
-                    await _db.SaveChangesAsync();
-                }
+                    var totalAssignedAdmin = leagues.Sum(l => l.assignedCount);
 
-                // 3) Listone per admin (NB: nel codice progetto è ListoneCalciatori)
-                var listone = _db.ListoneCalciatori.Where(x => x.AdminId == userId);
-                _db.ListoneCalciatori.RemoveRange(listone);
-                await _db.SaveChangesAsync();
+                    return new
+                    {
+                        adminId,
+                        adminEmail,
+                        leaguesCount = leagues.Count,
+                        assignedCount = totalAssignedAdmin,
+                        leghe = leagues
+                    };
+                })
+                .OrderBy(a => a.adminEmail)
+                .ToList();
 
-                // 1) infine l'utente Identity (dopo aver rimosso le FK su Leghe)
-                _db.Users.Remove(user);
-                await _db.SaveChangesAsync();
-
-                await tx.CommitAsync();
-                TempData["ok"] = $"Utente '{user.Email}' e dati associati eliminati correttamente.";
-            }
-            catch (Exception ex)
+            return Json(new
             {
-                // se il BeginTransactionAsync è stato aperto, rollback
-                try { await _db.Database.RollbackTransactionAsync(); } catch { /* ignore */ }
-                TempData["err"] = "Errore durante l'eliminazione: " + ex.Message;
-            }
-
-            return RedirectToAction(nameof(Index));
+                totalLeagues,
+                totalAssignedPlayers,
+                admins
+            });
         }
     }
 }

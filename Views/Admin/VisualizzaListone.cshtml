@@ -4,6 +4,7 @@
     ViewData["Title"] = "Listone Calciatori";
     var riepilogo = ViewBag.RiepilogoSquadre as List<AstaLegheFC.Models.ViewModels.SquadraRiepilogoViewModel> ?? new List<AstaLegheFC.Models.ViewModels.SquadraRiepilogoViewModel>();
     var squadreJson = JsonSerializer.Serialize(riepilogo.Select(s => new { s.SquadraId, s.Nickname }));
+    var appLogoUrl = Url.Content(ViewBag.AppLogoUrl as string ?? "~/png/logo_bazzer.png");
 }
 
 <style>
@@ -250,6 +251,222 @@
         opacity: .45;
         text-decoration: line-through
     }
+
+    /* ===== Modal “beauty” con scudetto opacizzato sullo sfondo ===== */
+    .modal-beauty .modal-content {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #34495e;
+        border-radius: 16px;
+        background: radial-gradient(120% 120% at 0% 0%, #1f2a39 0%, #1b2431 60%, #16202c 100%);
+        box-shadow: 0 22px 48px rgba(0,0,0,.5);
+    }
+
+        /* layer immagine: usa la CSS var --bg-url impostata via JS */
+        .modal-beauty .modal-content::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: var(--bg-url, none);
+            background-size: 70%;
+            background-repeat: no-repeat;
+            background-position: center;
+            opacity: .16;
+            filter: blur(1.5px) saturate(120%);
+            transform: scale(1.06);
+            pointer-events: none;
+        }
+
+        /* layer sfumatura per leggibilità del testo */
+        .modal-beauty .modal-content::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.35));
+            pointer-events: none;
+        }
+
+    .modal-beauty .modal-header,
+    .modal-beauty .modal-footer {
+        position: relative;
+        z-index: 1;
+        border-color: #2c3e50;
+        background: rgba(0,0,0,.15);
+        backdrop-filter: blur(6px);
+    }
+
+    .modal-beauty .modal-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #ecf0f1;
+        font-weight: 800;
+    }
+
+    .modal-beauty .team-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(0,0,0,.35);
+        border: 1px solid rgba(255,255,255,.12);
+        color: #dfe6ee;
+        font-weight: 700;
+        padding: 6px 10px;
+        border-radius: 999px;
+    }
+
+        .modal-beauty .team-chip img {
+            width: 20px;
+            height: 20px;
+            object-fit: contain;
+        }
+
+    .modal-beauty .modal-body {
+        position: relative;
+        z-index: 1;
+        color: #e7edf3;
+    }
+
+    .modal-beauty .role-badge {
+        display: inline-block;
+        min-width: 22px;
+        height: 22px;
+        line-height: 22px;
+        text-align: center;
+        font-weight: 900;
+        border-radius: 6px;
+        color: #fff;
+        margin-right: 8px;
+    }
+
+    .modal-beauty .role-P {
+        background: #d9822b;
+    }
+
+    .modal-beauty .role-D {
+        background: #2da44e;
+    }
+
+    .modal-beauty .role-C {
+        background: #2563eb;
+    }
+
+    .modal-beauty .role-A {
+        background: #c0353a;
+    }
+
+    .modal-beauty .input-group-text {
+        background: #1f2a39;
+        color: #cdd6df;
+        border-color: #334353;
+    }
+
+    .modal-beauty .form-control,
+    .modal-beauty .form-select {
+        background: #1b2431;
+        color: #e7edf3;
+        border-color: #334353;
+    }
+
+        .modal-beauty .form-control:focus,
+        .modal-beauty .form-select:focus {
+            border-color: #5dade2;
+            box-shadow: 0 0 0 .2rem rgba(93,173,226,.25);
+        }
+
+    /* Pulsanti azione “glass” */
+    .btn-glass {
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(255,255,255,.06);
+        color: #fff;
+        backdrop-filter: blur(6px);
+        transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+    }
+
+        .btn-glass:hover {
+            filter: brightness(1.07);
+            box-shadow: 0 10px 20px rgba(0,0,0,.35);
+        }
+
+        .btn-glass:active {
+            transform: translateY(1px);
+        }
+
+    .btn-danger-glow {
+        background: linear-gradient(180deg,#ef4444,#b91c1c);
+        border: 0;
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(239,68,68,.25);
+    }
+
+    .btn-success-glow {
+        background: linear-gradient(180deg,#22c55e,#15803d);
+        border: 0;
+        color: #fff;
+        box-shadow: 0 10px 20px rgba(34,197,94,.25);
+    }
+    /* === Modal Assegna/Svincola – tema scuro con watermark === */
+    .modal-base {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        background: linear-gradient(180deg,#0b1320,#0a1220);
+        color: #e5e7eb;
+        box-shadow: 0 12px 34px rgba(0,0,0,.45);
+    }
+
+        .modal-base .modal-header {
+            border: 0;
+            background: radial-gradient(1200px 420px at -15% -60%, rgba(59,130,246,.22), transparent 60%);
+        }
+
+        .modal-base .btn-close {
+            filter: invert(1) contrast(1.2);
+            opacity: .75;
+        }
+
+    .modal-squad-bg {
+        position: absolute;
+        inset: 0;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 360px;
+        opacity: .06;
+        filter: grayscale(100%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .modal-hero {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0 2px 0;
+        position: relative;
+        z-index: 1;
+    }
+
+        .modal-hero img {
+            width: 54px;
+            height: 54px;
+            object-fit: contain;
+            filter: drop-shadow(0 6px 16px rgba(0,0,0,.35));
+        }
+
+        .modal-hero .meta {
+            line-height: 1.15;
+        }
+
+            .modal-hero .meta .tit {
+                font-weight: 800;
+                letter-spacing: .15px;
+            }
+
+            .modal-hero .meta .sub {
+                opacity: .85;
+            }
+
 </style>
 
 <h2 class="mt-3">Listone Calciatori</h2>
@@ -482,62 +699,88 @@
 </div>
 
 <!-- ===== Modale Assegna ===== -->
-<div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+<div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-assegna"></div>
+
             <div class="modal-header">
-                <h5 class="modal-title" id="assegnaModalLabel">Assegna Giocatore</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="assegnaLabel">Assegna manualmente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
-            <div class="modal-body text-center">
-                <img id="logoGiocatoreAssegna" src="" alt="Logo Squadra" class="d-block mx-auto mb-3" style="height:70px" />
-                <p class="mb-0 fs-4" id="nomeGiocatoreModale"></p>
-                <p class="text-muted" id="dettagliGiocatoreAssegna"></p>
-                <hr />
+
+            <div class="modal-body">
                 <input type="hidden" id="idGiocatoreModale" />
-                <div class="mb-3 text-start">
-                    <label for="squadraSelect" class="form-label">Assegna a:</label>
-                    <select id="squadraSelect" class="form-select"></select>
+
+                <div class="modal-hero mb-2">
+                    <img id="logoGiocatoreAssegna" alt="">
+                    <div class="meta">
+                        <div id="nomeGiocatoreModale" class="tit"></div>
+                        <div id="dettagliGiocatoreAssegna" class="sub small text-muted"></div>
+                    </div>
                 </div>
-                <div class="mb-3 text-start">
-                    <label for="costoInput" class="form-label">Costo:</label>
-                    <input type="number" id="costoInput" class="form-control" value="1" min="1" />
+
+                <div class="row g-3 mt-2">
+                    <div class="col-5">
+                        <label for="costoAssegnaInput" class="form-label">Costo</label>
+                        <input id="costoAssegnaInput" type="number" class="form-control" min="0" step="1" value="0">
+                    </div>
+                    <div class="col-7">
+                        <label for="squadraSelectAssegna" class="form-label">Assegna a</label>
+                        <select id="squadraSelectAssegna" class="form-select"></select>
+                    </div>
                 </div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-primary" id="btnSalvaAssegnazione">Salva Assegnazione</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button id="btnSalvaAssegnazione" type="button" class="btn btn-primary">Conferma</button>
             </div>
         </div>
     </div>
 </div>
 
+
 <!-- ===== Modale Svincola ===== -->
-<div class="modal fade" id="svincolaModal" tabindex="-1" aria-labelledby="svincolaModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+<div class="modal fade" id="svincolaModal" tabindex="-1" aria-labelledby="svincolaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-svincola"></div>
+
             <div class="modal-header">
-                <h5 class="modal-title" id="svincolaModalLabel">Svincola Giocatore</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title" id="svincolaLabel">Svincola giocatore</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
-            <div class="modal-body text-center">
-                <img id="logoGiocatoreSvincola" src="" alt="Logo Squadra" class="d-block mx-auto mb-3" style="height:70px" />
-                <p class="mb-0 fs-4" id="nomeGiocatoreSvincolo"></p>
-                <p class="text-muted" id="dettagliGiocatoreSvincolo"></p>
-                <hr />
+
+            <div class="modal-body">
                 <input type="hidden" id="idGiocatoreSvincola" />
-                <div class="mb-3 text-start">
-                    <label for="creditiSvincoloInput" class="form-label">Crediti da restituire (costo originale: <span id="costoOriginaleSvincolo"></span>):</label>
-                    <input type="number" id="creditiSvincoloInput" class="form-control" value="1" min="0" />
+
+                <div class="modal-hero mb-2">
+                    <img id="logoGiocatoreSvincola" alt="">
+                    <div class="meta">
+                        <div id="nomeGiocatoreSvincolo" class="tit"></div>
+                        <div id="dettagliGiocatoreSvincola" class="sub small text-muted"></div>
+                    </div>
+                </div>
+
+                <div class="alert alert-secondary py-2 mb-3">
+                    Costo originale: <strong id="costoOriginaleSvincolo">0</strong>
+                </div>
+
+                <div>
+                    <label for="creditiSvincoloInput" class="form-label">Crediti da restituire</label>
+                    <input id="creditiSvincoloInput" type="number" class="form-control" min="0" value="0" />
                 </div>
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-primary" id="btnConfermaSvincolo">Conferma Svincolo</button>
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button id="btnConfermaSvincolo" type="button" class="btn btn-danger">Conferma svincolo</button>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- ===== Overlay Asta ===== -->
 <div id="asta-overlay">
@@ -560,53 +803,97 @@
 </div>
 
 <!-- ===== Modale Bonus Crediti ===== -->
+<!-- ===== Modale Bonus Crediti (stile modal-base) ===== -->
 <div class="modal fade" id="bonusModal" tabindex="-1" aria-labelledby="bonusModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-bonus" style="background-image:url('@appLogoUrl')"></div>
+
             <div class="modal-header">
-                <h5 class="modal-title" id="bonusModalLabel">Assegna crediti bonus</h5>
+                <h5 class="modal-title d-flex align-items-center gap-2" id="bonusModalLabel">
+                    <img src="@appLogoUrl" alt="Logo" style="width:22px;height:22px;object-fit:contain" />
+                    Gestione crediti
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
+
             <div class="modal-body">
-                <div class="mb-2"><strong>Squadra:</strong> <span id="bonusNick"></span></div>
-                <div class="mb-2"><strong>Crediti attuali:</strong> <span id="bonusCreditiAttuali"></span></div>
-                <div class="mb-2"><strong>Puntata max attuale:</strong> <span id="bonusPMaxAttuale"></span></div>
-                <hr />
-                <div class="mb-3">
-                    <label for="bonusDeltaInput" class="form-label">Delta crediti (può essere negativo)</label>
-                    <input type="number" id="bonusDeltaInput" class="form-control" value="0" step="1">
-                    <div class="form-text">Esempi: +10 (aggiungi), -5 (togli)</div>
+                <div class="modal-hero mb-2">
+                    <img src="@appLogoUrl" alt="Logo app">
+                    <div class="meta">
+                        <div class="tit" id="bonusNick">—</div>
+                        <div class="sub small text-muted">Aggiungi o rimuovi crediti alla squadra</div>
+                    </div>
                 </div>
-                <div class="mb-2"><strong>Crediti dopo:</strong> <span id="bonusCreditiDopo"></span></div>
-                <div><strong>Puntata max dopo:</strong> <span id="bonusPMaxDopo"></span></div>
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-6">
+                        <div class="small text-muted">Crediti attuali</div>
+                        <div class="fw-bold fs-5"><span id="bonusCreditiAttuali">0</span></div>
+                    </div>
+                    <div class="col-6 text-end">
+                        <div class="small text-muted">Puntata max attuale</div>
+                        <div class="fw-bold fs-5"><span id="bonusPMaxAttuale">0</span></div>
+                    </div>
+
+                    <div class="col-12"><hr class="border-secondary-subtle my-2" /></div>
+
+                    <div class="col-6">
+                        <label for="bonusDeltaInput" class="form-label">Delta crediti</label>
+                        <input type="number" id="bonusDeltaInput" class="form-control" value="0" step="1" />
+                        <div class="form-text">Esempi: +10 (aggiungi), -5 (togli)</div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="small text-muted">Crediti dopo</div>
+                        <div class="fw-bold fs-5"><span id="bonusCreditiDopo">0</span></div>
+                        <div class="small text-muted mt-2">Puntata max dopo</div>
+                        <div class="fw-bold"><span id="bonusPMaxDopo">0</span></div>
+                    </div>
+                </div>
 
                 <input type="hidden" id="bonusSquadraId" />
                 <input type="hidden" id="bonusGiocatoriCount" />
+                <input type="hidden" id="bonusSlotsRimasti" /> <!-- NEW -->
+
             </div>
+
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" class="btn btn-primary" id="btnConfermaBonus">Applica</button>
+                <button type="button" class="btn btn-outline-secondary btn-glass" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" class="btn btn-primary btn-success-glow" id="btnConfermaBonus">Applica</button>
             </div>
         </div>
     </div>
 </div>
 
+
 <!-- ===== Modale Messaggi generici ===== -->
+<!-- ===== Modale Messaggi generici (stile modal-base) ===== -->
 <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-white" style="background-color:#2c3e50;border:1px solid #3498db;">
-            <div class="modal-header" style="border-bottom-color:#34495e;">
-                <h5 class="modal-title" id="messaggioModaleTitolo">Info</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-msg" style="background-image:url('@appLogoUrl')"></div>
+
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="messaggioModaleLabel">
+                    <img src="@appLogoUrl" alt="Logo" style="width:20px;height:20px;object-fit:contain" />
+                    <span id="messaggioModaleTitolo">Info</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
-            <div class="modal-body"><p id="messaggioModaleCorpo">-</p></div>
-            <div class="modal-footer" style="border-top-color:#34495e;">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="messaggioModaleBtnAnnulla" style="display:none;">Annulla</button>
-                <button type="button" class="btn btn-primary" id="messaggioModaleBtnOk">OK</button>
+
+            <div class="modal-body">
+                <p id="messaggioModaleCorpo" class="mb-0">-</p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-glass" data-bs-dismiss="modal" id="messaggioModaleBtnAnnulla" style="display:none;">Annulla</button>
+                <button type="button" class="btn btn-primary btn-success-glow" id="messaggioModaleBtnOk">OK</button>
             </div>
         </div>
     </div>
 </div>
+
 
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 <audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
@@ -620,6 +907,7 @@
     <script>
         (function(){
           // ===== VAR =====
+
           let debounceTimer;
           let durataTimer = @ViewBag.DurataTimer;
           let countdownTimerAdmin = null;
@@ -635,6 +923,8 @@
 
           const overlay = document.getElementById('asta-overlay');
           if (overlay) overlay.classList.remove('visible');
+        
+
 
           // reset UI overlay (opzionale)
           const t = document.getElementById('overlay-timer');
@@ -646,8 +936,10 @@
         }
 
 
-          const legaAliasAdmin = "@ViewBag.LegaAlias";
-          const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+                  const legaAliasAdmin = "@ViewBag.LegaAlias";
+        const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+        const appLogoUrl = '@appLogoUrl';   // <-- AGGIUNGI QUI (globale)
+
 
           const LS_START        = `asta:start:${legaAliasAdmin}`;
           const LS_PAUSE_ACC    = `asta:pauseAcc:${legaAliasAdmin}`;
@@ -695,6 +987,9 @@
               btnOk.addEventListener('click', onOk, { once:true });
               if (conferma) btnAnn.addEventListener('click', onAnn, { once:true });
               mEl.addEventListener('hidden.bs.modal', onHidden);
+                      const bgMsg = document.getElementById('bg-msg');
+        if (bgMsg) bgMsg.style.backgroundImage = `url('${appLogoUrl}')`;
+
               bs.show();
             });
           };
@@ -1006,6 +1301,21 @@
               const s=(Number.isFinite(durataTimer) && durataTimer>0) ? durataTimer : parseInt(localStorage.getItem(LS_DEFAULT_TIMER)||'0');
               if(s>0) secInput.value=s;
             })();
+                    const elBonus = document.getElementById('bonusModal');
+        if (elBonus) {
+          elBonus.addEventListener('hidden.bs.modal', () => {
+            const bg = document.getElementById('bg-bonus');
+            if (bg) bg.style.backgroundImage = 'none';
+          });
+        }
+
+        const elMsg = document.getElementById('messaggioModale');
+        if (elMsg) {
+          elMsg.addEventListener('hidden.bs.modal', () => {
+            const bg = document.getElementById('bg-msg');
+            if (bg) bg.style.backgroundImage = 'none';
+          });
+        }
 
             // FILTRI
             const urlParams=new URLSearchParams(window.location.search);
@@ -1021,43 +1331,68 @@
             document.querySelectorAll('table.table-bordered.table-sm button.btn-toggle-rosa').forEach(btn=>{
               if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
               btn.addEventListener('click',(ev)=>{ ev.preventDefault(); ev.stopPropagation(); const td=btn.closest('td'); const ul=td?.querySelector('ul'); if(ul) ul.classList.toggle('d-none'); });
+
+                    // pulizia watermark quando i modali vengono chiusi
+        
+
             });
+            const elAssegna = document.getElementById('assegnaModal');
+        if (elAssegna) {
+          elAssegna.addEventListener('hidden.bs.modal', () => {
+            const bg = document.getElementById('bg-assegna');
+            if (bg) bg.style.backgroundImage = 'none';
+          });
+        }
+
+        const elSvincola = document.getElementById('svincolaModal');
+        if (elSvincola) {
+          elSvincola.addEventListener('hidden.bs.modal', () => {
+            const bg = document.getElementById('bg-svincola');
+            if (bg) bg.style.backgroundImage = 'none';
+          });
+        }
 
             // Delegation Asta/Assegna
             document.addEventListener('click', async (ev) => {
               const btnAsta = ev.target.closest('.btn-avvia-asta');
               const btnAssegna = ev.target.closest('.btn-assegna');
 
-              if (btnAsta) {
-                ev.preventDefault();
-                try{
-                  const id=btnAsta.dataset.id;
-                  const mantra=btnAsta.dataset.mantra==='true';
-        const r = await fetch('/Admin/AvviaAsta', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-            'RequestVerificationToken': antiToken
-          },
-          body: `id=${encodeURIComponent(id)}&mantra=${mantra}&lega=${encodeURIComponent(legaAliasAdmin)}`
-        });
+                      if (btnAsta) {
+          ev.preventDefault();
+          try {
+            const id = btnAsta.dataset.id;
+            const mantra = btnAsta.dataset.mantra === 'true';
+
+            const r = await fetch('/Admin/AvviaAsta', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                'RequestVerificationToken': antiToken
+              },
+              body: `id=${encodeURIComponent(id)}&mantra=${mantra}&lega=${encodeURIComponent(legaAliasAdmin)}`
+            }); // <<<<< QUI si chiude correttamente la fetch
+
+            if (!r.ok) { await mostraMessaggio('Errore', 'Errore avvio asta.'); return; }
+
+            const overlay = document.getElementById('asta-overlay');
+            if (overlay) {
+              document.getElementById('overlay-nome-giocatore').innerText = '…';
+              document.getElementById('overlay-dettagli-giocatore').innerText = 'In attesa…';
+              document.getElementById('overlay-offerta').innerText = '0';
+              document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
+              document.getElementById('overlay-timer').innerText = '--';
+              overlay.classList.add('visible');
+            }
+            try { if (window.connection) await window.connection.invoke("RichiediStatoAttuale"); } catch {}
+          } catch {
+            await mostraMessaggio('Errore', 'Impossibile avviare l’asta.');
+          }
+          return;
+        }
 
 
 
-                  if(!r.ok){ await mostraMessaggio('Errore','Errore avvio asta.'); return; }
-                  const overlay=document.getElementById('asta-overlay');
-                  if(overlay){
-                    document.getElementById('overlay-nome-giocatore').innerText='…';
-                    document.getElementById('overlay-dettagli-giocatore').innerText='In attesa…';
-                    document.getElementById('overlay-offerta').innerText='0';
-                    document.getElementById('overlay-offerente').innerText='In attesa di offerte...';
-                    document.getElementById('overlay-timer').innerText='--';
-                    overlay.classList.add('visible');
-                  }
-                  try{ if(window.connection) await window.connection.invoke("RichiediStatoAttuale"); }catch{}
-                }catch{ await mostraMessaggio('Errore','Impossibile avviare l’asta.'); }
-                return;
-              }
+                
 
               if (btnAssegna) {
                 ev.preventDefault();
@@ -1067,8 +1402,20 @@
                   document.getElementById('nomeGiocatoreModale').innerText=nome;
                   document.getElementById('dettagliGiocatoreAssegna').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
                   document.getElementById('logoGiocatoreAssegna').src=logo;
+                          const bgA = document.getElementById('bg-assegna');
+        if (bgA) bgA.style.backgroundImage = logo ? `url('${logo}')` : 'none';
 
-                  const sel=document.getElementById('squadraSelect'); sel.innerHTML=''; (squadreArr||[]).forEach(s=>{ const o=document.createElement('option'); o.value=s.SquadraId; o.innerText=s.Nickname; sel.appendChild(o); });
+
+                          // PRIMA cercavi 'squadraSelect'
+        const sel = document.getElementById('squadraSelectAssegna');
+        sel.innerHTML = '';
+        (squadreArr || []).forEach(s => {
+          const o = document.createElement('option');
+          o.value = s.SquadraId;
+          o.innerText = s.Nickname;
+          sel.appendChild(o);
+        });
+
 
                   bootstrap?.Modal?.getOrCreateInstance?.(document.getElementById('assegnaModal'))?.show();
                 }catch{ await mostraMessaggio('Errore','Impossibile aprire la modale di assegnazione.'); }
@@ -1079,12 +1426,14 @@
             // Svincolo
             window.apriModaleSvincolo=function(btn){
               const id=btn.dataset.id, nome=btn.dataset.nome||'', costo=parseInt(btn.dataset.costo)||0, squadra=btn.dataset.squadra||'', logo=btn.dataset.logo||'', ruolo=btn.dataset.ruolo||'';
-              document.getElementById('idGiocatoreSvincola').value=id;
+                      const bgS = document.getElementById('bg-svincola');
+        if (bgS) bgS.style.backgroundImage = (logo ? `url('${logo}')` : 'none');
+        document.getElementById('idGiocatoreSvincola').value=id;
               document.getElementById('costoOriginaleSvincolo').innerText=costo;
               const input=document.getElementById('creditiSvincoloInput'); if(input){ input.min=0; input.removeAttribute('max'); input.value=String(costo); }
               document.getElementById('logoGiocatoreSvincola').src=logo;
               document.getElementById('nomeGiocatoreSvincolo').innerText=nome;
-              document.getElementById('dettagliGiocatoreSvincolo').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
+              document.getElementById('dettagliGiocatoreSvincola').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
               bootstrap.Modal.getOrCreateInstance(document.getElementById('svincolaModal')).show();
             };
 
@@ -1097,34 +1446,55 @@
 
             // Bonus crediti
             let bonusModal, bonusDeltaInput;
-            function calcolaPuntataMax(creditiDisponibili, giocatoriCount){
-              const SLOT_TOTALI=parseInt("@(ViewBag.SlotTotali ?? 0)")||0;
-              const slotRimasti=Math.max(0, SLOT_TOTALI-(parseInt(giocatoriCount)||0));
-              const pmax=creditiDisponibili - (slotRimasti>0 ? slotRimasti-1 : 0);
-              return Math.max(0,pmax);
-            }
-            function aggiornaPreviewBonus(){
-              const currCred=parseInt(document.getElementById('bonusCreditiAttuali').textContent)||0;
-              const giocatoriCount=parseInt(document.getElementById('bonusGiocatoriCount').value)||0;
-              const delta=parseInt(bonusDeltaInput.value)||0;
-              const afterCred=currCred+delta;
-              const afterPMax=calcolaPuntataMax(afterCred,giocatoriCount);
-              document.getElementById('bonusCreditiDopo').textContent=afterCred;
-              document.getElementById('bonusPMaxDopo').textContent=afterPMax;
-            }
-            document.querySelectorAll('.btn-bonus').forEach(btn=>{
-              btn.addEventListener('click',()=>{
-                const sId=parseInt(btn.dataset.squadraid), nick=btn.dataset.nickname||'', cred=parseInt(btn.dataset.crediti)||0, pmax=parseInt(btn.dataset.pmax)||0, giocatoriCount=parseInt(btn.dataset.giocatori)||0;
-                document.getElementById('bonusSquadraId').value = sId;
-                document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
-                document.getElementById('bonusNick').textContent = nick;
-                document.getElementById('bonusCreditiAttuali').textContent = cred;
-                document.getElementById('bonusPMaxAttuale').textContent = pmax;
-                bonusDeltaInput=document.getElementById('bonusDeltaInput'); bonusDeltaInput.value="0"; aggiornaPreviewBonus();
-                if(!bonusModal) bonusModal=bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
-                bonusModal.show();
-              });
-            });
+            function calcolaPuntataMax(creditiDisponibili){
+          const slotsRimasti = parseInt(document.getElementById('bonusSlotsRimasti').value) || 0;
+          const minimoPerSlot = 1; // cambia qui se nella tua lega il minimo non è 1
+          const riserva = Math.max(0, (slotsRimasti - 1) * minimoPerSlot);
+          return Math.max(0, creditiDisponibili - riserva);
+        }
+
+                    function aggiornaPreviewBonus(){
+          const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
+          const delta    = parseInt(bonusDeltaInput.value) || 0;
+          const afterCred = currCred + delta;
+          const afterPMax = calcolaPuntataMax(afterCred);
+          document.getElementById('bonusCreditiDopo').textContent = afterCred;
+          document.getElementById('bonusPMaxDopo').textContent    = afterPMax;
+        }
+
+                    document.querySelectorAll('.btn-bonus').forEach(btn=>{
+          btn.addEventListener('click',()=>{
+            const sId=parseInt(btn.dataset.squadraid),
+                  nick=btn.dataset.nickname||'',
+                  cred=parseInt(btn.dataset.crediti)||0,
+                  pmax=parseInt(btn.dataset.pmax)||0,
+                  giocatoriCount=parseInt(btn.dataset.giocatori)||0;
+
+            document.getElementById('bonusSquadraId').value = sId;
+            document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
+            document.getElementById('bonusNick').textContent = nick;
+            document.getElementById('bonusCreditiAttuali').textContent = cred;
+            document.getElementById('bonusPMaxAttuale').textContent = pmax;
+
+            // NEW: deduco gli slot rimasti dalla formula del riepilogo
+            // PMax = Crediti - max(0, (SlotsRimasti - 1))  =>  SlotsRimasti = (Crediti - PMax) + 1
+            const slotsRimasti = Math.max(0, (cred - pmax) + 1);
+            document.getElementById('bonusSlotsRimasti').value = String(slotsRimasti);
+
+            bonusDeltaInput = document.getElementById('bonusDeltaInput');
+            bonusDeltaInput.value = "0";
+            aggiornaPreviewBonus();
+
+            if(!bonusModal) bonusModal=bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
+
+            // watermark con logo app
+            const bgB = document.getElementById('bg-bonus');
+            if (bgB) bgB.style.backgroundImage = `url('${appLogoUrl}')`;
+
+            bonusModal.show();
+          });
+        });
+
             document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
             document.getElementById('btnConfermaBonus')?.addEventListener('click', async ()=>{
               const sId=parseInt(document.getElementById('bonusSquadraId').value);
@@ -1214,9 +1584,10 @@
 
             // Assegna manuale (non tocca timer globale)
         document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async () => {
-          const idGioc   = parseInt(document.getElementById('idGiocatoreModale').value);
-          const squadraId= parseInt(document.getElementById('squadraSelect').value);
-          const costo    = parseInt(document.getElementById('costoInput').value);
+                  const idGioc    = parseInt(document.getElementById('idGiocatoreModale').value);
+        const squadraId = parseInt(document.getElementById('squadraSelectAssegna').value);
+        const costo     = parseInt(document.getElementById('costoAssegnaInput').value);
+
 
           if (!idGioc || !squadraId || isNaN(costo) || costo < 0) {
             await mostraMessaggio('Dati mancanti', 'Controlla squadra e costo.');
