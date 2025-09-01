@@ -58,14 +58,15 @@
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item"><a class="nav-link text-dark link-caricamento" asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
-                        <li class="nav-item"><a class="nav-link text-dark link-caricamento" asp-controller="Admin" asp-action="ImportaListone">Importa Listone</a></li>
-                        <li class="nav-item"><a class="nav-link link-caricamento" asp-controller="Leghe" asp-action="Index">Gestione Leghe</a></li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Support" asp-action="Create">Assistenza/Richieste</a>
-                        </li>
-                        <!-- <li class="nav-item">                             <a class="nav-link" asp-controller="Site" asp-action="Index">Sito WEB</a>                         </li>  -->
-                                        </ul>
+                        @if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item"><a class="nav-link text-dark link-caricamento" asp-area="" asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark link-caricamento" asp-controller="Admin" asp-action="ImportaListone">Importa Listone</a></li>
+                            <li class="nav-item"><a class="nav-link link-caricamento" asp-controller="Leghe" asp-action="Index">Gestione Leghe</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Support" asp-action="Create">Assistenza/Richieste</a></li>
+                        }
+                    </ul>
+
                     <partial name="_LoginPartial" />
                 </div>
             </div>
