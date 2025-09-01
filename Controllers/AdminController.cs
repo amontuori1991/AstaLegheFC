@@ -228,18 +228,24 @@ namespace AstaLegheFC.Controllers
             return View();
         }
 
-        // ========= Vista Admin Listone =========
+        // ========= Vista Admin Listone (paginata) =========
+        [HttpGet]
         public async Task<IActionResult> VisualizzaListone(
             string lega,
-            string nome,
-            string squadra,
-            string ruolo,
+            string? nome,
+            string? squadra,
+            string? ruolo,
             [FromQuery(Name = "mantra")] bool mantraAttivo = false,
             [FromQuery(Name = "sorteggio")] bool sorteggioLetteraAttivo = false,
-            [FromQuery(Name = "iniziale")] string? iniziale = null)
+            [FromQuery(Name = "iniziale")] string? iniziale = null,
+            int page = 1,
+            int pageSize = 20)
         {
             if (string.IsNullOrEmpty(lega))
                 return Content("⚠️ Parametro lega mancante. Inserisci ?lega=...");
+
+            if (page < 1) page = 1;
+            if (pageSize <= 0 || pageSize > 200) pageSize = 20;
 
             var adminId = _userManager.GetUserId(User);
             if (string.IsNullOrEmpty(adminId)) return Unauthorized();
@@ -256,10 +262,13 @@ namespace AstaLegheFC.Controllers
             IQueryable<CalciatoreListone> queryListone = _context.ListoneCalciatori
                 .Where(c => c.AdminId == adminId && !idGiocatoriAcquistati.Contains(c.IdListone));
 
+            // Filtri
             if (!string.IsNullOrWhiteSpace(nome))
                 queryListone = queryListone.Where(c => EF.Functions.ILike(c.Nome, $"%{nome}%"));
+
             if (!string.IsNullOrWhiteSpace(squadra))
                 queryListone = queryListone.Where(c => EF.Functions.ILike(c.Squadra, $"%{squadra}%"));
+
             if (!string.IsNullOrWhiteSpace(iniziale))
                 queryListone = queryListone.Where(c => EF.Functions.ILike(c.Nome, $"{iniziale}%"));
 
@@ -280,8 +289,16 @@ namespace AstaLegheFC.Controllers
             // per-lega
             _bazzerService.ImpostaModalitaMantra(legaModel.Alias, mantraAttivo);
 
-            var listoneDisponibile = await queryListone.OrderBy(g => g.Nome).ToListAsync();
+            // ===== PAGINAZIONE =====
+            var totalCount = await queryListone.CountAsync();
 
+            var items = await queryListone
+                .OrderBy(g => g.Nome)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            // ===== ViewBag già usati dalla tua view =====
             ViewBag.Nome = nome;
             ViewBag.Squadra = squadra;
             ViewBag.Ruolo = ruolo;
@@ -293,6 +310,7 @@ namespace AstaLegheFC.Controllers
             ViewBag.AdminNick = User.Identity?.Name ?? "ADMIN";
             ViewBag.LegaAlias = legaModel.Alias;
 
+            // ===== Riepilogo squadre (immutato) =====
             var squadreDaDb = await _context.Squadre
                 .Include(s => s.Giocatori)
                 .Where(s => s.LegaId == legaModel.Id)
@@ -323,6 +341,7 @@ namespace AstaLegheFC.Controllers
             }
             ViewBag.RiepilogoSquadre = riepilogo;
 
+            // ===== Ruoli disponibili (immutato) =====
             if (mantraAttivo)
             {
                 var ruoliRaw = await _context.ListoneCalciatori
@@ -351,8 +370,18 @@ namespace AstaLegheFC.Controllers
                     .ToListAsync();
             }
 
-            return View("VisualizzaListone", listoneDisponibile);
+            // ===== ViewModel paginato =====
+            var vm = new ListoneViewModel
+            {
+                Items = items,
+                Page = page,
+                PageSize = pageSize,
+                TotalCount = totalCount
+            };
+
+            return View("VisualizzaListone", vm);
         }
+
 
         // ========= Avvia / Annulla =========
         [HttpPost]

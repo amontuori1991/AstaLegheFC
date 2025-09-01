@@ -1,5 +1,6 @@
 ﻿@using System.Text.Json
-@model List<AstaLegheFC.Models.CalciatoreListone>
+@model AstaLegheFC.Models.ViewModels.ListoneViewModel
+
 @{
     ViewData["Title"] = "Listone Calciatori";
     var riepilogo = ViewBag.RiepilogoSquadre as List<AstaLegheFC.Models.ViewModels.SquadraRiepilogoViewModel> ?? new List<AstaLegheFC.Models.ViewModels.SquadraRiepilogoViewModel>();
@@ -641,6 +642,8 @@
 }
 
 <form id="filtroForm" method="get" asp-action="VisualizzaListone" class="row g-2 mb-4">
+    <input type="hidden" name="page" id="pageInput" value="@Model.Page" />
+
     <input type="hidden" name="lega" value="@ViewBag.LegaAlias" />
     <input type="hidden" name="iniziale" id="inizialeInput" value="@(ViewBag.Iniziale ?? "")" />
     <input type="hidden" name="sorteggio" id="sorteggioInput" value="@(ViewBag.SorteggioLetteraAttivo ? "true" : "false")" />
@@ -648,7 +651,9 @@
     <div class="col-md-4"><input type="text" name="nome" id="nomeFilterInput" class="form-control" placeholder="Cerca per nome" value="@ViewBag.Nome" /></div>
     <div class="col-md-4"><input type="text" name="squadra" id="squadraFilterInput" class="form-control" placeholder="Cerca per squadra" value="@ViewBag.Squadra" /></div>
     <div class="col-md-4">
-        <select name="ruolo" class="form-select" onchange="this.form.submit()">
+        <select name="ruolo" class="form-select"
+                onchange="document.getElementById('pageInput').value = 1; this.form.submit()">
+
             <option value="">Tutti i ruoli</option>
             @foreach (var r in (List<string>)ViewBag.RuoliDisponibili)
             {
@@ -691,7 +696,8 @@
             <tr><th>Nome</th><th>Ruolo</th><th>Squadra</th><th>Azioni</th></tr>
         </thead>
         <tbody class="text-center">
-            @foreach (var c in Model)
+            @foreach (var c in Model.Items)
+
             {
                 <tr id="riga-giocatore-@c.Id">
                     <td class="text-start">@c.Nome</td>
@@ -717,6 +723,104 @@
         </tbody>
     </table>
 </div>
+
+@if (Model.TotalPages > 1)
+{
+    var legaAlias = (string)ViewBag.LegaAlias;
+    var nomeQ = (string)(ViewBag.Nome ?? "");
+    var squadraQ = (string)(ViewBag.Squadra ?? "");
+    var ruoloQ = (string)(ViewBag.Ruolo ?? "");
+    var inizialeQ = (string)(ViewBag.Iniziale ?? "");
+    var mantraQ = ((ViewBag.MantraAttivo as bool?) == true) ? "true" : "false";
+    var sorteggioQ = ((ViewBag.SorteggioLetteraAttivo as bool?) == true) ? "true" : "false";
+
+    var start = Math.Max(1, Model.Page - 2);
+    var end = Math.Min(Model.TotalPages, Model.Page + 2);
+
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 my-3">
+        <small class="text-muted">
+            Mostrati @((Model.TotalCount == 0) ? 0 : ((Model.Page - 1) * Model.PageSize + 1))
+            –
+            @Math.Min(Model.Page * Model.PageSize, Model.TotalCount)
+            di @Model.TotalCount
+        </small>
+
+        <nav aria-label="Paginazione listone">
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="VisualizzaListone"
+                       asp-route-lega="@legaAlias"
+                       asp-route-page="1"
+                       asp-route-nome="@nomeQ"
+                       asp-route-squadra="@squadraQ"
+                       asp-route-ruolo="@ruoloQ"
+                       asp-route-iniziale="@inizialeQ"
+                       asp-route-mantra="@mantraQ"
+                       asp-route-sorteggio="@sorteggioQ"
+                       aria-label="Prima">&laquo;</a>
+                </li>
+                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="VisualizzaListone"
+                       asp-route-lega="@legaAlias"
+                       asp-route-page="@(Model.Page - 1)"
+                       asp-route-nome="@nomeQ"
+                       asp-route-squadra="@squadraQ"
+                       asp-route-ruolo="@ruoloQ"
+                       asp-route-iniziale="@inizialeQ"
+                       asp-route-mantra="@mantraQ"
+                       asp-route-sorteggio="@sorteggioQ"
+                       aria-label="Precedente">Prec</a>
+                </li>
+
+                @for (var i = start; i <= end; i++)
+                {
+                    <li class="page-item @(i == Model.Page ? "active" : "")">
+                        <a class="page-link"
+                           asp-action="VisualizzaListone"
+                           asp-route-lega="@legaAlias"
+                           asp-route-page="@i"
+                           asp-route-nome="@nomeQ"
+                           asp-route-squadra="@squadraQ"
+                           asp-route-ruolo="@ruoloQ"
+                           asp-route-iniziale="@inizialeQ"
+                           asp-route-mantra="@mantraQ"
+                           asp-route-sorteggio="@sorteggioQ">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="VisualizzaListone"
+                       asp-route-lega="@legaAlias"
+                       asp-route-page="@(Model.Page + 1)"
+                       asp-route-nome="@nomeQ"
+                       asp-route-squadra="@squadraQ"
+                       asp-route-ruolo="@ruoloQ"
+                       asp-route-iniziale="@inizialeQ"
+                       asp-route-mantra="@mantraQ"
+                       asp-route-sorteggio="@sorteggioQ"
+                       aria-label="Successiva">Succ</a>
+                </li>
+                <li class="page-item @(Model.Page == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link"
+                       asp-action="VisualizzaListone"
+                       asp-route-lega="@legaAlias"
+                       asp-route-page="@Model.TotalPages"
+                       asp-route-nome="@nomeQ"
+                       asp-route-squadra="@squadraQ"
+                       asp-route-ruolo="@ruoloQ"
+                       asp-route-iniziale="@inizialeQ"
+                       asp-route-mantra="@mantraQ"
+                       asp-route-sorteggio="@sorteggioQ"
+                       aria-label="Ultima">&raquo;</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+}
+
 
 <!-- ===== Modale Assegna ===== -->
 <div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaLabel" aria-hidden="true">
@@ -1014,7 +1118,13 @@
           function getArchivedLetters(){ try{ return JSON.parse(localStorage.getItem(LS_LETTERS)||'[]'); }catch{ return []; } }
           function setArchivedLetters(arr){ localStorage.setItem(LS_LETTERS, JSON.stringify(arr)); renderLettersChips(); }
           function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
-          function submitFormDebounced(){ clearTimeout(debounceTimer); debounceTimer=setTimeout(()=>document.getElementById("filtroForm").submit(),500); }
+                  function submitFormDebounced(){
+          clearTimeout(debounceTimer);
+          const pageInput = document.getElementById('pageInput');
+          if (pageInput) pageInput.value = '1';   // <-- QUI la "nuova if"
+          debounceTimer = setTimeout(() => document.getElementById("filtroForm").submit(), 500);
+        }
+
           function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
           window.toggleLista=toggleLista;
 
@@ -1126,7 +1236,9 @@
             if (inizialeInput) inizialeInput.value=letter||'';
             if (nomeInput) nomeInput.value='';
             if (squadraInput) squadraInput.value='';
-            document.getElementById('filtroForm').submit();
+                  const pageInput = document.getElementById('pageInput');
+        if (pageInput) pageInput.value = '1';
+                  document.getElementById('filtroForm').submit();
           }
 
           function renderLettersChips(){
@@ -1609,13 +1721,13 @@
 
             document.getElementById('mantraSwitch')?.addEventListener('change', function(){
               const hidden=document.getElementById('mantraInput'); if(hidden) hidden.value=this.checked?'true':'false';
-              const url=new URL(window.location.href); url.searchParams.set('mantra',this.checked); window.location.href=url.toString();
+              const url=new URL(window.location.href); url.searchParams.set('mantra',this.checked); url.searchParams.set('page', '1'); window.location.href=url.toString();
             });
 
             document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
               const sorteggioInput=document.getElementById('sorteggioInput'); const isAttivo=this.checked;
               if (sorteggioInput) sorteggioInput.value=isAttivo?'true':'false';
-              const url=new URL(window.location.href); url.searchParams.set('sorteggio',isAttivo); if(!isAttivo) url.searchParams.delete('iniziale'); window.location.href=url.toString();
+              const url=new URL(window.location.href); url.searchParams.set('sorteggio',isAttivo); url.searchParams.set('page', '1'); if(!isAttivo) url.searchParams.delete('iniziale'); window.location.href=url.toString();
             });
 
             // Annulla asta (Hub con fallback HTTP)
