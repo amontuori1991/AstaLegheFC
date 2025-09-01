@@ -4,12 +4,26 @@
     var nomeLega = ViewBag.LegaNome as string;
     var legaId = ViewBag.LegaId != null ? (int)ViewBag.LegaId : 0;
 }
+@{
+    var baseUrl = (string)(ViewBag.BaseUrl ?? "");
+    var legaAlias = (string)(ViewBag.LegaAlias ?? "");
+    var allPairs = Model.Select(s => new
+    {
+        Nickname = s.Nickname ?? "",
+        Link = $"{baseUrl}/Utente?lega={legaAlias}&nick={Uri.EscapeDataString(s.Nickname ?? "")}"
+    }).ToList();
+    var allPairsJson = System.Text.Json.JsonSerializer.Serialize(allPairs);
+}
 
 <h2 class="mt-4">Squadre - @nomeLega</h2>
 
 <a class="btn btn-primary mb-3" asp-action="Crea" asp-route-legaId="@legaId">
     + Aggiungi Squadra
 </a>
+
+<button id="btnCopiaTutti" type="button" class="btn btn-outline-primary mb-3 ms-2">
+    Copia Tutti
+</button>
 
 @if (!Model.Any())
 {
@@ -95,5 +109,42 @@ else
                 // Se l'utente clicca "Annulla" o chiude, non succede nulla.
             });
         });
-    </script>
+            function copiaTestoNegliAppunti(testo) {
+            // Prova API moderna
+            return navigator.clipboard?.writeText(testo).catch(() => {
+                // Fallback compatibilità
+                const ta = document.createElement('textarea');
+                ta.value = testo;
+                ta.style.position = 'fixed';
+                ta.style.opacity = '0';
+                document.body.appendChild(ta);
+                ta.focus();
+                ta.select();
+                try { document.execCommand('copy'); } finally { document.body.removeChild(ta); }
+            });
+        }
+
+        function copiaTutti(btn) {
+            const pairs = (window._allSquadLinks || []);
+            if (!pairs.length) return;
+
+            const testo = pairs.map(p => `${p.Nickname} - ${p.Link}`).join('\r\n\r\n'); // doppio a capo
+
+
+            const original = btn.innerText;
+            copiaTestoNegliAppunti(testo).then(() => {
+                btn.innerText = 'Copiato!';
+                btn.disabled = true;
+                setTimeout(() => { btn.innerText = original; btn.disabled = false; }, 1500);
+            }).catch(() => {
+                alert('Impossibile copiare negli appunti.');
+            });
+        }
+
+        // Collega il bottone
+        document.getElementById('btnCopiaTutti')?.addEventListener('click', function () {
+            copiaTutti(this);
+        });
+                window._allSquadLinks = @Html.Raw(allPairsJson);
+                </script>
 }

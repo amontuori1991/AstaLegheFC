@@ -8,6 +8,7 @@
 }
 
 <style>
+    @@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
     /* ===== Timer overlay ===== */
     #overlay-timer {
         font-size: 3.5rem;
@@ -465,6 +466,26 @@
             .modal-hero .meta .sub {
                 opacity: .85;
             }
+    /* === Font più gradevole per il log eventi (#overlay-log) === */
+    /* === Font del log eventi (solo #overlay-log) === */
+    #asta-overlay #overlay-log,
+    #asta-overlay #overlay-log *,
+    #asta-overlay .log-stream,
+    #asta-overlay .log-stream * {
+        font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace !important;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: .2px;
+    }
+
+    #overlay-log .log-item {
+        font-size: .95rem;
+    }
+
+    #overlay-log .log-time {
+        font-size: .8rem;
+        opacity: .9;
+    }
+
 
 </style>
 
@@ -794,7 +815,14 @@
         <h1 id="overlay-timer" class="mb-2">--</h1>
         <h1 id="overlay-offerta">0</h1>
         <h3 id="overlay-offerente">In attesa di offerte...</h3>
-        <div id="overlay-log" class="log-stream" role="log" aria-live="polite"></div>
+        <div id="overlay-log"
+             class="log-stream"
+             role="log"
+             aria-live="polite"
+             style="--log-font:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,'Liberation Mono',monospace; font-family:var(--log-font); font-variant-numeric:tabular-nums; letter-spacing:.2px;">
+        </div>
+
+
         <div class="asta-box-footer">
             <button class="btn btn-danger" id="btnAnnullaAsta">Annulla Asta</button>
         </div>
@@ -919,7 +947,7 @@
           if (box) box.style.setProperty('--bg-url', url ? `url('${url}')` : 'none');
         }
         function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-
+        const LOG_FONT_STACK = `"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace`;
         const LOG_ICONS  = { start:'🚀', bid:'💰', paused:'⏸️', resumed:'▶️', win:'🏆', cancel:'🛑', info:'ℹ️' };
         const LOG_COLORS = { start:'#94a3b8', bid:'#0ea5e9', paused:'#f59e0b', resumed:'#14b8a6', win:'#22c55e', cancel:'#ef4444', info:'#94a3b8' };
 
@@ -928,17 +956,21 @@
           const t  = new Date().toLocaleTimeString();
           const ic = LOG_ICONS[type]  || LOG_ICONS.info;
           const col= LOG_COLORS[type] || LOG_COLORS.info;
+
           const html = `
-            <div class="log-item log-${type}" style="--accent:${col}">
-              <span class="log-ic">${ic}</span>
-              <span class="log-text">${escapeHtml(text)}</span>
-              <span class="log-time">${t}</span>
+            <div class="log-item log-${type}"
+                 style="--accent:${col}; font-family:${LOG_FONT_STACK}; font-variant-numeric:tabular-nums; letter-spacing:.2px;">
+              <span class="log-ic"   style="font-family:${LOG_FONT_STACK}">${ic}</span>
+              <span class="log-text" style="font-family:${LOG_FONT_STACK}">${escapeHtml(text)}</span>
+              <span class="log-time" style="font-family:${LOG_FONT_STACK}">${t}</span>
             </div>`;
+
           el.insertAdjacentHTML('afterbegin', html);
-          // limita a 100 voci
+
           const items = el.querySelectorAll('.log-item');
           if (items.length > 100) for (let i=100; i<items.length; i++) items[i].remove();
         }
+
 
 
                   // Chiude subito l’overlay admin e azzera i timer locali
@@ -1317,6 +1349,13 @@
 
           // ====== DOM READY ======
           document.addEventListener('DOMContentLoaded', function(){
+                      const _log = document.getElementById('overlay-log');
+        if (_log) {
+          _log.style.fontFamily = '"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace';
+          _log.style.fontVariantNumeric = 'tabular-nums';
+          _log.style.letterSpacing = '.2px';
+        }
+
               document.getElementById('asta-overlay')?.classList.remove('visible');
             // pulizia ?bp=
             try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
