@@ -1,0 +1,32 @@
+﻿@page
+@model AstaLegheFC.Areas.Identity.Pages.Account.Manage.TwoFactorAuthenticationModel
+@{
+    ViewData["Title"] = "Autenticazione a due fattori";
+}
+<h3>@ViewData["Title"]</h3>
+<partial name="_StatusMessage" for="StatusMessage" />
+
+<div class="card">
+    <div class="card-body">
+        <p class="mb-1">
+            <strong>Stato:</strong>
+            @(Model.Is2faEnabled ? "Attiva" : "Disattiva")
+        </p>
+        <p class="mb-1">
+            <strong>Authenticator configurato:</strong>
+            @(Model.HasAuthenticator ? "Sì" : "No")
+        </p>
+        <p class="mb-3"><strong>Codici di recupero rimasti:</strong> @Model.RecoveryCodesLeft</p>
+
+        @if (Model.Is2faEnabled)
+        {
+            <form method="post" asp-page-handler="Disable2fa" class="d-inline">
+                <button type="submit" class="btn btn-danger">Disattiva 2FA</button>
+            </form>
+        }
+        else
+        {
+            <div class="text-muted">Per attivare 2FA, aggiungi una pagina di configurazione (es. EnableAuthenticator) o usa il flusso standard di Identity.</div>
+        }
+    </div>
+</div>

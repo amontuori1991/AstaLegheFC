@@ -1,0 +1,101 @@
+﻿@{
+    // Usa il layout principale del sito
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Gestisci il tuo account";
+}
+
+<style>
+    /* --- Tema scuro per le pagine Manage --- */
+    .id-manage {
+        color: #e7edf3;
+    }
+
+        .id-manage .manage-hero {
+            border: 1px solid #334155;
+            border-radius: 16px;
+            background: radial-gradient(120% 120% at 0% 0%, #0b1320 0%, #0a1220 60%, #091120 100%);
+            box-shadow: 0 12px 34px rgba(0,0,0,.45);
+            padding: 22px 20px;
+            margin-bottom: 1rem;
+        }
+
+            .id-manage .manage-hero h1 {
+                margin: 0 0 .25rem 0;
+                font-weight: 800;
+            }
+
+            .id-manage .manage-hero p {
+                margin: 0;
+                opacity: .9;
+            }
+
+        .id-manage .manage-card {
+            border: 1px solid #334155;
+            border-radius: 16px;
+            background: linear-gradient(180deg,#0b1320,#0a1220);
+            box-shadow: 0 8px 24px rgba(0,0,0,.35);
+            padding: 16px;
+        }
+
+        /* Nav sinistra */
+        .id-manage .nav-pills .nav-link {
+            color: #cbd5e1;
+            border-radius: .75rem;
+        }
+
+            .id-manage .nav-pills .nav-link:hover {
+                background: rgba(255,255,255,.06);
+            }
+
+            .id-manage .nav-pills .nav-link.active {
+                background: #2563eb;
+                color: #fff;
+            }
+
+        /* Campi / label dentro le card */
+        .id-manage label {
+            color: #cbd5e1;
+        }
+
+        .id-manage input.form-control, .id-manage select.form-select {
+            background: #111827;
+            color: #e5e7eb;
+            border-color: #334155;
+        }
+
+            .id-manage input.form-control:focus, .id-manage select.form-select:focus {
+                border-color: #5dade2;
+                box-shadow: 0 0 0 .2rem rgba(93,173,226,.25);
+            }
+
+    /* Sfondo pagina solo qui */
+    body.bg-id-manage {
+        background: #0b1320;
+    }
+</style>
+
+<div class="id-manage">
+    <div class="manage-hero">
+        <h1>Gestisci il tuo account</h1>
+        <p>Modifica le impostazioni del tuo account</p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="manage-card">
+                <partial name="_ManageNav" />
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="manage-card">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <!-- Applica lo sfondo scuro solo in queste pagine -->
+    <script>document.body.classList.add('bg-id-manage');</script>
+    @RenderSection("Scripts", required: false)
+}
