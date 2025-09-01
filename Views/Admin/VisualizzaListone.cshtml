@@ -29,11 +29,14 @@
         color: #e74c3c
     }
 
+    /* Overlay: non deve prendere i click quando è nascosto */
     #asta-overlay {
         position: fixed;
+        display: none; /* Lascia solo questa linea */
+
         inset: 0;
         background: rgba(0,0,0,.9);
-        display: flex;
+        /* Rimuovi la linea "display: flex;" da qui */
         justify-content: center;
         align-items: center;
         z-index: 1050;
@@ -42,92 +45,88 @@
         font-family: 'Montserrat',sans-serif;
         opacity: 0;
         visibility: hidden;
-        transition: opacity .3s,visibility .3s
+        pointer-events: none;
+        transition: opacity .3s, visibility .3s;
     }
 
+        /* Questa regola è corretta e si applica solo quando l'asta è attiva */
         #asta-overlay.visible {
+            display: flex;
             opacity: 1;
-            visibility: visible
+            visibility: visible;
+            pointer-events: auto;
         }
 
-    .asta-box {
-        background: linear-gradient(145deg,#34495e,#2c3e50);
-        padding: 40px;
+    /* Box “beauty” + watermark */
+    .asta-box.overlay-beauty {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #34495e;
         border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0,0,0,.6);
-        border: 1px solid #3498db;
+        background: radial-gradient(120% 120% at 0% 0%, #1f2a39 0%, #1b2431 60%, #16202c 100%);
+        box-shadow: 0 22px 48px rgba(0,0,0,.5);
+        padding: 40px;
         min-width: 650px;
         transform: scale(.95);
-        transition: transform .3s
+        transition: transform .3s;
     }
 
     #asta-overlay.visible .asta-box {
-        transform: scale(1)
+        transform: scale(1);
     }
 
-    .asta-box-header {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 10px
+    /* Pseudo-elementi: solo background, niente eventi e sotto i contenuti */
+    .asta-box.overlay-beauty::before,
+    .asta-box.overlay-beauty::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none; 
+        z-index: 0;
     }
 
-    #overlay-logo-squadra {
-        height: 90px;
-        filter: drop-shadow(0 0 10px rgba(255,255,255,.2))
+    .asta-box.overlay-beauty::before {
+        background-image: var(--bg-url, none);
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 420px;
+        opacity: .12;
+        filter: saturate(115%) blur(1px);
+        transform: scale(1.04);
     }
 
-    #overlay-nome-giocatore {
-        font-size: 3.5rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        margin: 0;
-        text-shadow: 0 0 15px rgba(0,0,0,.5);
-        color: #fff
+    .asta-box.overlay-beauty::after {
+        background: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.35));
     }
 
-    #overlay-dettagli-giocatore {
-        font-size: 1.5rem;
-        color: #95a5a6;
-        margin-top: 0
-    }
-
-    #overlay-offerta {
-        font-size: 7rem;
-        font-weight: 700;
-        margin: 20px 0;
-        line-height: 1;
-        text-shadow: 0 0 20px rgba(241,196,15,.5);
-        color: #f1c40f !important
-    }
-
-    #overlay-offerente {
-        font-size: 2.2rem;
-        font-weight: 300;
-        color: #fff
-    }
-
+    /* Metti i contenuti interattivi sopra ai layer di sfondo */
+    .asta-box-header,
+    #overlay-timer,
+    #overlay-offerta,
+    #overlay-offerente,
+    .asta-box-footer,
     #overlay-log {
-        margin-top: 20px;
-        max-height: 150px;
-        overflow-y: auto;
-        text-align: left;
-        font-family: monospace;
-        background: rgba(0,0,0,.3);
-        border-radius: 5px;
-        padding: 10px
+        position: relative;
+        z-index: 1;
     }
 
-        #overlay-log p {
-            margin: 2px 0;
-            border-bottom: 1px solid #34495e;
-            padding-bottom: 2px
-        }
+    
+    @@keyframes log-in {
+        from
 
-    .asta-box-footer {
-        margin-top: 30px
+    {
+        opacity: 0;
+        transform: translateY(2px);
     }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+
+    }
+
+
 
     /* Presence */
     .status-dot {
@@ -784,7 +783,7 @@
 
 <!-- ===== Overlay Asta ===== -->
 <div id="asta-overlay">
-    <div class="asta-box">
+    <div class="asta-box overlay-beauty">
         <div class="asta-box-header">
             <img id="overlay-logo-squadra" src="" alt="Logo Squadra" />
             <div>
@@ -795,7 +794,7 @@
         <h1 id="overlay-timer" class="mb-2">--</h1>
         <h1 id="overlay-offerta">0</h1>
         <h3 id="overlay-offerente">In attesa di offerte...</h3>
-        <div id="overlay-log"></div>
+        <div id="overlay-log" class="log-stream" role="log" aria-live="polite"></div>
         <div class="asta-box-footer">
             <button class="btn btn-danger" id="btnAnnullaAsta">Annulla Asta</button>
         </div>
@@ -909,10 +908,38 @@
           // ===== VAR =====
 
           let debounceTimer;
-          let durataTimer = @ViewBag.DurataTimer;
+          let durataTimer = parseInt('@(ViewBag.DurataTimer ?? "0")', 10) || 0;
           let countdownTimerAdmin = null;
           let closeTimeoutAdmin   = null;
           let lastOffertaAdmin = 0;
+
+                  // ===== Overlay helpers (watermark + log) =====
+        function setOverlayBg(url){
+          const box = document.querySelector('#asta-overlay .asta-box');
+          if (box) box.style.setProperty('--bg-url', url ? `url('${url}')` : 'none');
+        }
+        function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+        const LOG_ICONS  = { start:'🚀', bid:'💰', paused:'⏸️', resumed:'▶️', win:'🏆', cancel:'🛑', info:'ℹ️' };
+        const LOG_COLORS = { start:'#94a3b8', bid:'#0ea5e9', paused:'#f59e0b', resumed:'#14b8a6', win:'#22c55e', cancel:'#ef4444', info:'#94a3b8' };
+
+        function appendLog(type, text){
+          const el = document.getElementById('overlay-log'); if (!el) return;
+          const t  = new Date().toLocaleTimeString();
+          const ic = LOG_ICONS[type]  || LOG_ICONS.info;
+          const col= LOG_COLORS[type] || LOG_COLORS.info;
+          const html = `
+            <div class="log-item log-${type}" style="--accent:${col}">
+              <span class="log-ic">${ic}</span>
+              <span class="log-text">${escapeHtml(text)}</span>
+              <span class="log-time">${t}</span>
+            </div>`;
+          el.insertAdjacentHTML('afterbegin', html);
+          // limita a 100 voci
+          const items = el.querySelectorAll('.log-item');
+          if (items.length > 100) for (let i=100; i<items.length; i++) items[i].remove();
+        }
+
 
                   // Chiude subito l’overlay admin e azzera i timer locali
         function closeAdminOverlayImmediate() {
@@ -1148,7 +1175,9 @@
             document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
             document.getElementById('overlay-offerta').innerText='0';
             const offEl=document.getElementById('overlay-offerente'); offEl.innerText='In attesa di offerte...'; offEl.style.color='';
-            document.getElementById('overlay-log').innerHTML='';
+            const logEl = document.getElementById('overlay-log'); if (logEl) logEl.innerHTML='';
+            setOverlayBg(giocatore.logoUrl || appLogoUrl);
+            appendLog('start', `Asta avviata per ${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`);
             const timerEl=document.getElementById('overlay-timer');
             timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
             document.querySelector('.asta-box-footer').style.display='block';
@@ -1182,7 +1211,7 @@
             const isRealBid=(offerta > (lastOffertaAdmin||0));
             if(isRealBid){
               try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch{}
-              const log=document.getElementById('overlay-log'); if(log){ const p=document.createElement('p'); p.innerText=`${offerente} offre ${offerta}`; log.prepend(p); }
+              appendLog('bid', `${offerente} offre ${offerta}`);
             }
             lastOffertaAdmin=offerta;
 
@@ -1229,7 +1258,7 @@
             try{ const v=document.getElementById('suono-vittoria'); v.currentTime=0; v.play().catch(()=>{}); }catch{}
             const offEl=document.getElementById('overlay-offerente'); offEl.innerText=`AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color='#2ecc71';
             document.getElementById('overlay-offerta').innerText=prezzo||0;
-            const log=document.getElementById('overlay-log'); if(log){ const ts=new Date().toLocaleTimeString(); const row=document.createElement('p'); row.innerText=`[${ts}] ${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`; log.prepend(row); }
+            appendLog('win', `${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`);
             document.querySelector('.asta-box-footer').style.display='none';
             setTimeout(()=>{ document.getElementById('asta-overlay').classList.remove('visible'); setTimeout(()=>location.reload(), 600); }, 1600);
           });
@@ -1238,6 +1267,7 @@
             clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
             clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
             document.getElementById('asta-overlay').classList.remove('visible');
+            appendLog('cancel', 'Asta annullata dall’amministratore.');
             // niente reset della durata globale qui
           });
 
@@ -1255,6 +1285,7 @@
             const t=document.getElementById('overlay-timer'); if(t){ t.textContent='PAUSA'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
             const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta in pausa…'; offEl.style.color='#f1c40f'; }
             paintDurata();
+            appendLog('paused', 'Asta in pausa');
           });
 
           connection.on("AstaRipresa",()=>{
@@ -1271,6 +1302,7 @@
 
             const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta ripresa'; offEl.style.color=''; }
             paintDurata();
+            appendLog('resumed', 'Asta ripresa');
 
             try{ connection.invoke("RichiediStatoAttuale"); }catch{}
           });
@@ -1285,12 +1317,14 @@
 
           // ====== DOM READY ======
           document.addEventListener('DOMContentLoaded', function(){
+              document.getElementById('asta-overlay')?.classList.remove('visible');
             // pulizia ?bp=
             try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
 
             // squadre per modale Assegna
-            let squadreArr=[];
-            try { squadreArr = JSON.parse('@Html.Raw(squadreJson)') || []; } catch { squadreArr=[]; }
+        let squadreArr = [];
+        try { squadreArr = @Html.Raw(squadreJson) || []; } catch (e) { squadreArr = []; }
+
 
             const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 

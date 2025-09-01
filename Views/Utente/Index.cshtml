@@ -77,7 +77,7 @@
         gap: .5rem;
     }
 
-    /* === Toast Suggerimento – compatto, chiuso sulla barra === */
+    /* === Toast Suggerimento – layout “hero” === */
     .toast-sug {
         position: fixed !important;
         top: 50% !important;
@@ -85,10 +85,11 @@
         transform: translate(-50%, -50%) scale(.98) !important;
         z-index: 3001;
         width: min(92%, 420px);
-        /* niente flex -> altezza = contenuto */
-        display: block;
-        /* il box termina sulla progress bar */
-        padding: 12px 14px 3px; /* 3px = altezza barra */
+        /* Grid: riga 1 = contenuto, riga 2 = progress bar (3px) */
+        display: grid;
+        grid-template-rows: auto 3px;
+        gap: 10px;
+        padding: 14px 16px;
         border-radius: 16px;
         border: 1px solid #334155;
         background: linear-gradient(180deg,#0b1320,#0a1220);
@@ -119,49 +120,50 @@
             padding: 0;
         }
 
-    .ts-row {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 6px;
-    }
-
-    .ts-title {
+    /* Blocco centrale con logo + testi */
+    .ts-hero {
         display: flex;
         flex-direction: column;
-        line-height: 1.15;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
     }
 
-        .ts-title strong {
-            font-size: 1.05rem;
-        }
+    #toast-logo {
+        width: 64px;
+        height: 64px;
+        object-fit: contain;
+        flex-shrink: 0;
+        filter: drop-shadow(0 2px 6px rgba(0,0,0,.35));
+    }
 
-    .ts-sub {
-        font-size: .9rem;
+    .ts-player-name {
+        font-weight: 800;
+        font-size: 1.25rem;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        line-height: 1.1;
+    }
+
+    .ts-player-sub {
+        font-size: .95rem;
         color: #aab3bd;
-    }
-
-    #toast-ruoloBadge {
-        margin-left: auto;
+        line-height: 1.1;
     }
 
     .ts-ok {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
-        font-weight: 600;
+        font-weight: 700;
         color: #2ecc71;
         margin-top: 2px;
     }
 
-    /* progress bar incollata al fondo del box */
+    /* La progress bar è la seconda riga della grid: niente absolute */
     .ts-progress {
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: 0;
         height: 3px;
-        margin: 0;
         background: transparent;
         border-radius: 0;
     }
@@ -174,7 +176,6 @@
             opacity: .9;
             animation: ts-progress 2200ms linear forwards;
         }
-
     @@keyframes ts-progress {
         from
 
@@ -184,6 +185,21 @@
 
     to {
         width: 0%
+    }
+
+    }
+
+    /* Mobile: logo un filo più piccolo */
+    @@media (max-width:576px) {
+        #toast-logo
+
+    {
+        width: 56px;
+        height: 56px;
+    }
+
+    .ts-player-name {
+        font-size: 1.15rem;
     }
 
     }
@@ -1049,20 +1065,19 @@
 <div id="toast-suggerimento" class="toast-sug" role="status" aria-live="polite" aria-atomic="true">
     <button type="button" class="toast-close" aria-label="Chiudi">&times;</button>
 
-    <div class="ts-row">
-        <img id="toast-logo" alt="Logo squadra" style="width:22px;height:22px;object-fit:contain;flex-shrink:0" />
-        <div class="ts-title">
-            <strong id="toast-nome">-</strong>
-            <div id="toast-dettagli" class="ts-sub">-</div>
+    <div class="ts-hero">
+        <img id="toast-logo" alt="Logo squadra" />
+        <div class="ts-player">
+            <div id="toast-nome" class="ts-player-name">-</div>
+            <div id="toast-dettagli" class="ts-player-sub">-</div>
         </div>
-        <span id="toast-ruoloBadge" class="role-badge">-</span>
     </div>
 
     <div class="ts-ok">✅ <span>Suggerimento inviato all’admin</span></div>
-    
-    <div class="ts-progress"><span id="toast-progress"></span></div>
 
+    <div class="ts-progress"><span id="toast-progress"></span></div>
 </div>
+
 
 
 
@@ -1148,6 +1163,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
     <script>
         const appLogoUrl = '@appLogoUrl'; // disponibile ovunque
+        let lastPlayerLogoUrl = null;
+
 
         // Modale messaggi – stessa API dell’admin
         window.mostraMessaggio = function (titolo, corpo, conferma = false) {
@@ -1482,9 +1499,9 @@
               .catch(err => console.error("Errore nell'invio del suggerimento:", err));
           }
 
-         
 
-               function mostraToastSuggerimento(giocatore, durataMs = 2200) {
+
+         function mostraToastSuggerimento(giocatore, durataMs = 2200) {
           const el   = document.getElementById('toast-suggerimento');
           const logo = document.getElementById('toast-logo');
           const nome = document.getElementById('toast-nome');
@@ -1496,173 +1513,211 @@
           const teamSlug = (giocatore.squadra || '').toLowerCase().replace(/\s+/g, '-');
           const logoUrl  = `https://content.fantacalcio.it/web/img/team/${teamSlug}.png`;
 
-          if (logo) {
+          if (logo){
             logo.src = logoUrl;
             logo.style.display = 'block';
             logo.onerror = () => { logo.style.display = 'none'; };
           }
-          if (nome) nome.textContent = giocatore.nome || '';
+          if (nome) nome.textContent = (giocatore.nome || '').toUpperCase();
           if (dett) dett.textContent = `${giocatore.ruolo || ''} - ${giocatore.squadra || ''}`;
 
           // Mostra
           el.classList.add('show');
 
           // Riavvio animazione barra + durata dinamica
-          if (bar) {
+          if (bar){
             bar.style.animation = 'none';
-            void bar.offsetWidth; // forza reflow per riavviare l’animazione
+            void bar.offsetWidth;
             bar.style.animation = `ts-progress ${durataMs}ms linear forwards`;
           }
 
-          // Auto-close sincronizzato alla barra
+          // Auto close
           clearTimeout(el._tClose);
           el._tClose = setTimeout(() => el.classList.remove('show'), durataMs);
 
           // Chiudi con la X
-          if (closeBtn) {
-            closeBtn.onclick = () => {
-              clearTimeout(el._tClose);
-              el.classList.remove('show');
-            };
+          if (closeBtn){
+            closeBtn.onclick = () => { clearTimeout(el._tClose); el.classList.remove('show'); };
           }
         }
 
 
 
 
-          // ===== SignalR Handlers =====
-          connection.on("MostraGiocatoreInAsta", (giocatore) => {
-            const logoImg = document.getElementById("logo-giocatore-in-asta");
+         // ===== SignalR Handlers =====
+        let lastPlayerLogoUrl = null; // logo del giocatore correntemente in asta (o null)
 
-            idListoneAttuale = giocatore.id;
-            ruoloGiocatoreAttuale = giocatore.ruolo;
+        connection.on("MostraGiocatoreInAsta", (giocatore) => {
+          const logoImg = document.getElementById("logo-giocatore-in-asta");
 
-            document.getElementById("giocatore").textContent =
-              `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
+          idListoneAttuale = giocatore.id;
+          ruoloGiocatoreAttuale = giocatore.ruolo;
 
-            if (giocatore.logoUrl){ logoImg.src = giocatore.logoUrl; logoImg.style.display = 'block'; }
-            else { logoImg.style.display = 'none'; }
+          document.getElementById("giocatore").textContent =
+            `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
 
-            document.getElementById("offerente").textContent = "NESSUNO";
-            document.getElementById("offerta").textContent = "0";
-            offertaAttuale = 0;
-            fineUtcCorrente = null;
-            lastFineUtcStr = null;
-            finalizeGuard = false;
+          if (giocatore.logoUrl) {
+            logoImg.src = giocatore.logoUrl;
+            logoImg.style.display = "block";
+          } else {
+            logoImg.style.display = "none";
+          }
 
-            // Watermark: preferisci logoUrl inviato dall’admin, fallback allo scudetto costruito, poi logo app
-            const wm = giocatore.logoUrl || getTeamLogo(giocatore.squadraReale) || appLogoUrl;
-            setOffertaBg(wm);
-            setPausaBg(wm);
+          document.getElementById("offerente").textContent = "NESSUNO";
+          document.getElementById("offerta").textContent = "0";
+          offertaAttuale = 0;
+          fineUtcCorrente = null;
+          lastFineUtcStr = null;
+          finalizeGuard = false;
 
-            aggiornaStatoPulsantiBazzer();
-            aggiornaCountdownDaFineUtc();
-          });
+          // Watermark: memorizzo il logo del giocatore (con fallback) per l'offerta;
+          // per la PAUSA uso SEMPRE il logo dell'app.
+          lastPlayerLogoUrl =
+            giocatore.logoUrl || getTeamLogo(giocatore.squadraReale) || appLogoUrl;
 
-          connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
-            document.getElementById("offerente").textContent = offerente || "-";
-            document.getElementById("offerta").textContent = offerta || 0;
-            offertaAttuale = offerta || 0;
+          setOffertaBg(lastPlayerLogoUrl);
+          setPausaBg(appLogoUrl); // la pausa deve mostrare solo il logo app
 
-            if (fineUtc && fineUtc !== lastFineUtcStr){
-              lastFineUtcStr = fineUtc;
-              fineUtcCorrente = fineUtc;
-              if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
-            }
-          });
+          aggiornaStatoPulsantiBazzer();
+          aggiornaCountdownDaFineUtc();
+        });
 
-          connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
-            if (typeof mostraMessaggio === 'function'){
-              mostraMessaggio('Asta Conclusa!', `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
-            }else{
-              alert(`Asta Conclusa! Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
-            }
+        connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
+          document.getElementById("offerente").textContent = offerente || "-";
+          document.getElementById("offerta").textContent = offerta || 0;
+          offertaAttuale = offerta || 0;
 
-            idListoneAttuale = 0; ruoloGiocatoreAttuale = "";
-            document.getElementById("giocatore").textContent = "Nessun giocatore";
-            document.getElementById("logo-giocatore-in-asta").style.display = 'none';
-            setOffertaBg(appLogoUrl);
-            document.getElementById("offerente").textContent = "-";
-            document.getElementById("offerta").textContent = "0";
-            fineUtcCorrente = null; lastFineUtcStr = null; finalizeGuard = false;
-            stopCountdown(); document.getElementById("timer").textContent = "-";
-            pausaAttivaClient = false; document.getElementById('pausa-overlay').classList.remove('visible');
+          if (fineUtc && fineUtc !== lastFineUtcStr) {
+            lastFineUtcStr = fineUtc;
+            fineUtcCorrente = fineUtc;
+            if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+          }
+        });
 
-            aggiornaStatoPulsantiBazzer();
-            aggiornaCrediti(); caricaListone();
-          });
+        connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
+          if (typeof mostraMessaggio === "function") {
+            mostraMessaggio(
+              "Asta Conclusa!",
+              `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`
+            );
+          } else {
+            alert(`Asta Conclusa! Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
+          }
 
-          connection.on("AstaAnnullata", () => {
-            if (typeof mostraMessaggio === 'function'){
-              mostraMessaggio("Asta Annullata", "L'amministratore ha annullato l'asta corrente.");
-            }else{ alert("Asta Annullata"); }
+          idListoneAttuale = 0;
+          ruoloGiocatoreAttuale = "";
+          document.getElementById("giocatore").textContent = "Nessun giocatore";
+          document.getElementById("logo-giocatore-in-asta").style.display = "none";
 
-            idListoneAttuale = 0; ruoloGiocatoreAttuale = "";
+          // Reset watermark e memoria del logo
+          lastPlayerLogoUrl = null;
+          setOffertaBg(appLogoUrl);
+          setPausaBg(appLogoUrl);
 
-            const nomeEl = document.getElementById("giocatore");
-            const logoEl = document.getElementById("logo-giocatore-in-asta");
-            const offerenteEl = document.getElementById("offerente");
-            const offertaEl = document.getElementById("offerta");
-            const timerEl = document.getElementById("timer");
+          document.getElementById("offerente").textContent = "-";
+          document.getElementById("offerta").textContent = "0";
+          fineUtcCorrente = null;
+          lastFineUtcStr = null;
+          finalizeGuard = false;
 
-            if (nomeEl) nomeEl.textContent = "Nessun giocatore";
-            if (logoEl) logoEl.style.display = 'none';
-            if (offerenteEl) offerenteEl.textContent = "-";
-            if (offertaEl) offertaEl.textContent = "0";
+          stopCountdown();
+          document.getElementById("timer").textContent = "-";
+          pausaAttivaClient = false;
+          document.getElementById("pausa-overlay").classList.remove("visible");
 
-            fineUtcCorrente = null; lastFineUtcStr = null; finalizeGuard = false;
-            stopCountdown(); if (timerEl) timerEl.textContent = "-";
+          aggiornaStatoPulsantiBazzer();
+          aggiornaCrediti();
+          caricaListone();
+        });
 
-            pausaAttivaClient = false;
-            const pausaEl = document.getElementById('pausa-overlay');
-            if (pausaEl) pausaEl.classList.remove('visible');
+        connection.on("AstaAnnullata", () => {
+          if (typeof mostraMessaggio === "function") {
+            mostraMessaggio("Asta Annullata", "L'amministratore ha annullato l'asta corrente.");
+          } else {
+            alert("Asta Annullata");
+          }
 
-            setOffertaBg(appLogoUrl);
-            setPausaBg(appLogoUrl);
+          idListoneAttuale = 0;
+          ruoloGiocatoreAttuale = "";
 
-            aggiornaStatoPulsantiBazzer();
-          });
+          const nomeEl = document.getElementById("giocatore");
+          const logoEl = document.getElementById("logo-giocatore-in-asta");
+          const offerenteEl = document.getElementById("offerente");
+          const offertaEl = document.getElementById("offerta");
+          const timerEl = document.getElementById("timer");
 
-          // ► Pausa
-          connection.on("AstaPausa", (payload) => {
-            pausaAttivaClient = true; pauseLockUntil = 0;
+          if (nomeEl) nomeEl.textContent = "Nessun giocatore";
+          if (logoEl) logoEl.style.display = "none";
+          if (offerenteEl) offerenteEl.textContent = "-";
+          if (offertaEl) offertaEl.textContent = "0";
 
-            const rem = (typeof payload?.remainingSec === 'number')
+          fineUtcCorrente = null;
+          lastFineUtcStr = null;
+          finalizeGuard = false;
+          stopCountdown();
+          if (timerEl) timerEl.textContent = "-";
+
+          pausaAttivaClient = false;
+          const pausaEl = document.getElementById("pausa-overlay");
+          if (pausaEl) pausaEl.classList.remove("visible");
+
+          // Reset watermark e memoria del logo
+          lastPlayerLogoUrl = null;
+          setOffertaBg(appLogoUrl);
+          setPausaBg(appLogoUrl);
+
+          aggiornaStatoPulsantiBazzer();
+        });
+
+        // ► Pausa
+        connection.on("AstaPausa", (payload) => {
+          pausaAttivaClient = true;
+          pauseLockUntil = 0;
+
+          const rem =
+            typeof payload?.remainingSec === "number"
               ? payload.remainingSec
-              : (document.getElementById('timer').textContent || '--');
+              : document.getElementById("timer").textContent || "--";
 
-            const remEl = document.getElementById('pausa-remaining');
-            if (remEl) remEl.textContent = rem;
+          const remEl = document.getElementById("pausa-remaining");
+          if (remEl) remEl.textContent = rem;
 
-            const tEl = document.getElementById('timer');
-            if (tEl) tEl.textContent = rem;
+          const tEl = document.getElementById("timer");
+          if (tEl) tEl.textContent = rem;
 
-            const logoCorrente = (document.getElementById('logo-giocatore-in-asta')?.src || '').trim();
-            const wm = logoCorrente || appLogoUrl;
-            setPausaBg(wm);
-            setOffertaBg(wm);
+          // SOLO PAUSA: usa esclusivamente il logo dell'app
+          setPausaBg(appLogoUrl);
 
-            setPauseUI(true);
-            startResumePolling();
-          });
+          // Non tocchiamo l'offerta: resta col logo giocatore (se asta attiva), altrimenti è già appLogo
+          if (!idListoneAttuale) setOffertaBg(appLogoUrl);
 
-          // ► Ripresa
-          connection.on("AstaRipresa", (arg) => {
-            pausaAttivaClient = false;
-            pauseLockUntil = Date.now() + 5000;
-            stopResumePolling();
-            setPauseUI(false);
+          setPauseUI(true);
+          startResumePolling();
+        });
 
-            const fineUtc = (typeof arg === 'string') ? arg : (arg && arg.fineUtc);
-            if (fineUtc){
-              lastFineUtcStr  = fineUtc;
-              fineUtcCorrente = fineUtc;
-              aggiornaCountdownDaFineUtc();
-            }else{
-              try { connection.invoke("RichiediStatoAttuale"); } catch {}
-            }
-            aggiornaStatoPulsantiBazzer();
-          });
+        // ► Ripresa
+        connection.on("AstaRipresa", (arg) => {
+          pausaAttivaClient = false;
+          pauseLockUntil = Date.now() + 5000;
+          stopResumePolling();
+          setPauseUI(false);
+
+          // Ripristina lo sfondo dell'offerta al logo del giocatore (se presente), altrimenti app
+          setOffertaBg(lastPlayerLogoUrl || appLogoUrl);
+
+          const fineUtc = typeof arg === "string" ? arg : arg && arg.fineUtc;
+          if (fineUtc) {
+            lastFineUtcStr = fineUtc;
+            fineUtcCorrente = fineUtc;
+            aggiornaCountdownDaFineUtc();
+          } else {
+            try {
+              connection.invoke("RichiediStatoAttuale");
+            } catch {}
+          }
+          aggiornaStatoPulsantiBazzer();
+        });
+
 
           // ► Sync stato
           connection.on("StatoAsta", (stato) => {
