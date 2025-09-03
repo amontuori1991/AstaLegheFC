@@ -2381,16 +2381,57 @@
           }
         });
 
-            document.getElementById('mantraSwitch')?.addEventListener('change', function(){
-              const hidden=document.getElementById('mantraInput'); if(hidden) hidden.value=this.checked?'true':'false';
-              const url=new URL(window.location.href); url.searchParams.set('mantra',this.checked); url.searchParams.set('page', '1'); window.location.href=url.toString();
-            });
+        document.getElementById('mantraSwitch')?.addEventListener('change', async function () {
+          const isOn = this.checked;
 
-            document.getElementById('sorteggioSwitch')?.addEventListener('change', function(){
-              const sorteggioInput=document.getElementById('sorteggioInput'); const isAttivo=this.checked;
-              if (sorteggioInput) sorteggioInput.value=isAttivo?'true':'false';
-              const url=new URL(window.location.href); url.searchParams.set('sorteggio',isAttivo); url.searchParams.set('page', '1'); if(!isAttivo) url.searchParams.delete('iniziale'); window.location.href=url.toString();
-            });
+          // mantieni il valore nell’hidden (coerente con la tua view)
+          const hidden = document.getElementById('mantraInput');
+          if (hidden) hidden.value = isOn ? 'true' : 'false';
+
+          // prepara l’URL con i nuovi parametri
+          const url = new URL(window.location.href);
+          url.searchParams.set('mantra', isOn);
+          url.searchParams.set('page', '1'); // reset paginazione
+
+          // messaggio per l’admin prima del reload
+          const titolo = 'Modalità Mantra';
+          const msg = isOn ? 'Modalità Mantra ATTIVATA' : 'Modalità Mantra DISATTIVATA';
+          if (typeof mostraMessaggio === 'function') {
+            await mostraMessaggio(titolo, msg);
+          } else {
+            alert(msg);
+          }
+
+          // ricarica con i nuovi parametri
+          window.location.href = url.toString();
+        });
+
+
+        document.getElementById('sorteggioSwitch')?.addEventListener('change', async function () {
+          const isOn = this.checked;
+
+          // mantieni il valore nell’hidden (coerente con la tua view)
+          const sorteggioInput = document.getElementById('sorteggioInput');
+          if (sorteggioInput) sorteggioInput.value = isOn ? 'true' : 'false';
+
+          // prepara l’URL con i nuovi parametri
+          const url = new URL(window.location.href);
+          url.searchParams.set('sorteggio', isOn);
+          url.searchParams.set('page', '1'); // reset paginazione
+          if (!isOn) url.searchParams.delete('iniziale'); // se disattivi, rimuovi la lettera selezionata
+
+          // messaggio per l’admin prima del reload
+          const titolo = 'Sorteggio lettere';
+          const msg = isOn ? 'Sorteggio lettere ATTIVATO' : 'Sorteggio lettere DISATTIVATO';
+          if (typeof mostraMessaggio === 'function') {
+            await mostraMessaggio(titolo, msg);
+          } else {
+            alert(msg);
+          }
+
+          // ricarica con i nuovi parametri
+          window.location.href = url.toString();
+        });
 
             // Annulla asta (Hub con fallback HTTP)
                    // Annulla asta (SignalR con fallback HTTP) — chiusura ottimistica
