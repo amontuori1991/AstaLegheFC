@@ -17,6 +17,9 @@ namespace AstaLegheFC.Services
             public bool BloccoPortieriAttivo = false;
             public bool MantraAttivo = false;
 
+            // === NEW: modalità buzzer ===
+            public bool BuzzerModeAttivo = false;
+
             public DateTime? AstaStartUtc;
             public bool PausaAttiva = false;
             public DateTime? PausaStartUtc;
@@ -44,6 +47,10 @@ namespace AstaLegheFC.Services
 
         public void ImpostaModalitaMantra(string lega, bool attivo) => S(lega).MantraAttivo = attivo;
         public bool IsMantraAttivo(string lega) => S(lega).MantraAttivo;
+
+        // === NEW: modalità BUZZER (on/off) ===
+        public void ImpostaBuzzerMode(string lega, bool attivo) => S(lega).BuzzerModeAttivo = attivo;
+        public bool IsBuzzerModeAttivo(string lega) => S(lega).BuzzerModeAttivo;
 
         // ===== Avvio/Annullamento =====
         public void ImpostaGiocatoreInAsta(string lega, CalciatoreListone giocatore, bool mantraAttivo)
@@ -163,15 +170,38 @@ namespace AstaLegheFC.Services
 
         // ===== Metodi classici per-lega =====
         public CalciatoreListone? GetGiocatoreInAsta(string lega) => S(lega).GiocatoreInAsta;
+
         public (string offerente, int offerta) GetOffertaAttuale(string lega)
         {
             var s = S(lega);
             return (s.OfferenteAttuale, s.OffertaAttuale);
         }
 
+        // === NEW: registrazione del "buzz" (nessuna offerta memorizzata) ===
+        public void RegistraBuzz(string lega, string? offerente, DateTime nowUtc)
+        {
+            var s = S(lega);
+
+            // Normalizza l’offerente (evita null/whitespace)
+            s.OfferenteAttuale = string.IsNullOrWhiteSpace(offerente) ? "-" : offerente.Trim();
+
+            // In buzzer non tocchiamo l’importo; aggiorniamo solo la scadenza se non in pausa
+            if (!s.PausaAttiva)
+                ReimpostaFineAstaDaOra(lega, s.DurataTimer, nowUtc);
+        }
+
+
         public void AggiornaOfferta(string lega, string offerente, int offerta)
         {
             var s = S(lega);
+
+            // In modalità buzzer ignoriamo l'importo e comportiamoci come un "buzz"
+            if (s.BuzzerModeAttivo)
+            {
+                RegistraBuzz(lega, offerente, DateTime.UtcNow);
+                return;
+            }
+
             s.OfferenteAttuale = offerente;
             s.OffertaAttuale = offerta;
 

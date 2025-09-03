@@ -100,6 +100,26 @@ namespace AstaLegheFC.Hubs
             await Clients.Group(AdminGroup(legaLower)).SendAsync("StatoPartecipanti", new { partecipanti = snapshot });
         }
 
+        public async Task Buzz(string lega, string offerente)
+        {
+            var alias = (lega ?? "").Trim().ToLowerInvariant();
+            _bazzerService.RegistraBuzz(alias, offerente, DateTime.UtcNow);
+
+            var fineUtc = _bazzerService.GetFineOffertaUtc(alias)?.ToUniversalTime().ToString("o");
+
+            // Evento dedicato alla modalità buzzer (per chi l’ha implementato)
+            await Clients.Group(alias).SendAsync("Buzz", offerente, fineUtc);
+
+            // NEW: fallback per le UI che si aspettano AggiornaOfferta
+            if (_bazzerService.IsBuzzerModeAttivo(alias))
+            {
+                // offerta = 0; serve solo a propagare fineUtc e far partire i timer esistenti
+                await Clients.Group(alias).SendAsync("AggiornaOfferta", offerente, 0, fineUtc);
+            }
+        }
+
+
+
         public async Task RegistratiAllaLega(string legaAlias, string nickname, bool isAdmin)
         {
             var legaLower = NormalizeLega(legaAlias);
@@ -173,6 +193,9 @@ namespace AstaLegheFC.Hubs
             if (!TryGetCallerLega(out var legaLower) || string.IsNullOrEmpty(legaLower)) return;
             if (_bazzerService.PausaAttiva(legaLower)) return;
 
+            // ⬇️ NEW: in modalità buzzer si ignorano le offerte con importo
+            if (_bazzerService.IsBuzzerModeAttivo(legaLower)) return;
+
             var (_, attOfferta) = _bazzerService.GetOffertaAttuale(legaLower);
             if (baseOfferta.HasValue && baseOfferta.Value != attOfferta) return;
             if (offerta <= attOfferta) return;
@@ -182,6 +205,7 @@ namespace AstaLegheFC.Hubs
             var fineUtc = _bazzerService.GetFineOffertaUtc(legaLower)?.ToUniversalTime().ToString("o");
             await Clients.Group(legaLower).SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
         }
+
 
         public async Task TerminaAsta(string legaAlias)
         {
@@ -202,6 +226,49 @@ namespace AstaLegheFC.Hubs
 
                 var giocatoreInAsta = _bazzerService.GetGiocatoreInAsta(legaLower);
                 var (offerente, offerta) = _bazzerService.GetOffertaAttuale(legaLower);
+                // === RAMO MODALITÀ BUZZER ===
+                if (_bazzerService.IsBuzzerModeAttivo(legaLower))
+                {
+                    if (giocatoreInAsta == null)
+                    {
+                        _bazzerService.AnnullaAstaCorrente(legaLower);
+                        return;
+                    }
+
+                    // In Buzzer l'offerta numerica non conta: ci interessa SOLO l'offerente (ultimo buzz).
+                    // Può anche essere "-" (nessuno ha buzzato in tempo).
+                    int? squadraId = null;
+                    if (!string.IsNullOrWhiteSpace(offerente) && offerente != "-")
+                    {
+                        var squadraBuzzer = await _context.Squadre
+                            .Include(s => s.Lega)
+                            .FirstOrDefaultAsync(s => s.Nickname == offerente && s.Lega.Alias.ToLower() == legaLower);
+                        squadraId = squadraBuzzer?.Id;
+                    }
+
+
+                    // 1) Notifica i partecipanti che l'asta è terminata (nessun prezzo)
+                    await Clients.Group(legaLower).SendAsync(
+                        "AstaTerminata",
+                        giocatoreInAsta.Id,
+                        giocatoreInAsta.Nome,
+                        string.IsNullOrWhiteSpace(offerente) ? "-" : offerente,
+                        0 // prezzo 0: il front-end in Buzzer non mostrerà l'importo
+                    );
+
+                    // 2) Chiedi all'admin di inserire importo e confermare l'assegnazione
+                    await Clients.Group(AdminGroup(legaLower)).SendAsync("BuzzerRichiediImporto", new
+                    {
+                        giocatoreId = giocatoreInAsta.Id,   // Id del record di ListoneCalciatori
+                        nomeGiocatore = giocatoreInAsta.Nome,
+                        offerente = string.IsNullOrWhiteSpace(offerente) ? "-" : offerente,
+                        squadraId = squadraId   // può essere null se il nick non corrisponde
+                    });
+
+                    _bazzerService.AnnullaAstaCorrente(legaLower);
+                    return;
+                }
+
                 if (giocatoreInAsta == null || offerente == "-" || offerta <= 0) return;
 
                 var squadraVincitrice = await _context.Squadre
@@ -298,12 +365,16 @@ namespace AstaLegheFC.Hubs
             await Clients.Caller.SendAsync("AggiornaOfferta", offerente, offerta, fineUtc);
 
             var st = _bazzerService.GetStato(legaLower);
+            var buzzerAttivo = _bazzerService.IsBuzzerModeAttivo(legaLower);
+            var mantraAttivo = _bazzerService.IsMantraAttivo(legaLower);
             await Clients.Caller.SendAsync("StatoAsta", new
             {
                 startUtc = st.astaStartUtc?.ToUniversalTime().ToString("o"),
                 pausaAccumulataSec = (int)st.pausaAccumulata.TotalSeconds,
                 pausaAttiva = st.pausaAttiva,
-                fineUtc = st.fineOffertaUtc?.ToUniversalTime().ToString("o")
+                fineUtc = st.fineOffertaUtc?.ToUniversalTime().ToString("o"),
+                mantraAttivo,
+                buzzerAttivo 
             });
 
             if (_bazzerService.PausaAttiva(legaLower))
@@ -340,6 +411,22 @@ namespace AstaLegheFC.Hubs
             await Clients.Group(legaLower).SendAsync("AstaRipresa", new { fineUtc, partecipanti });
             await Clients.Group(AdminGroup(legaLower)).SendAsync("MostraMessaggio", "▶️ Asta ripresa", "È di nuovo possibile fare offerte.");
             await BroadcastStatoPartecipantiAsync(legaLower);
+        }
+
+        public async Task AnnullaAsta(string legaAlias = "")
+        {
+            // Determina la lega: usa il parametro se c’è, altrimenti quella del caller
+            var legaLower = string.IsNullOrWhiteSpace(legaAlias)
+                ? (TryGetCallerLega(out var l) ? l : "")
+                : NormalizeLega(legaAlias);
+
+            if (string.IsNullOrEmpty(legaLower)) return;
+
+            // Stop logica corrente lato server
+            _bazzerService.AnnullaAstaCorrente(legaLower);
+
+            // Notifica tutti i client della lega
+            await Clients.Group(legaLower).SendAsync("AstaAnnullata");
         }
 
         public async Task ResetDurataAsta(string legaAlias)

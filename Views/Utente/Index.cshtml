@@ -984,6 +984,71 @@
         pointer-events: none;
         z-index: 0;
     }
+
+    /* === BUZZER BUTTON === */
+    .btn-buzzer {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: 0;
+        outline: 0;
+        background: radial-gradient(circle at 30% 30%, #ef4444, #b91c1c);
+        box-shadow: 0 14px 28px rgba(0,0,0,.35), inset 0 -8px 18px rgba(0,0,0,.3);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 900;
+        letter-spacing: .5px;
+        text-transform: uppercase;
+        transition: transform .06s ease, filter .12s ease;
+    }
+
+        .btn-buzzer:active {
+            transform: translateY(2px);
+        }
+
+    .buzzer-ring {
+        position: absolute;
+        inset: 14px;
+        border-radius: 50%;
+        background: rgba(255,255,255,.08);
+        box-shadow: inset 0 6px 18px rgba(0,0,0,.35);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .buzzer-logo {
+        width: 150px; /* scegli il valore che vuoi: 80/90/100… */
+        height: 150px;
+        object-fit: contain;
+        filter: drop-shadow(0 6px 14px rgba(0,0,0,.45));
+    }
+
+
+    .buzzer-text {
+        position: absolute;
+        bottom: 16px;
+        font-size: 1.1rem;
+        text-shadow: 0 2px 8px rgba(0,0,0,.5);
+    }
+    /* Evidenziazione offerente in modalità Buzzer */
+    .offerente-buzzer {
+        font-size: clamp(2rem, 8vw, 3rem) !important;
+        font-weight: 900 !important;
+        color: #2ecc71 !important;
+        text-transform: uppercase;
+        text-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+
+    #label-offerente-buzzer {
+        text-transform: uppercase;
+        font-weight: 800;
+        opacity: .85;
+    }
+
 </style>
 
 <div class="row mt-md-4">
@@ -1015,6 +1080,7 @@
                         <h5 class="card-title text-muted mb-1">Offerta Attuale</h5>
                         <p id="offerta" class="display-1 fw-bold text-warning mb-0">@Model.OffertaAttuale</p>
                         <small id="label-da" class="text-muted">da</small>
+                        <h6 id="label-offerente-buzzer" class="text-muted mb-1" style="display:none; letter-spacing:.3px;">ATTUALE OFFERENTE</h6>
                         <h3 id="offerente" class="text-info mb-0">@Model.OfferenteAttuale</h3>
                     </div>
                 </div>
@@ -1034,21 +1100,36 @@
                 <span class="text-muted small">Rilanci rapidi</span>
             </div>
             <div class="card-body">
-                <div id="avviso-ruolo-completo" class="alert alert-danger" style="display:none;"></div>
+                <!-- UI CLASSICA (offerte) -->
+                <div id="bidUi">
+                    <div id="avviso-ruolo-completo" class="alert alert-danger" style="display:none;"></div>
 
-                <div class="pulsanti-offerta-container d-flex flex-wrap gap-2">
-                    @foreach (var incremento in new[] { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50 })
-                    {
-                        <button class="bazzer btn btn-outline-primary flex-grow-1" data-incremento="@incremento" disabled>+@incremento</button>
-                    }
+                    <div class="pulsanti-offerta-container d-flex flex-wrap gap-2">
+                        @foreach (var incremento in new[] { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50 })
+                        {
+                            <button class="bazzer btn btn-outline-primary flex-grow-1" data-incremento="@incremento" disabled>+@incremento</button>
+                        }
+                    </div>
+                    <hr />
+                    <div class="input-group mt-3">
+                        <span class="input-group-text" id="basic-addon1">Off. Pers.</span>
+                        <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Valore" aria-label="Offerta personalizzata" min="1" disabled>
+                        <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
+                    </div>
                 </div>
-                <hr />
-                <div class="input-group mt-3">
-                    <span class="input-group-text" id="basic-addon1">Off. Pers.</span>
-                    <input type="number" id="offertaPersonalizzataInput" class="form-control" placeholder="Valore" aria-label="Offerta personalizzata" min="1" disabled>
-                    <button id="btnOffertaPersonalizzata" class="btn btn-success" disabled>Offri</button>
+
+                <!-- UI BUZZER (mostrata solo in modalità buzzer) -->
+                <div id="buzzerClientArea" class="d-none text-center my-3">
+                    <button id="btnClientBuzzer" type="button" class="btn btn-lg btn-buzzer">
+                        <span class="buzzer-ring">
+                            <img src="@appLogoUrl" alt="Logo" class="buzzer-logo" />
+                        </span>
+                        <span class="buzzer-text">BUZZ!</span>
+                    </button>
+                    <div class="small text-muted mt-2">Premi per prenotare la parola</div>
                 </div>
             </div>
+
         </div>
 
         <div class="card shadow">
@@ -1158,6 +1239,7 @@
         </div>
     </div>
 </div>
+<audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/6.0.0/signalr.min.js"></script>
@@ -1268,6 +1350,27 @@
             .withUrl("/bazzerHub")
             .withAutomaticReconnect({ nextRetryDelayInMilliseconds: (ctx) => ctx.previousRetryCount < MAX_AUTO_ATTEMPTS ? 1000 : null })
             .build();
+                    // === CLICK BUZZER (utente) ===
+        document.getElementById('btnClientBuzzer')?.addEventListener('click', async ()=>{
+          if (pausaAttivaClient){
+            if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi buzzare durante la pausa.");
+            return;
+          }
+
+          // SUONO MONETE (feedback immediato lato utente)
+          try {
+            const s = document.getElementById('suono-offerta');
+            s.currentTime = 0;
+            await s.play();
+          } catch {}
+
+          try {
+            await connection.invoke('Buzz', legaAlias, nickname);
+          } catch (e) {
+            console.error(e);
+          }
+        });
+
 
           // ===== Utils =====
           function setPauseUI(isPaused){
@@ -1287,6 +1390,45 @@
             document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata")
               .forEach(el => el.disabled = !enabled);
           }
+
+                  // === BUZZER UI ======================================================
+        let buzzerModeOn = false;
+
+        function setBuzzerUI(on){
+          buzzerModeOn = !!on;
+
+          const titleOff = document.querySelector('.offerta-content .card-title'); // "Offerta Attuale"
+          const offVal   = document.getElementById('offerta');                     // valore numerico
+          const labelDa  = document.getElementById('label-da');                    // "da"
+          const buzLbl   = document.getElementById('label-offerente-buzzer');      // "ATTUALE OFFERENTE"
+          const offName  = document.getElementById('offerente');                   // nome offerente
+
+          if (buzzerModeOn){
+            if (titleOff) titleOff.style.display = 'none';
+            if (offVal)   offVal.style.display   = 'none';
+            if (labelDa)  labelDa.style.display  = 'none';
+            if (buzLbl)   buzLbl.style.display   = '';
+            if (offName)  offName.classList.add('offerente-buzzer');
+          } else {
+            if (titleOff) titleOff.style.display = '';
+            if (offVal)   offVal.style.display   = '';
+            if (labelDa)  labelDa.style.display  = '';
+            if (buzLbl)   buzLbl.style.display   = 'none';
+            if (offName)  offName.classList.remove('offerente-buzzer');
+          }
+        }
+        // ===================================================================
+
+        let buzzerAttivoClient = false;
+        function showBuzzerUI(on){
+          buzzerAttivoClient = !!on;
+          const bidUi  = document.getElementById('bidUi');
+          const buzzer = document.getElementById('buzzerClientArea');
+          if (buzzer) buzzer.classList.toggle('d-none', !on);
+          if (bidUi)  bidUi.classList.toggle('d-none',  on);
+          // in modalità buzzer, disabilito in ogni caso i controlli offerta classici
+          setBidControlsEnabled(!on);
+        }
 
           function aggiornaStatoPulsantiBazzer(){
             const hubState = connection.state;
@@ -1577,15 +1719,44 @@
 
           setOffertaBg(lastPlayerLogoUrl);
           setPausaBg(appLogoUrl); // la pausa deve mostrare solo il logo app
-
+          setBuzzerUI(buzzerModeOn);
           aggiornaStatoPulsantiBazzer();
           aggiornaCountdownDaFineUtc();
+        });
+                // Modalità buzzer ON/OFF (arrivano sia da AdminController che da Hub)
+        connection.on('BuzzerModeChanged', payload => {
+          const on = !!(payload && (payload.attivo === true));
+          showBuzzerUI(on);
+        });
+        connection.on('BuzzerModeAggiornato', payload => {
+          const on = !!(payload && (payload.buzzerAttivo === true));
+          showBuzzerUI(on);
+        });
+
+        // Quando qualcuno preme BUZZ (server manda offerente + fineUtc)
+        connection.on('Buzz', (offerente, fineUtc) => {
+          document.getElementById("offerente").textContent = offerente || "-";
+          document.getElementById("offerta").textContent = "0"; // in buzzer non c'è importo
+          if (fineUtc && fineUtc !== lastFineUtcStr) {
+            lastFineUtcStr = fineUtc;
+            fineUtcCorrente = fineUtc;
+            if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+          }
         });
 
         connection.on("AggiornaOfferta", (offerente, offerta, fineUtc) => {
           document.getElementById("offerente").textContent = offerente || "-";
-          document.getElementById("offerta").textContent = offerta || 0;
-          offertaAttuale = offerta || 0;
+
+          if (!buzzerModeOn) {
+            // modalità classica: aggiorno il numero
+            document.getElementById("offerta").textContent = offerta || 0;
+            offertaAttuale = offerta || 0;
+          } else {
+            // modalità Buzzer: non mostro un numero, metto un trattino lungo
+            const el = document.getElementById("offerta");
+            if (el) el.textContent = '—';
+            // e NON tocco offertaAttuale (irrilevante qui)
+          }
 
           if (fineUtc && fineUtc !== lastFineUtcStr) {
             lastFineUtcStr = fineUtc;
@@ -1594,14 +1765,17 @@
           }
         });
 
+
         connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
+          const titolo = "Asta Conclusa!";
+          const corpo  = (typeof buzzerModeOn !== 'undefined' && buzzerModeOn)
+            ? `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente}`
+            : `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`;
+
           if (typeof mostraMessaggio === "function") {
-            mostraMessaggio(
-              "Asta Conclusa!",
-              `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`
-            );
+            mostraMessaggio(titolo, corpo);
           } else {
-            alert(`Asta Conclusa! Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`);
+            alert(`${titolo}\n${corpo}`);
           }
 
           idListoneAttuale = 0;
@@ -1720,24 +1894,32 @@
 
 
           // ► Sync stato
-          connection.on("StatoAsta", (stato) => {
-            if (Date.now() < pauseLockUntil && stato?.pausaAttiva === true) return;
+                 connection.on("StatoAsta", (stato) => {
+          const buzzerOn = !!stato?.buzzerAttivo;
 
-            if (stato?.pausaAttiva){
-              pausaAttivaClient = true;
-              setPauseUI(true);
-              startResumePolling();
-            }else{
-              pausaAttivaClient = false;
-              stopResumePolling();
-              setPauseUI(false);
-              if (stato?.fineUtc){
-                lastFineUtcStr  = stato.fineUtc;
-                fineUtcCorrente = stato.fineUtc;
-                aggiornaCountdownDaFineUtc();
-              }
+          // 1) Aggiorna testi/etichette (nascondi "Offerta Attuale", mostra "ATTUALE OFFERENTE", ecc.)
+          setBuzzerUI(buzzerOn);
+
+          // 2) Sincronizza i pannelli (BUZZER vs pulsanti offerta)
+          showBuzzerUI(buzzerOn);
+
+          if (Date.now() < pauseLockUntil && stato?.pausaAttiva === true) return;
+
+          if (stato?.pausaAttiva) {
+            pausaAttivaClient = true;
+            setPauseUI(true);
+            startResumePolling();
+          } else {
+            pausaAttivaClient = false;
+            stopResumePolling();
+            setPauseUI(false);
+            if (stato?.fineUtc) {
+              lastFineUtcStr  = stato.fineUtc;
+              fineUtcCorrente = stato.fineUtc;
+              aggiornaCountdownDaFineUtc();
             }
-          });
+          }
+        });
 
           // === Riepilogo & crediti live ===
           connection.on("RiepilogoAggiornato", (data) => {
@@ -1754,6 +1936,10 @@
 
           connection.on("AggiornaUtente", ()=>{ aggiornaCrediti(); caricaListone(); });
           connection.on("AggiornaDurataTimer", (nuoviSecondi)=>{ timerSecondi = nuoviSecondi; });
+                  // Ricevi i broadcast dell'admin quando cambia lo switch
+        connection.on("BuzzerModeChanged",   (p) => setBuzzerUI(!!p?.attivo));
+        connection.on("BuzzerModeAggiornato",(p) => setBuzzerUI(!!p?.buzzerAttivo));
+
           connection.on("AggiornaRegoleLega", (regole) => {
             maxPortieri = regole.maxPortieri;
             maxDifensori = regole.maxDifensori;

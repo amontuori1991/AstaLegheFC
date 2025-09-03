@@ -775,6 +775,13 @@
             <label class="form-check-label" for="sorteggioSwitch">Sorteggio lettera</label>
         </div>
     </div>
+    <div class="col-auto">
+        <div class="form-check form-switch fs-5">
+            <input class="form-check-input" type="checkbox" role="switch" id="buzzerSwitch" @(ViewBag.BuzzerAttivo ? "checked" : "")>
+            <label class="form-check-label" for="buzzerSwitch">Modalità Buzzer</label>
+        </div>
+    </div>
+
 </div>
 
 <div class="table-responsive">
@@ -1156,6 +1163,100 @@
         </div>
     </div>
 </div>
+<!-- ===== Modale Concludi Asta (Buzzer) ===== -->
+<div class="modal fade" id="buzzerModal" tabindex="-1" aria-labelledby="buzzerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-buzzer"></div>
+
+            <div class="modal-header">
+                <h5 class="modal-title d-flex align-items-center gap-2" id="buzzerModalLabel">
+                    <span>Concludi asta (Buzzer)</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="buzzerGiocatoreId" />
+                <div class="modal-hero mb-2">
+                    <img id="buzzerLogo" alt="">
+                    <div class="meta">
+                        <div id="buzzerNomeGiocatore" class="tit">—</div>
+                        <div class="sub small text-muted">
+                            Offerente: <strong id="buzzerOfferente">-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-7">
+                        <label for="buzzerSquadraSelect" class="form-label">Assegna a</label>
+                        <select id="buzzerSquadraSelect" class="form-select"></select>
+                    </div>
+                    <div class="col-5">
+                        <label for="buzzerCostoInput" class="form-label">Costo</label>
+                        <input id="buzzerCostoInput" type="number" class="form-control" min="0" step="1" value="1">
+                    </div>
+                </div>
+
+                <div class="form-text mt-2">
+                    Inserisci il costo concordato a voce e conferma l’assegnazione.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-glass" data-bs-dismiss="modal">Annulla</button>
+                <button id="btnConfermaBuzzer" type="button" class="btn btn-primary btn-success-glow">Conferma</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Modale Buzzer: conferma importo e squadra ===== -->
+<div class="modal fade" id="buzzerModal" tabindex="-1" aria-labelledby="buzzerLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-buzzer"></div>
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="buzzerLabel">Conferma aggiudicazione (Buzzer)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="buzzerGiocatoreId" />
+
+                <div class="modal-hero mb-2">
+                    <img id="buzzerLogo" alt="">
+                    <div class="meta">
+                        <div class="tit" id="buzzerNomeGiocatore">—</div>
+                        <div class="sub small text-muted">Offerente: <span id="buzzerOfferente">—</span></div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-7">
+                        <label for="buzzerSquadraSelect" class="form-label">Assegna a</label>
+                        <select id="buzzerSquadraSelect" class="form-select"></select>
+                    </div>
+                    <div class="col-5">
+                        <label for="buzzerCostoInput" class="form-label">Costo</label>
+                        <input id="buzzerCostoInput" type="number" class="form-control" min="0" step="1" value="1">
+                    </div>
+                </div>
+
+                <div class="form-text mt-2">
+                    Imposta l'importo concordato e conferma l'assegnazione.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-glass" data-bs-dismiss="modal">Annulla</button>
+                <button type="button" id="btnConfermaBuzzer" class="btn btn-primary btn-success-glow">Conferma</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
@@ -1176,6 +1277,18 @@
           let countdownTimerAdmin = null;
           let closeTimeoutAdmin   = null;
           let lastOffertaAdmin = 0;
+                  // === Buzzer UI helpers ===
+        let isBuzzer = false;
+        function updateBuzzerUI(on) {
+          isBuzzer = !!on;
+          const offertaEl   = document.getElementById('overlay-offerta');
+          const offerenteEl = document.getElementById('overlay-offerente');
+          if (offertaEl) offertaEl.style.display = on ? 'none' : '';
+          if (offerenteEl && on) {
+            offerenteEl.innerText = 'In attesa del BUZZ...';
+            offerenteEl.style.color = '';
+          }
+        }
 
                   // ===== Overlay helpers (watermark + log) =====
         function setOverlayBg(url){
@@ -1234,6 +1347,26 @@
                   const legaAliasAdmin = "@ViewBag.LegaAlias";
         const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
         const appLogoUrl = '@appLogoUrl';   // <-- AGGIUNGI QUI (globale)
+
+                // === BUZZER MODE state + UI helper ===
+        let buzzerModeOn = false;
+
+        function updateBuzzerUI(isOn){
+          buzzerModeOn = !!isOn;
+
+          // Nel pannello overlay: in modalità Buzzer l'importo non è usato
+          const offertaEl = document.getElementById('overlay-offerta');
+          if (offertaEl && buzzerModeOn) offertaEl.textContent = '—';
+
+          const offerenteEl = document.getElementById('overlay-offerente');
+          if (offerenteEl) {
+            const txt = (offerenteEl.textContent || '').trim();
+            if (buzzerModeOn && (txt === '' || /In attesa di offerte/i.test(txt))) {
+              offerenteEl.textContent = 'In attesa di BUZZ...';
+            }
+          }
+        }
+
 
 
           const LS_START        = `asta:start:${legaAliasAdmin}`;
@@ -1428,6 +1561,10 @@
               document.getElementById('btn-pausa').disabled = false;
               document.getElementById('btn-riprendi').disabled = true;
             }
+                    if (typeof stato?.buzzerAttivo === 'boolean') {
+          updateBuzzerUI(stato.buzzerAttivo);
+        }
+        updateBuzzerUI(!!stato?.buzzerAttivo);
 
             startDurataLoop();
           });
@@ -1454,6 +1591,16 @@
             const logEl = document.getElementById('overlay-log'); if (logEl) logEl.innerHTML='';
             setOverlayBg(giocatore.logoUrl || appLogoUrl);
             appendLog('start', `Asta avviata per ${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`);
+                    // Se Buzzer è attivo, nascondi l'importo e mostra testo coerente
+        if (isBuzzer) {
+          const offertaEl = document.getElementById('overlay-offerta');
+          if (offertaEl) offertaEl.style.display = 'none';
+          if (offEl) { offEl.innerText = 'In attesa del BUZZ...'; offEl.style.color = ''; }
+        } else {
+          const offertaEl = document.getElementById('overlay-offerta');
+          if (offertaEl) offertaEl.style.display = '';
+        }
+
             const timerEl=document.getElementById('overlay-timer');
             timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
             document.querySelector('.asta-box-footer').style.display='block';
@@ -1478,16 +1625,26 @@
 
             const timerEl=document.getElementById('overlay-timer');
 
-            if(!fineUtc || !offerta || offerta<=0){
-              timerEl.innerText='--';
-              timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-              lastOffertaAdmin=offerta||0; return;
-            }
+        // In Buzzer l'offerta può essere 0: NON uscire se c'è fineUtc
+        if (!fineUtc) {
+          timerEl.innerText = '--';
+          timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+          lastOffertaAdmin = offerta || 0;
+          return;
+        }
+
+        // Se siamo in Buzzer e l'offerta è 0, mostra un trattino ma fai partire il timer
+        if (!offerta || offerta <= 0) {
+          const valEl = document.getElementById('overlay-offerta');
+          if (valEl) valEl.textContent = '—';
+        }
+
 
             const isRealBid=(offerta > (lastOffertaAdmin||0));
             if(isRealBid){
               try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch{}
               appendLog('bid', `${offerente} offre ${offerta}`);
+
             }
             lastOffertaAdmin=offerta;
 
@@ -1528,16 +1685,234 @@
             }
           });
 
+                  connection.on("Buzz", (offerente, fineUtc) => {
+          // offerta numerica non usata in Buzzer
+          const offEl = document.getElementById('overlay-offerente');
+          if (offEl) offEl.innerText = offerente || '-';
+
+                  try {
+          const s = document.getElementById('suono-offerta');
+          s.currentTime = 0;
+          s.play().catch(()=>{});
+        } catch {}
+
+
+          const valEl = document.getElementById('overlay-offerta');
+          if (valEl) valEl.innerText = '—';
+
+          // azzera timer locali
+          clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
+          clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin = null;
+
+          const timerEl = document.getElementById('overlay-timer');
+
+          if (!fineUtc) {
+            if (timerEl) {
+              timerEl.innerText = '--';
+              timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+            }
+            return;
+          }
+
+          // log carino
+          appendLog('bid', `BUZZ da ${offerente}`);
+
+          const end = new Date(fineUtc);
+          const paint = (sec) => {
+            if (!timerEl) return;
+            timerEl.innerText = sec;
+            timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+            if (sec > 5) timerEl.classList.add('timer-green');
+            else if (sec >= 4) timerEl.classList.add('timer-yellow');
+            else timerEl.classList.add('timer-red');
+          };
+
+          let prevSec = -1;
+          const tick = () => {
+            const msLeft = end.getTime() - Date.now();
+            const sec = Math.max(0, Math.ceil(msLeft / 1000));
+
+            if (sec !== prevSec) {
+              paint(sec);
+              if (sec > 0 && prevSec !== -1) {
+                try { const beep = document.getElementById('suono-countdown'); beep.currentTime = 0; beep.play().catch(()=>{}); } catch {}
+              }
+              prevSec = sec;
+              if (sec === 0) { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; return; }
+            }
+            const nextDelay = Math.max(20, msLeft - (sec - 1) * 1000 + 2);
+            countdownTimerAdmin = setTimeout(tick, nextDelay);
+          };
+          tick();
+
+          const msRemaining = end.getTime() - Date.now();
+          if (msRemaining > 0) {
+            closeTimeoutAdmin = setTimeout(() => {
+              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+            }, msRemaining + 2);
+          } else {
+            connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+          }
+        });
+
+          
+          // === BUZZ: solo offerente + timer, nessun importo ===
+        connection.on("Buzz", (offerente, fineUtc) => {
+          const offEl = document.getElementById('overlay-offerente');
+          if (offEl) { offEl.innerText = offerente || '-'; offEl.style.color = ''; }
+
+          clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
+          clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin = null;
+
+          const timerEl = document.getElementById('overlay-timer');
+          if (!fineUtc) {
+            if (timerEl) { timerEl.innerText = '--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); }
+            return;
+          }
+
+          const end = new Date(fineUtc);
+          let prevSec = -1;
+
+          const paint = (sec) => {
+            if (!timerEl) return;
+            timerEl.innerText = sec;
+            timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+            if (sec > 5) timerEl.classList.add('timer-green');
+            else if (sec >= 4) timerEl.classList.add('timer-yellow');
+            else timerEl.classList.add('timer-red');
+          };
+
+          const tick = () => {
+            const msLeft = end.getTime() - Date.now();
+            const sec = Math.max(0, Math.ceil(msLeft/1000));
+            if (sec !== prevSec) {
+              paint(sec);
+              if (sec === 0) { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; return; }
+              prevSec = sec;
+            }
+            const nextDelay = Math.max(20, msLeft - (sec-1)*1000 + 2);
+            countdownTimerAdmin = setTimeout(tick, nextDelay);
+          };
+          tick();
+
+          const msRemaining = end.getTime() - Date.now();
+          if (msRemaining > 0) {
+            closeTimeoutAdmin = setTimeout(() => {
+              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+            }, msRemaining + 2);
+          } else {
+            connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+          }
+        });
+
+        // === BuzzerRichiediImporto: ri-usa la modale Assegna ===
+        connection.on("BuzzerRichiediImporto", (p) => {
+          try {
+            const id = p?.giocatoreId;
+            const nome = p?.nomeGiocatore || '';
+            const ruolo = p?.ruolo || '';
+            const squadraReale = p?.squadraReale || '';
+            const logo = p?.logoUrl || appLogoUrl;
+            const preSelSquadraId = p?.squadraId || null;
+
+            document.getElementById('idGiocatoreModale').value = id;
+            document.getElementById('nomeGiocatoreModale').innerText = nome;
+            document.getElementById('dettagliGiocatoreAssegna').innerText =
+              (ruolo && squadraReale) ? `Ruolo: ${ruolo} - Squadra: ${squadraReale}` : '';
+            document.getElementById('logoGiocatoreAssegna').src = logo;
+            const bgA = document.getElementById('bg-assegna');
+            if (bgA) bgA.style.backgroundImage = logo ? `url('${logo}')` : 'none';
+
+            const sel = document.getElementById('squadraSelectAssegna');
+            sel.innerHTML = '';
+            (squadreArr || []).forEach(s => {
+              const o = document.createElement('option');
+              o.value = s.SquadraId;
+              o.innerText = s.Nickname;
+              sel.appendChild(o);
+            });
+            if (preSelSquadraId) sel.value = String(preSelSquadraId);
+
+            const costo = document.getElementById('costoAssegnaInput');
+            if (costo) costo.value = '0';
+
+            document.getElementById('asta-overlay')?.classList.remove('visible');
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('assegnaModal')).show();
+          } catch { /* no-op */ }
+        });
+
           connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
-            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
-            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
-            try{ const v=document.getElementById('suono-vittoria'); v.currentTime=0; v.play().catch(()=>{}); }catch{}
-            const offEl=document.getElementById('overlay-offerente'); offEl.innerText=`AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color='#2ecc71';
-            document.getElementById('overlay-offerta').innerText=prezzo||0;
-            appendLog('win', `${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`);
-            document.querySelector('.asta-box-footer').style.display='none';
-            setTimeout(()=>{ document.getElementById('asta-overlay').classList.remove('visible'); setTimeout(()=>location.reload(), 600); }, 1600);
+                    clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
+        clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin  = null;
+
+        try { const v = document.getElementById('suono-vittoria'); v.currentTime = 0; v.play().catch(()=>{}); } catch {}
+
+        const offEl = document.getElementById('overlay-offerente');
+        const offVal = document.getElementById('overlay-offerta');
+
+        if (buzzerModeOn) {
+          // In Buzzer il prezzo numerico non è definitivo; niente reload, aprirà la modale dedicata.
+          if (offEl) { offEl.innerText = `${vincitore} ha buzzato per primo. Inserire importo nella modale.`; offEl.style.color = '#2ecc71'; }
+          if (offVal) offVal.innerText = '—';
+          appendLog('win', `${nomeGiocatore} → ${vincitore} (Buzzer: in attesa importo)`);
+
+          // nascondi footer Annulla, chiudi overlay dopo un attimo, ma NON ricaricare
+          const footer = document.querySelector('.asta-box-footer');
+          if (footer) footer.style.display = 'none';
+          setTimeout(() => { document.getElementById('asta-overlay')?.classList.remove('visible'); }, 800);
+          return; // <-- fondamentale per evitare il reload automatico
+        }
+
+        // Modalità classica (non Buzzer): messaggio standard + reload
+        if (offEl) { offEl.innerText = `AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color = '#2ecc71'; }
+        if (offVal) offVal.innerText = prezzo || 0;
+        appendLog('win', `${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`);
+        document.querySelector('.asta-box-footer').style.display='none';
+        setTimeout(() => {
+          document.getElementById('asta-overlay')?.classList.remove('visible');
+          setTimeout(() => location.reload(), 600);
+        }, 1600);
+
           });
+                  connection.on("BuzzerRichiediImporto", (payload) => {
+          // payload: { giocatoreId, nomeGiocatore, offerente, squadraId? }
+          const id       = payload?.giocatoreId || 0;
+          const nome     = payload?.nomeGiocatore || '—';
+          const offer    = payload?.offerente || '-';
+          const squadraIdPreferita = payload?.squadraId || null;
+
+          // campi modale
+          document.getElementById('buzzerGiocatoreId').value = String(id);
+          document.getElementById('buzzerNomeGiocatore').textContent = nome;
+          document.getElementById('buzzerOfferente').textContent = offer;
+          document.getElementById('buzzerCostoInput').value = '1';
+
+          // watermark/logo
+          const bg = document.getElementById('bg-buzzer');
+          if (bg) bg.style.backgroundImage = `url('${appLogoUrl}')`;
+          const logo = document.getElementById('buzzerLogo');
+          if (logo) logo.src = appLogoUrl;
+
+          // popola select squadre
+          const sel = document.getElementById('buzzerSquadraSelect');
+          sel.innerHTML = '';
+          (window.squadreArr || []).forEach(s => {
+            const o = document.createElement('option');
+            o.value = s.SquadraId;
+            o.textContent = s.Nickname;
+            sel.appendChild(o);
+          });
+
+          // preseleziona: prima per id, altrimenti per nickname offerente
+          if (squadraIdPreferita) {
+            sel.value = String(squadraIdPreferita);
+          } else if (offer) {
+            const match = (window.squadreArr || []).find(x => (x.Nickname || '').toLowerCase() === String(offer).toLowerCase());
+            if (match) sel.value = String(match.SquadraId);
+          }
+
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('buzzerModal')).show();
+        });
 
           connection.on("AstaAnnullata",()=>{
             clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
@@ -1591,6 +1966,9 @@
             if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
           });
 
+                  connection.on("BuzzerModeChanged",  (p) => updateBuzzerUI(!!p?.attivo));
+        connection.on("BuzzerModeAggiornato", (p) => updateBuzzerUI(!!p?.buzzerAttivo));
+
           // ====== DOM READY ======
           document.addEventListener('DOMContentLoaded', function(){
                       const _log = document.getElementById('overlay-log');
@@ -1601,12 +1979,17 @@
         }
 
               document.getElementById('asta-overlay')?.classList.remove('visible');
+                      // Allinea la UI al valore corrente dello switch (prima di eventuali eventi hub)
+        updateBuzzerUI(document.getElementById('buzzerSwitch')?.checked);
+
             // pulizia ?bp=
             try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
 
             // squadre per modale Assegna
         let squadreArr = [];
         try { squadreArr = @Html.Raw(squadreJson) || []; } catch (e) { squadreArr = []; }
+        window.squadreArr = squadreArr;
+
 
 
             const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
@@ -1851,6 +2234,46 @@
             await mostraMessaggio('Errore', 'Errore di rete durante l’aggiornamento.');
           }
         });
+                // Ripulisci watermark alla chiusura
+        document.getElementById('buzzerModal')?.addEventListener('hidden.bs.modal', () => {
+          const bg = document.getElementById('bg-buzzer');
+          if (bg) bg.style.backgroundImage = 'none';
+        });
+
+        document.getElementById('btnConfermaBuzzer')?.addEventListener('click', async () => {
+          const giocId   = parseInt(document.getElementById('buzzerGiocatoreId').value);
+          const squadraId= parseInt(document.getElementById('buzzerSquadraSelect').value);
+          const costo    = parseInt(document.getElementById('buzzerCostoInput').value);
+
+          if (!giocId || !squadraId || !Number.isFinite(costo) || costo < 0) {
+            await mostraMessaggio('Dati mancanti', 'Seleziona la squadra e inserisci un costo valido.');
+            return;
+          }
+
+          try {
+            const r = await fetch('/Admin/ConcludiAstaBuzzer', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+              },
+              body: JSON.stringify({ giocatoreListoneId: giocId, squadraId, costo, lega: legaAliasAdmin })
+            });
+
+            if (!r.ok) {
+              let msg = 'Errore durante il salvataggio.';
+              try { const data = await r.json(); if (data?.message) msg = data.message; } catch {}
+              await mostraMessaggio('Operazione bloccata', msg);
+              return;
+            }
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('buzzerModal')).hide();
+            await mostraMessaggio('OK', 'Assegnazione registrata.');
+            location.reload();
+          } catch {
+            await mostraMessaggio('Errore', 'Errore di rete durante il salvataggio.');
+          }
+        });
 
             // Bonus crediti
             let bonusModal, bonusDeltaInput;
@@ -1941,6 +2364,22 @@
           else await mostraMessaggio('Errore','Errore aggiornamento regola.');
         });
 
+                document.getElementById('buzzerSwitch')?.addEventListener('change', async function(){
+          const isAttivo = this.checked;
+          try {
+            const r = await fetch('/Admin/ImpostaBuzzerMode', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiToken },
+              body: JSON.stringify({ attivo: isAttivo, lega: legaAliasAdmin })
+            });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            updateBuzzerUI(isAttivo);
+            await mostraMessaggio('Modalità Buzzer', isAttivo ? 'Modalità Buzzer ATTIVATA' : 'Modalità Buzzer DISATTIVATA');
+          } catch {
+            await mostraMessaggio('Errore', 'Impossibile aggiornare la modalità Buzzer.');
+            this.checked = !isAttivo; // rollback visivo
+          }
+        });
 
             document.getElementById('mantraSwitch')?.addEventListener('change', function(){
               const hidden=document.getElementById('mantraInput'); if(hidden) hidden.value=this.checked?'true':'false';

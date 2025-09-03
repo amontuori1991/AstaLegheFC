@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using OfficeOpenXml;
 
 namespace AstaLegheFC.Controllers
@@ -36,6 +37,7 @@ namespace AstaLegheFC.Controllers
             LegaService legaService,
             IHubContext<BazzerHub> hubContext,
             UserManager<ApplicationUser> userManager)
+
         {
             _context = context;
             _bazzerService = bazzerService;
@@ -308,6 +310,7 @@ namespace AstaLegheFC.Controllers
             ViewBag.BloccoPortieriAttivo = IsBloccoPortieriAttivo(legaModel.Alias);
             ViewBag.DurataTimer = GetDurataTimer(legaModel.Alias);
             ViewBag.MantraAttivo = IsMantraAttivo(legaModel.Alias) || mantraAttivo;
+            ViewBag.BuzzerAttivo = _bazzerService.IsBuzzerModeAttivo(legaModel.Alias);
             ViewBag.AdminNick = User.Identity?.Name ?? "ADMIN";
             ViewBag.LegaAlias = legaModel.Alias;
 
@@ -507,6 +510,49 @@ namespace AstaLegheFC.Controllers
 
             return Ok();
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ConcludiAstaBuzzer([FromBody] ConcludiAstaBuzzerDto dto)
+        {
+            if (dto == null || dto.GiocatoreListoneId <= 0 || dto.SquadraId <= 0 || dto.Costo < 0)
+                return BadRequest("Dati non validi.");
+
+            var adminId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(adminId)) return Unauthorized();
+
+            // Verifica che la squadra esista e recupera lega
+            var squadra = await _context.Squadre
+                .Include(s => s.Lega)
+                .Include(s => s.Giocatori)
+                .FirstOrDefaultAsync(s => s.Id == dto.SquadraId);
+
+            if (squadra == null) return NotFound("Squadra non trovata.");
+            var lega = squadra.Lega!;
+            if (lega.AdminId != adminId) return Forbid();
+
+            // Verifica che il giocatore sia nel TUO listone
+            var listoneItem = await _context.ListoneCalciatori
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == dto.GiocatoreListoneId && c.AdminId == adminId);
+
+            if (listoneItem == null)
+                return NotFound("Giocatore non trovato nel tuo listone.");
+
+            // Budget check (come in ModificaCostoGiocatore)
+            var sumOther = squadra.Giocatori.Sum(x => x.CreditiSpesi ?? 0);
+            var maxConsentito = squadra.Crediti - sumOther;
+            if (dto.Costo > maxConsentito)
+                return Conflict(new { message = $"Costo troppo alto. Max consentito: {maxConsentito}." });
+
+            // Assegna usando la stessa logica di sempre (gestisce anche Blocco Portieri)
+            await _legaService.AssegnaGiocatoreManualmenteAsync(dto.GiocatoreListoneId, dto.SquadraId, dto.Costo, adminId);
+
+            // Broadcast riepilogo e refresh utenti
+            await BroadcastRiepilogoLegaAsync(lega.Id);
+            await _hubContext.Clients.Group(Normalize(lega.Alias)).SendAsync("AggiornaUtente");
+
+            return Ok(new { ok = true });
+        }
 
         // ========= Impostazioni per-lega =========
         [HttpPost]
@@ -675,6 +721,39 @@ namespace AstaLegheFC.Controllers
             });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ImpostaBuzzerMode([FromBody] BuzzerModeRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Lega))
+                return BadRequest("Richiesta non valida.");
+
+            _bazzerService.ImpostaBuzzerMode(request.Lega, request.Attivo);
+
+            var legaKey = (request.Lega ?? "").Trim().ToLowerInvariant();
+
+            // Broadcast compatibile con client vecchi/nuovi
+            await _hubContext.Clients.Group(legaKey).SendAsync("BuzzerModeChanged", new { attivo = request.Attivo });
+            await _hubContext.Clients.Group(legaKey).SendAsync("BuzzerModeAggiornato", new { buzzerAttivo = request.Attivo });
+
+            // Stato aggiornato
+            var stato = _bazzerService.GetStato(request.Lega);
+            await _hubContext.Clients.Group(legaKey).SendAsync("StatoAsta", new
+            {
+                pausaAttiva = stato.pausaAttiva,
+                startUtc = stato.astaStartUtc?.ToUniversalTime().ToString("o"),
+                pausaAccumulataSec = (int)stato.pausaAccumulata.TotalSeconds,
+                pausaStartUtc = stato.pausaStartUtc?.ToUniversalTime().ToString("o"),
+                fineOffertaUtc = stato.fineOffertaUtc?.ToUniversalTime().ToString("o"),
+                mantraAttivo = stato.mantraAttivo,
+                buzzerAttivo = _bazzerService.IsBuzzerModeAttivo(request.Lega)
+            });
+
+            return Ok(new { ok = true });
+        }
+
+
+
+      
 
         [HttpPost]
         public async Task<IActionResult> AggiornaCreditiBonus([FromBody] BonusRequest request)
@@ -735,6 +814,22 @@ namespace AstaLegheFC.Controllers
             public int GiocatoreId { get; set; }
             public int NuovoCosto { get; set; }
         }
+
+        public class BuzzerModeRequest
+        {
+            public string Lega { get; set; } = "";
+            public bool Attivo { get; set; }
+        }
+
+
+        public class ConcludiAstaBuzzerDto
+        {
+            public int GiocatoreListoneId { get; set; }  // <-- Id del record in ListoneCalciatori (è quello che inviamo in MostraGiocatoreInAsta)
+            public int SquadraId { get; set; }           // squadra a cui assegnare
+            public int Costo { get; set; }               // costo deciso a voce
+            public string Lega { get; set; } = "";       // alias della lega corrente
+        }
+
 
     }
 }
