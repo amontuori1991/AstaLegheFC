@@ -1009,6 +1009,14 @@
             transform: translateY(2px);
         }
 
+        .btn-buzzer:disabled {
+            opacity: .45;
+            filter: grayscale(.25);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+
     .buzzer-ring {
         position: absolute;
         inset: 14px;
@@ -1426,8 +1434,10 @@
           const buzzer = document.getElementById('buzzerClientArea');
           if (buzzer) buzzer.classList.toggle('d-none', !on);
           if (bidUi)  bidUi.classList.toggle('d-none',  on);
+
           // in modalità buzzer, disabilito in ogni caso i controlli offerta classici
           setBidControlsEnabled(!on);
+          aggiornaStatoPulsantiBazzer();
         }
 
           function aggiornaStatoPulsantiBazzer(){
@@ -1441,6 +1451,20 @@
               else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti){ abilitato=false; messaggio=`Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`; }
             }
             setBidControlsEnabled(abilitato);
+                    // Stato del bottone BUZZER: visibile in buzzer mode ma disabilitato se nessun giocatore
+        const buzBtn = document.getElementById('btnClientBuzzer');
+        if (buzBtn) {
+          const hubState = connection.state;
+          const buzzerEnabled =
+            buzzerAttivoClient &&            // modalità buzzer ON
+            idListoneAttuale > 0 &&          // c'è un giocatore in asta
+            !pausaAttivaClient &&            // non in pausa
+            hubState === signalR.HubConnectionState.Connected;
+
+          buzBtn.disabled = !buzzerEnabled;
+          buzBtn.setAttribute('aria-disabled', String(!buzzerEnabled));
+        }
+
             const avvisoDiv = document.getElementById('avviso-ruolo-completo');
             if (!abilitato && messaggio){ avvisoDiv.innerText = messaggio; avvisoDiv.style.display = 'block'; }
             else { avvisoDiv.style.display = 'none'; }
