@@ -29,6 +29,7 @@ namespace AstaLegheFC.Controllers
         private readonly IHubContext<BazzerHub> _hubContext;
         private readonly UserManager<ApplicationUser> _userManager;
 
+
         public AdminController(
             AppDbContext context,
             BazzerService bazzerService,
@@ -434,7 +435,7 @@ namespace AstaLegheFC.Controllers
             var legaId = gioc?.Squadra?.LegaId;
             var legaAlias = gioc?.Squadra?.Lega?.Alias;
 
-            if (request.CreditiRestituiti < 0) request.CreditiRestituiti = 0;
+          //  if (request.CreditiRestituiti < 0) request.CreditiRestituiti = 0;
 
             await _legaService.SvincolaGiocatoreAsync(request.Id, request.CreditiRestituiti);
 
@@ -612,6 +613,68 @@ namespace AstaLegheFC.Controllers
             await _hubContext.Clients.Group(Normalize(lega)).SendAsync("AstaRipresa", new { fineUtc });
             return Ok();
         }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ModificaCostoGiocatore([FromBody] ModificaCostoDto dto)
+        {
+            var adminId = _userManager.GetUserId(User);
+            if (string.IsNullOrEmpty(adminId)) return Unauthorized();
+
+            var giocatore = await _context.Giocatori
+                .Include(g => g.Squadra)
+                    .ThenInclude(s => s.Giocatori)
+                .FirstOrDefaultAsync(g => g.Id == dto.GiocatoreId);
+
+            if (giocatore == null) return NotFound(new { message = "Giocatore non trovato." });
+            if (giocatore.Squadra == null) return BadRequest(new { message = "Il giocatore non è assegnato a nessuna squadra." });
+
+            // Verifica appartenenza lega
+            var lega = await _context.Leghe.FirstOrDefaultAsync(l => l.Id == giocatore.Squadra.LegaId);
+            if (lega == null || lega.AdminId != adminId) return Forbid();
+
+            var nuovo = Math.Max(0, dto.NuovoCosto);
+
+            // Budget check
+            var sumOther = giocatore.Squadra.Giocatori.Where(x => x.Id != giocatore.Id).Sum(x => x.CreditiSpesi ?? 0);
+            var maxConsentito = giocatore.Squadra.Crediti - sumOther;
+            if (nuovo > maxConsentito)
+                return Conflict(new { message = $"Costo troppo alto. Max consentito: {maxConsentito}." });
+
+            // Salva
+            giocatore.CreditiSpesi = nuovo;
+            await _context.SaveChangesAsync();
+
+            // Recalc
+            var sumAllNow = giocatore.Squadra.Giocatori.Sum(x => x.CreditiSpesi ?? 0);
+            var creditiDisponibiliNow = giocatore.Squadra.Crediti - sumAllNow;
+
+            int slotTotali = lega.MaxPortieri + lega.MaxDifensori + lega.MaxCentrocampisti + lega.MaxAttaccanti;
+            int giocatoriAcquistatiCount = giocatore.Squadra.Giocatori.Count;
+            int slotRimasti = slotTotali - giocatoriAcquistatiCount;
+            int pmax = creditiDisponibiliNow - (slotRimasti > 0 ? slotRimasti - 1 : 0);
+            if (pmax < 0) pmax = 0;
+
+            // Broadcast
+            await _hubContext.Clients.Group(Normalize(lega.Alias)).SendAsync("RiepilogoAggiornato", new
+            {
+                squads = new[] {
+            new {
+                squadraId = giocatore.SquadraId,
+                creditiDisponibili = creditiDisponibiliNow,
+                puntataMassima = pmax
+            }
+        }
+            });
+
+            return Ok(new
+            {
+                nuovoCosto = nuovo,
+                squadraId = giocatore.SquadraId,
+                creditiDisponibili = creditiDisponibiliNow,
+                puntataMassima = pmax
+            });
+        }
+
 
         [HttpPost]
         public async Task<IActionResult> AggiornaCreditiBonus([FromBody] BonusRequest request)
@@ -666,5 +729,12 @@ namespace AstaLegheFC.Controllers
         public class AssegnaRequest { public int GiocatoreId { get; set; } public int SquadraId { get; set; } public int Costo { get; set; } }
         public class BloccoPortieriRequest { public string Lega { get; set; } = ""; public bool Attivo { get; set; } }
         public class BonusRequest { public int SquadraId { get; set; } public int Delta { get; set; } public string? Nota { get; set; } }
+
+        public class ModificaCostoDto
+        {
+            public int GiocatoreId { get; set; }
+            public int NuovoCosto { get; set; }
+        }
+
     }
 }

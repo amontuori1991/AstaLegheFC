@@ -569,7 +569,30 @@
                                         }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
                                         <span class="text-nowrap small">(@g.CreditiSpesi)</span>
-                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
+                                        <button class="btn-neo btn-neo-danger btn-sm ms-2 btn-svincola"
+                                                data-role="btn-svincola"
+                                                data-id="@g.Id"
+                                                data-nome="@g.Nome"
+                                                data-costo="@g.CreditiSpesi"
+                                                data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl"
+                                                data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleSvincolo(this)">
+                                            Svincola
+                                        </button>
+
+                                        <button class="btn-neo btn-neo-warning btn-sm ms-2 btn-modifica-costo"
+                                                data-id="@g.Id"
+                                                data-nome="@g.Nome"
+                                                data-costo="@g.CreditiSpesi"
+                                                data-squadraid="@s.SquadraId"
+                                                data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl"
+                                                data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleModificaCosto(this)">
+                                            Mod. Spesa
+                                        </button>
+
                                     </li>
                                 }
                             </ul>
@@ -589,9 +612,30 @@
                                         }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
                                         <span class="text-nowrap small">(@g.CreditiSpesi)</span>
-                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
+
+                                        <button class="btn-neo btn-neo-danger btn-sm ms-2 btn-svincola"
+                                                data-role="btn-svincola"
+                                                data-id="@g.Id"
+                                                data-nome="@g.Nome"
+                                                data-costo="@g.CreditiSpesi"
+                                                data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl"
+                                                data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleSvincolo(this)">
+                                            Svincola
+                                        </button>
+
+
+                                        <button class="btn-neo btn-neo-warning btn-sm ms-2 btn-modifica-costo"
+                                                data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi"
+                                                data-squadraid="@s.SquadraId" data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleModificaCosto(this)">
+                                            Mod. Spesa
+                                        </button>
                                     </li>
                                 }
+
                             </ul>
                         </td>
                         <td>
@@ -609,9 +653,30 @@
                                         }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
                                         <span class="text-nowrap small">(@g.CreditiSpesi)</span>
-                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
+
+                                        <button class="btn-neo btn-neo-danger btn-sm ms-2 btn-svincola"
+                                                data-role="btn-svincola"
+                                                data-id="@g.Id"
+                                                data-nome="@g.Nome"
+                                                data-costo="@g.CreditiSpesi"
+                                                data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl"
+                                                data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleSvincolo(this)">
+                                            Svincola
+                                        </button>
+
+
+                                        <button class="btn-neo btn-neo-warning btn-sm ms-2 btn-modifica-costo"
+                                                data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi"
+                                                data-squadraid="@s.SquadraId" data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleModificaCosto(this)">
+                                            Mod. Spesa
+                                        </button>
                                     </li>
                                 }
+
                             </ul>
                         </td>
                         <td>
@@ -629,8 +694,30 @@
                                         }
                                         <img src="@g.LogoUrl" alt="@g.SquadraReale" style="height:22px" class="mx-2" />
                                         <span class="text-nowrap small">(@g.CreditiSpesi)</span>
-                                        <button class="btn btn-danger btn-sm ms-2" data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi" data-squadra="@g.SquadraReale" data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo" onclick="apriModaleSvincolo(this)">SVINCOLA</button>
+
+                                        <button class="btn-neo btn-neo-danger btn-sm ms-2 btn-svincola"
+                                                data-role="btn-svincola"
+                                                data-id="@g.Id"
+                                                data-nome="@g.Nome"
+                                                data-costo="@g.CreditiSpesi"
+                                                data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl"
+                                                data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleSvincolo(this)">
+                                            Svincola
+                                        </button>
+
+
+                                        <button class="btn-neo btn-neo-warning btn-sm ms-2 btn-modifica-costo"
+                                                data-id="@g.Id" data-nome="@g.Nome" data-costo="@g.CreditiSpesi"
+                                                data-squadraid="@s.SquadraId" data-squadra="@g.SquadraReale"
+                                                data-logo="@g.LogoUrl" data-ruolo="@g.Ruolo"
+                                                onclick="apriModaleModificaCosto(this)">
+                                            Mod. Spesa
+                                        </button>
                                     </li>
+                                
+
                                 }
                             </ul>
                         </td>
@@ -905,6 +992,51 @@
     </div>
 </div>
 
+<div class="modal fade" id="modificaCostoModal" tabindex="-1" aria-labelledby="modCostoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-base">
+            <div class="modal-squad-bg" id="bg-modcosto"></div>
+
+            <div class="modal-header">
+                <h5 class="modal-title" id="modCostoLabel">Modifica costo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" id="modCostoGiocatoreId" />
+                <input type="hidden" id="modCostoSquadraId" />
+
+                <div class="modal-hero mb-2">
+                    <img id="modCostoLogo" alt="">
+                    <div class="meta">
+                        <div id="modCostoNome" class="tit"></div>
+                        <div id="modCostoDettagli" class="sub small text-muted"></div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-2">
+                    <div class="col-6">
+                        <label class="form-label">Costo corrente</label>
+                        <div class="form-control-plaintext fw-bold"><span id="modCostoCorrente">0</span></div>
+                    </div>
+                    <div class="col-6">
+                        <label for="modCostoInput" class="form-label">Nuovo costo</label>
+                        <input id="modCostoInput" type="number" class="form-control" min="0" step="1" value="0">
+                    </div>
+                </div>
+
+                <div class="form-text mt-2">
+                    Il nuovo costo non può superare il budget disponibile della squadra.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+                <button id="btnConfermaModificaCosto" type="button" class="btn btn-primary">Salva</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ===== Overlay Asta ===== -->
 <div id="asta-overlay">
@@ -1628,6 +1760,97 @@
               fetch('/Admin/SvincolaGiocatore',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ id, creditiRestituiti:crediti }) })
                 .then(r=>{ if(r.ok) location.reload(); else mostraMessaggio('Errore','Errore durante lo svincolo.'); });
             });
+                    // ===== Modifica costo =====
+        let modCostoBtnRef = null;
+
+        window.apriModaleModificaCosto = function(btn) {
+          modCostoBtnRef = btn;
+          const id = parseInt(btn.dataset.id);
+          const nome = btn.dataset.nome || '';
+          const ruolo = btn.dataset.ruolo || '';
+          const squadra = btn.dataset.squadra || '';
+          const logo = btn.dataset.logo || '';
+          const costo = parseInt(btn.dataset.costo) || 0;
+          const squadraId = parseInt(btn.dataset.squadraid) || 0;
+
+          document.getElementById('modCostoGiocatoreId').value = id;
+          document.getElementById('modCostoSquadraId').value = squadraId;
+          document.getElementById('modCostoNome').innerText = nome;
+          document.getElementById('modCostoDettagli').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+          document.getElementById('modCostoLogo').src = logo;
+          document.getElementById('modCostoCorrente').innerText = String(costo);
+          document.getElementById('modCostoInput').value = String(costo);
+
+          const bg = document.getElementById('bg-modcosto');
+          if (bg) bg.style.backgroundImage = logo ? `url('${logo}')` : 'none';
+
+          bootstrap.Modal.getOrCreateInstance(document.getElementById('modificaCostoModal')).show();
+        };
+
+        document.getElementById('modificaCostoModal')?.addEventListener('hidden.bs.modal', () => {
+          const bg = document.getElementById('bg-modcosto');
+          if (bg) bg.style.backgroundImage = 'none';
+        });
+
+        document.getElementById('btnConfermaModificaCosto')?.addEventListener('click', async () => {
+          const idGioc = parseInt(document.getElementById('modCostoGiocatoreId').value);
+          const nuovoCosto = parseInt(document.getElementById('modCostoInput').value);
+          if (!Number.isFinite(nuovoCosto) || nuovoCosto < 0) {
+            await mostraMessaggio('Valore non valido', 'Inserisci un numero >= 0');
+            return;
+          }
+
+          try {
+            const r = await fetch('/Admin/ModificaCostoGiocatore', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+              },
+              body: JSON.stringify({ giocatoreId: idGioc, nuovoCosto })
+            });
+
+            if (!r.ok) {
+              let msg = 'Errore durante l’aggiornamento del costo.';
+              try {
+                const data = await r.json();
+                if (data && (data.message || data.error)) msg = data.message || data.error;
+              } catch {}
+              await mostraMessaggio('Operazione bloccata', msg);
+              return;
+            }
+
+            const data = await r.json();
+
+            // Aggiorna UI locale del <li> (testo costo) e i dataset dei bottoni
+            if (modCostoBtnRef) {
+              const li = modCostoBtnRef.closest('li');
+              if (li) {
+                // aggiorna lo span "(costo)"
+                const spanCosto = li.querySelector('span.text-nowrap.small');
+                if (spanCosto) spanCosto.textContent = `(${nuovoCosto})`;
+
+                // aggiorna dataset del bottone MODIFICA
+                modCostoBtnRef.dataset.costo = String(nuovoCosto);
+
+                // aggiorna dataset del bottone SVINCOLA (se presente)
+        const btnSvincola = li.querySelector('button[data-role="btn-svincola"]');
+        if (btnSvincola) btnSvincola.dataset.costo = String(nuovoCosto);
+
+              }
+            }
+
+            // Chiudi modale
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('modificaCostoModal')).hide();
+
+            // Info utente
+            await mostraMessaggio('OK', 'Costo aggiornato correttamente.');
+
+            // Il broadcast "RiepilogoAggiornato" dal server aggiornerà crediti/puntata max
+          } catch {
+            await mostraMessaggio('Errore', 'Errore di rete durante l’aggiornamento.');
+          }
+        });
 
             // Bonus crediti
             let bonusModal, bonusDeltaInput;
