@@ -10,7 +10,7 @@
 
 <style>
     @@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
-    /* ===== Timer overlay ===== */
+
     #overlay-timer {
         font-size: 3.5rem;
         font-weight: 700;
@@ -31,14 +31,11 @@
         color: #e74c3c
     }
 
-    /* Overlay: non deve prendere i click quando è nascosto */
     #asta-overlay {
         position: fixed;
-        display: none; /* Lascia solo questa linea */
-
+        display: none;
         inset: 0;
         background: rgba(0,0,0,.9);
-        /* Rimuovi la linea "display: flex;" da qui */
         justify-content: center;
         align-items: center;
         z-index: 1050;
@@ -51,7 +48,6 @@
         transition: opacity .3s, visibility .3s;
     }
 
-        /* Questa regola è corretta e si applica solo quando l'asta è attiva */
         #asta-overlay.visible {
             display: flex;
             opacity: 1;
@@ -59,7 +55,6 @@
             pointer-events: auto;
         }
 
-    /* Box “beauty” + watermark */
     .asta-box.overlay-beauty {
         position: relative;
         overflow: hidden;
@@ -77,13 +72,12 @@
         transform: scale(1);
     }
 
-    /* Pseudo-elementi: solo background, niente eventi e sotto i contenuti */
     .asta-box.overlay-beauty::before,
     .asta-box.overlay-beauty::after {
         content: "";
         position: absolute;
         inset: 0;
-        pointer-events: none; 
+        pointer-events: none;
         z-index: 0;
     }
 
@@ -101,7 +95,6 @@
         background: linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.35));
     }
 
-    /* Metti i contenuti interattivi sopra ai layer di sfondo */
     .asta-box-header,
     #overlay-timer,
     #overlay-offerta,
@@ -112,25 +105,42 @@
         z-index: 1;
     }
 
-    
+
     @@keyframes log-in {
-        from
+        from {
+            opacity: 0;
+            transform: translateY(2px);
+        }
 
-    {
-        opacity: 0;
-        transform: translateY(2px);
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+    /* cella nickname: un filo di aria a sinistra */
+    .table-bordered td.td-nick {
+        text-align: left !important;
+        padding-left: .5rem !important; 
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        justify-content: flex-start;
     }
 
-    to {
-        opacity: 1;
-        transform: none;
+    /* puntino: nessun vincolo col bordo, ma puoi aggiungere un micro offset */
+    .td-nick .status-dot {
+        margin-left: .125rem;
+        flex: 0 0 10px;
+        width: 10px;
+        height: 10px;
     }
 
+    /* testo nickname */
+    .td-nick .nick-label {
+        display: inline-block;
     }
 
 
-
-    /* Presence */
     .status-dot {
         display: inline-block;
         width: 10px;
@@ -153,7 +163,6 @@
         background: #f1c40f
     }
 
-    /* Top bar */
     .auction-bar {
         background: rgba(44,62,80,.5);
         border: 1px solid #34495e;
@@ -162,7 +171,6 @@
         box-shadow: inset 2px 2px 6px rgba(0,0,0,.25), inset -2px -2px 6px rgba(255,255,255,.06)
     }
 
-    /* Buttons */
     .btn-neo {
         border: none !important;
         position: relative;
@@ -221,7 +229,6 @@
         box-shadow: 6px 6px 12px rgba(0,0,0,.35),-6px -6px 12px rgba(255,255,255,.04) !important
     }
 
-    /* Letters */
     .letters-bar .letter-chip {
         border: none;
         background: #2d3b4d;
@@ -253,7 +260,6 @@
         text-decoration: line-through
     }
 
-    /* ===== Modal “beauty” con scudetto opacizzato sullo sfondo ===== */
     .modal-beauty .modal-content {
         position: relative;
         overflow: hidden;
@@ -263,7 +269,6 @@
         box-shadow: 0 22px 48px rgba(0,0,0,.5);
     }
 
-        /* layer immagine: usa la CSS var --bg-url impostata via JS */
         .modal-beauty .modal-content::before {
             content: "";
             position: absolute;
@@ -278,7 +283,6 @@
             pointer-events: none;
         }
 
-        /* layer sfumatura per leggibilità del testo */
         .modal-beauty .modal-content::after {
             content: "";
             position: absolute;
@@ -375,7 +379,6 @@
             box-shadow: 0 0 0 .2rem rgba(93,173,226,.25);
         }
 
-    /* Pulsanti azione “glass” */
     .btn-glass {
         border: 1px solid rgba(255,255,255,.18);
         background: rgba(255,255,255,.06);
@@ -406,7 +409,7 @@
         color: #fff;
         box-shadow: 0 10px 20px rgba(34,197,94,.25);
     }
-    /* === Modal Assegna/Svincola – tema scuro con watermark === */
+
     .modal-base {
         position: relative;
         overflow: hidden;
@@ -467,8 +470,7 @@
             .modal-hero .meta .sub {
                 opacity: .85;
             }
-    /* === Font più gradevole per il log eventi (#overlay-log) === */
-    /* === Font del log eventi (solo #overlay-log) === */
+
     #asta-overlay #overlay-log,
     #asta-overlay #overlay-log *,
     #asta-overlay .log-stream,
@@ -486,7 +488,6 @@
         font-size: .8rem;
         opacity: .9;
     }
-
 
 </style>
 
@@ -537,9 +538,11 @@
                 @foreach (var s in riepilogo)
                 {
                     <tr>
-                        <td>
-                            <span class="status-dot dot-offline" data-nick="@s.Nickname" title="@s.Nickname"></span>
-                            @s.Nickname
+                        
+                        <td class="td-nick">
+                                 <span class="status-dot dot-offline" data-nick="@s.Nickname" title="@s.Nickname"></span>
+                                <span class="nick-label">@s.Nickname</span>
+                           
                         </td>
                         <td>
                             <button class="btn btn-info btn-sm btn-bonus"
@@ -716,7 +719,7 @@
                                             Mod. Spesa
                                         </button>
                                     </li>
-                                
+
 
                                 }
                             </ul>
@@ -915,8 +918,6 @@
     </div>
 }
 
-
-<!-- ===== Modale Assegna ===== -->
 <div class="modal fade" id="assegnaModal" tabindex="-1" aria-labelledby="assegnaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-base">
@@ -959,7 +960,6 @@
 </div>
 
 
-<!-- ===== Modale Svincola ===== -->
 <div class="modal fade" id="svincolaModal" tabindex="-1" aria-labelledby="svincolaLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-base">
@@ -1045,7 +1045,6 @@
     </div>
 </div>
 
-<!-- ===== Overlay Asta ===== -->
 <div id="asta-overlay">
     <div class="asta-box overlay-beauty">
         <div class="asta-box-header">
@@ -1072,8 +1071,6 @@
     </div>
 </div>
 
-<!-- ===== Modale Bonus Crediti ===== -->
-<!-- ===== Modale Bonus Crediti (stile modal-base) ===== -->
 <div class="modal fade" id="bonusModal" tabindex="-1" aria-labelledby="bonusModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-base">
@@ -1124,7 +1121,7 @@
 
                 <input type="hidden" id="bonusSquadraId" />
                 <input type="hidden" id="bonusGiocatoriCount" />
-                <input type="hidden" id="bonusSlotsRimasti" /> <!-- NEW -->
+                <input type="hidden" id="bonusSlotsRimasti" />
 
             </div>
 
@@ -1136,9 +1133,6 @@
     </div>
 </div>
 
-
-<!-- ===== Modale Messaggi generici ===== -->
-<!-- ===== Modale Messaggi generici (stile modal-base) ===== -->
 <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-base">
@@ -1163,7 +1157,6 @@
         </div>
     </div>
 </div>
-<!-- ===== Modale Concludi Asta (Buzzer) ===== -->
 <div class="modal fade" id="buzzerModal" tabindex="-1" aria-labelledby="buzzerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-base">
@@ -1212,53 +1205,6 @@
     </div>
 </div>
 
-<!-- ===== Modale Buzzer: conferma importo e squadra ===== -->
-<div class="modal fade" id="buzzerModal" tabindex="-1" aria-labelledby="buzzerLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content modal-base">
-            <div class="modal-squad-bg" id="bg-buzzer"></div>
-
-            <div class="modal-header">
-                <h5 class="modal-title" id="buzzerLabel">Conferma aggiudicazione (Buzzer)</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
-            </div>
-
-            <div class="modal-body">
-                <input type="hidden" id="buzzerGiocatoreId" />
-
-                <div class="modal-hero mb-2">
-                    <img id="buzzerLogo" alt="">
-                    <div class="meta">
-                        <div class="tit" id="buzzerNomeGiocatore">—</div>
-                        <div class="sub small text-muted">Offerente: <span id="buzzerOfferente">—</span></div>
-                    </div>
-                </div>
-
-                <div class="row g-3 mt-2">
-                    <div class="col-7">
-                        <label for="buzzerSquadraSelect" class="form-label">Assegna a</label>
-                        <select id="buzzerSquadraSelect" class="form-select"></select>
-                    </div>
-                    <div class="col-5">
-                        <label for="buzzerCostoInput" class="form-label">Costo</label>
-                        <input id="buzzerCostoInput" type="number" class="form-control" min="0" step="1" value="1">
-                    </div>
-                </div>
-
-                <div class="form-text mt-2">
-                    Imposta l'importo concordato e conferma l'assegnazione.
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary btn-glass" data-bs-dismiss="modal">Annulla</button>
-                <button type="button" id="btnConfermaBuzzer" class="btn btn-primary btn-success-glow">Conferma</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 <audio id="suono-countdown" src="~/sounds/beep.mp3" preload="auto"></audio>
 <audio id="suono-vittoria" src="~/sounds/gavel.mp3" preload="auto"></audio>
@@ -1270,1130 +1216,1040 @@
 
     <script>
         (function(){
-          // ===== VAR =====
+            let debounceTimer;
+            let durataTimer = parseInt('@(ViewBag.DurataTimer ?? "0")', 10) || 0;
+            let countdownTimerAdmin = null;
+            let closeTimeoutAdmin = null;
+            let lastOffertaAdmin = 0;
+            let isBuzzer = false;
+            function updateBuzzerUI(on) {
+                isBuzzer = !!on;
+                const offertaEl   = document.getElementById('overlay-offerta');
+                const offerenteEl = document.getElementById('overlay-offerente');
+                if (offertaEl) offertaEl.style.display = on ? 'none' : '';
+                if (offerenteEl && on) {
+                    offerenteEl.innerText = 'In attesa del BUZZ...';
+                    offerenteEl.style.color = '';
+                }
+            }
 
-          let debounceTimer;
-          let durataTimer = parseInt('@(ViewBag.DurataTimer ?? "0")', 10) || 0;
-          let countdownTimerAdmin = null;
-          let closeTimeoutAdmin   = null;
-          let lastOffertaAdmin = 0;
-                  // === Buzzer UI helpers ===
-        let isBuzzer = false;
-        function updateBuzzerUI(on) {
-          isBuzzer = !!on;
-          const offertaEl   = document.getElementById('overlay-offerta');
-          const offerenteEl = document.getElementById('overlay-offerente');
-          if (offertaEl) offertaEl.style.display = on ? 'none' : '';
-          if (offerenteEl && on) {
-            offerenteEl.innerText = 'In attesa del BUZZ...';
-            offerenteEl.style.color = '';
-          }
-        }
+            function setOverlayBg(url){
+                const box = document.querySelector('#asta-overlay .asta-box');
+                if (box) box.style.setProperty('--bg-url', url ? `url('${url}')` : 'none');
+            }
+            function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+            const LOG_FONT_STACK = `"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace`;
+            const LOG_ICONS  = { start:'🚀', bid:'💰', paused:'⏸️', resumed:'▶️', win:'🏆', cancel:'🛑', info:'ℹ️' };
+            const LOG_COLORS = { start:'#94a3b8', bid:'#0ea5e9', paused:'#f59e0b', resumed:'#14b8a6', win:'#22c55e', cancel:'#ef4444', info:'#94a3b8' };
 
-                  // ===== Overlay helpers (watermark + log) =====
-        function setOverlayBg(url){
-          const box = document.querySelector('#asta-overlay .asta-box');
-          if (box) box.style.setProperty('--bg-url', url ? `url('${url}')` : 'none');
-        }
-        function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-        const LOG_FONT_STACK = `"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace`;
-        const LOG_ICONS  = { start:'🚀', bid:'💰', paused:'⏸️', resumed:'▶️', win:'🏆', cancel:'🛑', info:'ℹ️' };
-        const LOG_COLORS = { start:'#94a3b8', bid:'#0ea5e9', paused:'#f59e0b', resumed:'#14b8a6', win:'#22c55e', cancel:'#ef4444', info:'#94a3b8' };
+            function appendLog(type, text){
+                const el = document.getElementById('overlay-log'); if (!el) return;
+                const t  = new Date().toLocaleTimeString();
+                const ic = LOG_ICONS[type]  || LOG_ICONS.info;
+                const col= LOG_COLORS[type] || LOG_COLORS.info;
 
-        function appendLog(type, text){
-          const el = document.getElementById('overlay-log'); if (!el) return;
-          const t  = new Date().toLocaleTimeString();
-          const ic = LOG_ICONS[type]  || LOG_ICONS.info;
-          const col= LOG_COLORS[type] || LOG_COLORS.info;
+                const html = `
+                    <div class="log-item log-${type}"
+                         style="--accent:${col}; font-family:${LOG_FONT_STACK}; font-variant-numeric:tabular-nums; letter-spacing:.2px;">
+                      <span class="log-ic"    style="font-family:${LOG_FONT_STACK}">${ic}</span>
+                      <span class="log-text" style="font-family:${LOG_FONT_STACK}">${escapeHtml(text)}</span>
+                      <span class="log-time" style="font-family:${LOG_FONT_STACK}">${t}</span>
+                    </div>`;
 
-          const html = `
-            <div class="log-item log-${type}"
-                 style="--accent:${col}; font-family:${LOG_FONT_STACK}; font-variant-numeric:tabular-nums; letter-spacing:.2px;">
-              <span class="log-ic"   style="font-family:${LOG_FONT_STACK}">${ic}</span>
-              <span class="log-text" style="font-family:${LOG_FONT_STACK}">${escapeHtml(text)}</span>
-              <span class="log-time" style="font-family:${LOG_FONT_STACK}">${t}</span>
-            </div>`;
+                el.insertAdjacentHTML('afterbegin', html);
 
-          el.insertAdjacentHTML('afterbegin', html);
+                const items = el.querySelectorAll('.log-item');
+                if (items.length > 100) for (let i=100; i<items.length; i++) items[i].remove();
+            }
 
-          const items = el.querySelectorAll('.log-item');
-          if (items.length > 100) for (let i=100; i<items.length; i++) items[i].remove();
-        }
+            function closeAdminOverlayImmediate() {
+                try { clearTimeout(countdownTimerAdmin); } catch {}
+                try { clearTimeout(closeTimeoutAdmin); } catch {}
+                countdownTimerAdmin = null;
+                closeTimeoutAdmin   = null;
 
+                const overlay = document.getElementById('asta-overlay');
+                if (overlay) overlay.classList.remove('visible');
 
+                const t = document.getElementById('overlay-timer');
+                if (t) { t.textContent = '--'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
+                const offEl = document.getElementById('overlay-offerente');
+                if (offEl) { offEl.textContent = '—'; offEl.style.color = ''; }
+                const offVal = document.getElementById('overlay-offerta');
+                if (offVal) offVal.textContent = '0';
+            }
 
-                  // Chiude subito l’overlay admin e azzera i timer locali
-        function closeAdminOverlayImmediate() {
-          try { clearTimeout(countdownTimerAdmin); } catch {}
-          try { clearTimeout(closeTimeoutAdmin); } catch {}
-          countdownTimerAdmin = null;
-          closeTimeoutAdmin   = null;
-
-          const overlay = document.getElementById('asta-overlay');
-          if (overlay) overlay.classList.remove('visible');
-        
-
-
-          // reset UI overlay (opzionale)
-          const t = document.getElementById('overlay-timer');
-          if (t) { t.textContent = '--'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
-          const offEl = document.getElementById('overlay-offerente');
-          if (offEl) { offEl.textContent = '—'; offEl.style.color = ''; }
-          const offVal = document.getElementById('overlay-offerta');
-          if (offVal) offVal.textContent = '0';
-        }
-
-
-                  const legaAliasAdmin = "@ViewBag.LegaAlias";
-        const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
-        const appLogoUrl = '@appLogoUrl';   // <-- AGGIUNGI QUI (globale)
-
-                // === BUZZER MODE state + UI helper ===
+            const legaAliasAdmin = "@ViewBag.LegaAlias";
+            const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+            const appLogoUrl = '@appLogoUrl';
         let buzzerModeOn = false;
-
         function updateBuzzerUI(isOn){
           buzzerModeOn = !!isOn;
 
-          // Nel pannello overlay: in modalità Buzzer l'importo non è usato
-          const offertaEl = document.getElementById('overlay-offerta');
-          if (offertaEl && buzzerModeOn) offertaEl.textContent = '—';
-
+          const offertaEl   = document.getElementById('overlay-offerta');
           const offerenteEl = document.getElementById('overlay-offerente');
+
+          if (offertaEl) offertaEl.style.display = buzzerModeOn ? 'none' : '';
+
           if (offerenteEl) {
             const txt = (offerenteEl.textContent || '').trim();
-            if (buzzerModeOn && (txt === '' || /In attesa di offerte/i.test(txt))) {
+            if (buzzerModeOn && (txt === '' || /attesa/i.test(txt))) {
               offerenteEl.textContent = 'In attesa di BUZZ...';
+              offerenteEl.style.color = '';
             }
           }
         }
 
 
+            const LS_START      = `asta:start:${legaAliasAdmin}`;
+            const LS_PAUSE_ACC    = `asta:pauseAcc:${legaAliasAdmin}`;
+            const LS_PAUSE_AT     = `asta:pauseAt:${legaAliasAdmin}`;
+            const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
+            const LS_STOP_ACTIVE  = `asta:stopActive:${legaAliasAdmin}`;
+            const LS_STOP_SEC     = `asta:stopSec:${legaAliasAdmin}`;
+                    const LS_STOP_AT      = `asta:stopAt:${legaAliasAdmin}`;
+        const LS_STOP_ACC     = `asta:stopAcc:${legaAliasAdmin}`;
 
-          const LS_START        = `asta:start:${legaAliasAdmin}`;
-          const LS_PAUSE_ACC    = `asta:pauseAcc:${legaAliasAdmin}`;
-          const LS_PAUSE_AT     = `asta:pauseAt:${legaAliasAdmin}`;
-          const LS_PAUSE_ACTIVE = `asta:pauseActive:${legaAliasAdmin}`;
-          const LS_STOP_ACTIVE  = `asta:stopActive:${legaAliasAdmin}`;
-          const LS_STOP_SEC     = `asta:stopSec:${legaAliasAdmin}`;
-          const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-          const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
-          const LS_DEFAULT_TIMER = `asta:defaultTimer:${legaAliasAdmin}`;
+            const ALPH = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+            const LS_LETTERS = `asta:lettersArchived:${legaAliasAdmin}`;
+            const LS_DEFAULT_TIMER = `asta:defaultTimer:${legaAliasAdmin}`;
 
-          // ====== UTILS ======
-          function getArchivedLetters(){ try{ return JSON.parse(localStorage.getItem(LS_LETTERS)||'[]'); }catch{ return []; } }
-          function setArchivedLetters(arr){ localStorage.setItem(LS_LETTERS, JSON.stringify(arr)); renderLettersChips(); }
-          function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
-                  function submitFormDebounced(){
-          clearTimeout(debounceTimer);
-          const pageInput = document.getElementById('pageInput');
-          if (pageInput) pageInput.value = '1';   // <-- QUI la "nuova if"
-          debounceTimer = setTimeout(() => document.getElementById("filtroForm").submit(), 500);
+
+
+            function getArchivedLetters(){ try{ return JSON.parse(localStorage.getItem(LS_LETTERS)||'[]'); }catch{ return []; } }
+            function setArchivedLetters(arr){ localStorage.setItem(LS_LETTERS, JSON.stringify(arr)); renderLettersChips(); }
+            function fmt(s){ s=Math.max(0,Math.floor(s||0)); const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60; return h>0?`${h}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`:`${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+            function submitFormDebounced(){
+                clearTimeout(debounceTimer);
+                const pageInput = document.getElementById('pageInput');
+                if (pageInput) pageInput.value = '1';
+                debounceTimer = setTimeout(() => document.getElementById("filtroForm").submit(), 500);
+            }
+
+            function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
+            window.toggleLista=toggleLista;
+
+            window.mostraMessaggio = function (titolo, corpo, conferma = false) {
+                const mEl = document.getElementById('messaggioModale');
+                if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
+                const titleEl = document.getElementById('messaggioModaleTitolo');
+                const bodyEl  = document.getElementById('messaggioModaleCorpo');
+                let   btnOk   = document.getElementById('messaggioModaleBtnOk');
+                let   btnAnn  = document.getElementById('messaggioModaleBtnAnnulla');
+
+                titleEl.textContent = titolo || 'Info';
+                bodyEl.textContent  = corpo  || '';
+                btnAnn.style.display = conferma ? '' : 'none';
+
+                const bs = bootstrap.Modal.getOrCreateInstance(mEl);
+                btnOk.replaceWith(btnOk.cloneNode(true));
+                btnAnn.replaceWith(btnAnn.cloneNode(true));
+                btnOk  = document.getElementById('messaggioModaleBtnOk');
+                btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
+
+                const bgMsg = document.getElementById('bg-msg');
+                if (bgMsg) bgMsg.style.backgroundImage = `url('${appLogoUrl}')`;
+
+                return new Promise((resolve) => {
+                    let decided = false;
+                    const cleanup = () => { mEl.removeEventListener('hidden.bs.modal', onHidden); };
+                    const onHidden = () => { if (!decided) { decided = true; resolve(false); } cleanup(); };
+                    const onOk  = () => { if (decided) return; decided = true; mEl.addEventListener('hidden.bs.modal', () => { resolve(true); cleanup(); }, { once: true }); bs.hide(); };
+                    const onAnn = () => { if (decided) return; decided = true; mEl.addEventListener('hidden.bs.modal', () => { resolve(false); cleanup(); }, { once: true }); bs.hide(); };
+                    btnOk.addEventListener('click', onOk, { once:true });
+                    if (conferma) btnAnn.addEventListener('click', onAnn, { once:true });
+                    mEl.addEventListener('hidden.bs.modal', onHidden);
+                    bs.show();
+                });
+            };
+
+            let audioUnlocked=false;
+            document.addEventListener('click',()=>{ if(audioUnlocked) return; audioUnlocked=true; ['suono-offerta','suono-countdown','suono-vittoria'].forEach(id=>{ const a=document.getElementById(id); if(!a) return; a.muted=true; a.play().catch(()=>{}).finally(()=>{ try{a.pause();a.currentTime=0;}catch{} a.muted=false; }); }); }, { once:true });
+
+        function computeElapsedSec(){
+          const startIso = localStorage.getItem(LS_START);
+          if (!startIso) return 0;
+          const startMs = new Date(startIso).getTime();
+
+          // PAUSE (cronologica)
+          const pauseAcc   = parseInt(localStorage.getItem(LS_PAUSE_ACC) || "0");
+          const pauseAct   = (localStorage.getItem(LS_PAUSE_ACTIVE) === "true");
+          const pauseAtIso = localStorage.getItem(LS_PAUSE_AT);
+          const pauseExtra = (pauseAct && pauseAtIso)
+            ? Math.max(0, Math.floor((Date.now() - new Date(pauseAtIso).getTime()) / 1000))
+            : 0;
+
+          // STOP (solo locale/visivo)
+          const stopAcc   = parseInt(localStorage.getItem(LS_STOP_ACC) || "0");
+          const stopAct   = (localStorage.getItem(LS_STOP_ACTIVE) === "true");
+          const stopAtIso = localStorage.getItem(LS_STOP_AT);
+          const stopExtra = (stopAct && stopAtIso)
+            ? Math.max(0, Math.floor((Date.now() - new Date(stopAtIso).getTime()) / 1000))
+            : 0;
+
+          const elapsed = Math.floor((Date.now() - startMs) / 1000);
+          return Math.max(0, elapsed - (pauseAcc + pauseExtra + stopAcc + stopExtra));
         }
 
-          function toggleLista(id){ const el=document.getElementById(id); if(el) el.classList.toggle('d-none'); }
-          window.toggleLista=toggleLista;
 
-          // Messaggi modali
-          window.mostraMessaggio = function (titolo, corpo, conferma = false) {
-            const mEl = document.getElementById('messaggioModale');
-            if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
-            const titleEl = document.getElementById('messaggioModaleTitolo');
-            const bodyEl  = document.getElementById('messaggioModaleCorpo');
-            let   btnOk   = document.getElementById('messaggioModaleBtnOk');
-            let   btnAnn  = document.getElementById('messaggioModaleBtnAnnulla');
+            function paintDurata(){
+                const out=document.getElementById('durata-asta');
+                const badge=document.getElementById('stato-pausa');
+                const startIso=localStorage.getItem(LS_START);
+                if(!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
 
-            titleEl.textContent = titolo || 'Info';
-            bodyEl.textContent  = corpo  || '';
-            btnAnn.style.display = conferma ? '' : 'none';
+                if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
+                    const frozen = parseInt(localStorage.getItem(LS_STOP_SEC)||"0");
+                    out.textContent = fmt(frozen);
+                    badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
+                    return;
+                }
 
-            const bs = bootstrap.Modal.getOrCreateInstance(mEl);
-            btnOk.replaceWith(btnOk.cloneNode(true));
-            btnAnn.replaceWith(btnAnn.cloneNode(true));
-            btnOk  = document.getElementById('messaggioModaleBtnOk');
-            btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
+                const sec = computeElapsedSec();
+                out.textContent=fmt(sec);
+                badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
+            }
+            let durataInterval=null;
+            function startDurataLoop(){ if(durataInterval) clearInterval(durataInterval); paintDurata(); durataInterval=setInterval(paintDurata,1000); }
+            function stopDurataLoop(){ if(durataInterval){ clearInterval(durataInterval); durataInterval=null; } }
+            function resetDurataLocal(){
+                localStorage.removeItem(LS_START);
+                localStorage.removeItem(LS_PAUSE_AT);
+                localStorage.setItem(LS_PAUSE_ACC,"0");
+                localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+                localStorage.setItem(LS_STOP_ACTIVE,"false");
+                localStorage.removeItem(LS_STOP_SEC);
+          localStorage.removeItem(LS_STOP_AT);     // << aggiungi
+          localStorage.setItem(LS_STOP_ACC,"0");   // << aggiungi
 
-            return new Promise((resolve) => {
-              let decided = false;
-              const cleanup = () => { mEl.removeEventListener('hidden.bs.modal', onHidden); };
-              const onHidden = () => { if (!decided) { decided = true; resolve(false); } cleanup(); };
-              const onOk  = () => { if (decided) return; decided = true; mEl.addEventListener('hidden.bs.modal', () => { resolve(true); cleanup(); }, { once: true }); bs.hide(); };
-              const onAnn = () => { if (decided) return; decided = true; mEl.addEventListener('hidden.bs.modal', () => { resolve(false); cleanup(); }, { once: true }); bs.hide(); };
-              btnOk.addEventListener('click', onOk, { once:true });
-              if (conferma) btnAnn.addEventListener('click', onAnn, { once:true });
-              mEl.addEventListener('hidden.bs.modal', onHidden);
-                      const bgMsg = document.getElementById('bg-msg');
-        if (bgMsg) bgMsg.style.backgroundImage = `url('${appLogoUrl}')`;
+          stopDurataLoop();
+                const out=document.getElementById('durata-asta'); const badge=document.getElementById('stato-pausa');
+                if(out) out.textContent='00:00'; if(badge) badge.classList.add('d-none');
+                const stopBtn=document.getElementById('btn-stop'); if(stopBtn){ stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; }
+            }
 
-              bs.show();
+function toggleStop(){
+  const stopBtn = document.getElementById('btn-stop');
+  const active  = (localStorage.getItem(LS_STOP_ACTIVE) === "true");
+
+  if (active) {
+    // Uscita dallo STOP: aggiungi il delta allo STOP_ACC e chiudi lo stato
+    const atIso = localStorage.getItem(LS_STOP_AT);
+    if (atIso) {
+      const delta = Math.max(0, Math.floor((Date.now() - new Date(atIso).getTime()) / 1000));
+      const acc   = parseInt(localStorage.getItem(LS_STOP_ACC) || "0");
+      localStorage.setItem(LS_STOP_ACC, String(acc + delta));
+    }
+    localStorage.setItem(LS_STOP_ACTIVE, "false");
+    localStorage.removeItem(LS_STOP_AT);
+
+    stopBtn.dataset.state = 'go';
+    stopBtn.textContent   = 'Stop';
+    startDurataLoop();
+  } else {
+    // Entrata in STOP: “fotografa” il tempo visibile e memorizza il momento
+    const sec = computeElapsedSec();
+    localStorage.setItem(LS_STOP_ACTIVE, "true");
+    localStorage.setItem(LS_STOP_SEC, String(sec));
+    localStorage.setItem(LS_STOP_AT, new Date().toISOString());
+
+    stopBtn.dataset.state = 'stop';
+    stopBtn.textContent   = 'Riprendi Timer';
+    paintDurata();
+    stopDurataLoop();
+  }
+}
+
+        
+
+
+            function applyInitialFilter(letter){
+                const inizialeInput=document.getElementById('inizialeInput');
+                const nomeInput=document.getElementById('nomeFilterInput');
+                const squadraInput=document.getElementById('squadraFilterInput');
+                const sorteggioInput=document.getElementById('sorteggioInput');
+                if (sorteggioInput) sorteggioInput.value='true';
+                if (inizialeInput) inizialeInput.value=letter||'';
+                if (nomeInput) nomeInput.value='';
+                if (squadraInput) squadraInput.value='';
+                const pageInput = document.getElementById('pageInput');
+                if (pageInput) pageInput.value = '1';
+                document.getElementById('filtroForm').submit();
+            }
+
+            function renderLettersChips(){
+                const cont=document.getElementById('lettersChips');
+                if(!cont) return;
+                const archived=getArchivedLetters();
+                const selected=(new URLSearchParams(window.location.search).get('iniziale')||'').toUpperCase();
+                cont.innerHTML='';
+                ALPH.forEach(l=>{
+                    const btn=document.createElement('button');
+                    btn.type='button'; btn.className='letter-chip btn btn-sm';
+                    if(archived.includes(l)) btn.classList.add('letter-archived');
+                    if(selected===l) btn.classList.add('letter-selected');
+                    btn.textContent=l;
+                    btn.title=archived.includes(l)?'Lettera estratta (clic per renderla disponibile)':'Filtra per '+l;
+                    btn.addEventListener('click', ()=>{
+                        if(archived.includes(l)) setArchivedLetters(archived.filter(x=>x!==l));
+                        applyInitialFilter(l);
+                    });
+                    cont.appendChild(btn);
+                });
+            }
+
+            const connection=new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
+            window.connection=connection;
+
+            connection.on("StatoAsta", (stato) => {
+                if (stato?.startUtc) {
+                    const curr = localStorage.getItem(LS_START);
+                    const incoming = new Date(stato.startUtc).getTime();
+                    if (!curr || incoming < new Date(curr).getTime()) {
+                        localStorage.setItem(LS_START, stato.startUtc);
+                    }
+                }
+
+                if (typeof stato?.pausaAccumulataSec === 'number') {
+                    localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec));
+                } else if (!localStorage.getItem(LS_PAUSE_ACC)) {
+                    localStorage.setItem(LS_PAUSE_ACC, "0");
+                }
+
+                const pauseActive = !!stato?.pausaAttiva;
+                localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
+                if (pauseActive) {
+                    if (!localStorage.getItem(LS_PAUSE_AT)) {
+                        localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
+                    }
+                    document.getElementById('btn-pausa').disabled = true;
+                    document.getElementById('btn-riprendi').disabled = false;
+                } else {
+                    localStorage.removeItem(LS_PAUSE_AT);
+                    document.getElementById('btn-pausa').disabled = false;
+                    document.getElementById('btn-riprendi').disabled = true;
+                }
+                if (typeof stato?.buzzerAttivo === 'boolean') {
+                    updateBuzzerUI(stato.buzzerAttivo);
+                }
+                updateBuzzerUI(!!stato?.buzzerAttivo);
+
+                startDurataLoop();
             });
-          };
 
-          // Audio warmup
-          let audioUnlocked=false;
-          document.addEventListener('click',()=>{ if(audioUnlocked) return; audioUnlocked=true; ['suono-offerta','suono-countdown','suono-vittoria'].forEach(id=>{ const a=document.getElementById(id); if(!a) return; a.muted=true; a.play().catch(()=>{}).finally(()=>{ try{a.pause();a.currentTime=0;}catch{} a.muted=false; }); }); }, { once:true });
-
-          // ====== DURATA GLOBALE ======
-          function computeElapsedSec(){
-            const startIso=localStorage.getItem(LS_START);
-            if(!startIso) return 0;
-            const start=new Date(startIso).getTime();
-            const pauseAcc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-            const pauseActive=(localStorage.getItem(LS_PAUSE_ACTIVE)==="true");
-            const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
-            const extra=pauseActive && pauseAtIso ? Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000)) : 0;
-            return Math.max(0, Math.floor((Date.now()-start)/1000) - (pauseAcc + extra));
-          }
-
-          function paintDurata(){
-            const out=document.getElementById('durata-asta');
-            const badge=document.getElementById('stato-pausa');
-            const startIso=localStorage.getItem(LS_START);
-            if(!startIso){ out.textContent='00:00'; badge?.classList.add('d-none'); return; }
-
-            if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
-              const frozen = parseInt(localStorage.getItem(LS_STOP_SEC)||"0");
-              out.textContent = fmt(frozen);
-              badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
-              return;
-            }
-
-            const sec = computeElapsedSec();
-            out.textContent=fmt(sec);
-            badge?.classList.toggle('d-none', !(localStorage.getItem(LS_PAUSE_ACTIVE)==="true"));
-          }
-          let durataInterval=null;
-          function startDurataLoop(){ if(durataInterval) clearInterval(durataInterval); paintDurata(); durataInterval=setInterval(paintDurata,1000); }
-          function stopDurataLoop(){ if(durataInterval){ clearInterval(durataInterval); durataInterval=null; } }
-          function resetDurataLocal(){
-            localStorage.removeItem(LS_START);
-            localStorage.removeItem(LS_PAUSE_AT);
-            localStorage.setItem(LS_PAUSE_ACC,"0");
-            localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-            localStorage.setItem(LS_STOP_ACTIVE,"false");
-            localStorage.removeItem(LS_STOP_SEC);
-            stopDurataLoop();
-            const out=document.getElementById('durata-asta'); const badge=document.getElementById('stato-pausa');
-            if(out) out.textContent='00:00'; if(badge) badge.classList.add('d-none');
-            const stopBtn=document.getElementById('btn-stop'); if(stopBtn){ stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; }
-          }
-
-          function toggleStop(){
-            const stopBtn=document.getElementById('btn-stop');
-            if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){
-              localStorage.setItem(LS_STOP_ACTIVE,"false");
-              stopBtn.dataset.state='go'; stopBtn.textContent='Stop';
-              startDurataLoop();
-            } else {
-              const sec=computeElapsedSec();
-              localStorage.setItem(LS_STOP_ACTIVE,"true");
-              localStorage.setItem(LS_STOP_SEC,String(sec));
-              stopBtn.dataset.state='stop'; stopBtn.textContent='Riprendi Timer';
-              paintDurata(); stopDurataLoop();
-            }
-          }
-
-          function applyInitialFilter(letter){
-            const inizialeInput=document.getElementById('inizialeInput');
-            const nomeInput=document.getElementById('nomeFilterInput');
-            const squadraInput=document.getElementById('squadraFilterInput');
-            const sorteggioInput=document.getElementById('sorteggioInput');
-            if (sorteggioInput) sorteggioInput.value='true';
-            if (inizialeInput) inizialeInput.value=letter||'';
-            if (nomeInput) nomeInput.value='';
-            if (squadraInput) squadraInput.value='';
-                  const pageInput = document.getElementById('pageInput');
-        if (pageInput) pageInput.value = '1';
-                  document.getElementById('filtroForm').submit();
-          }
-
-          function renderLettersChips(){
-            const cont=document.getElementById('lettersChips');
-            if(!cont) return;
-            const archived=getArchivedLetters();
-            const selected=(new URLSearchParams(window.location.search).get('iniziale')||'').toUpperCase();
-            cont.innerHTML='';
-            ALPH.forEach(l=>{
-              const btn=document.createElement('button');
-              btn.type='button'; btn.className='letter-chip btn btn-sm';
-              if(archived.includes(l)) btn.classList.add('letter-archived');
-              if(selected===l) btn.classList.add('letter-selected');
-              btn.textContent=l;
-              btn.title=archived.includes(l)?'Lettera estratta (clic per renderla disponibile)':'Filtra per '+l;
-              btn.addEventListener('click', ()=>{
-                if(archived.includes(l)) setArchivedLetters(archived.filter(x=>x!==l));
-                applyInitialFilter(l);
-              });
-              cont.appendChild(btn);
+            connection.on("RiepilogoAggiornato",(data)=>{
+                const squads=(data&&(data.squads||data.squadre))?(data.squads||data.squadre):[];
+                squads.forEach(s=>{
+                    const cred=document.getElementById(`cred-${s.squadraId}`);
+                    const pmax=document.getElementById(`pmax-${s.squadraId}`);
+                    if(cred) cred.textContent=s.creditiDisponibili;
+                    if(pmax) pmax.textContent=s.puntataMassima;
+                    const btn=document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
+                    if(btn){ btn.dataset.crediti=s.creditiDisponibili; btn.dataset.pmax=s.puntataMassima; }
+                });
             });
-          }
 
-          // ===== SignalR: crea connessione SUBITO =====
-          const connection=new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-          window.connection=connection;
+            connection.on("MostraGiocatoreInAsta",(giocatore)=>{
+                document.getElementById('overlay-nome-giocatore').innerText=giocatore.nome;
+                document.getElementById('overlay-dettagli-giocatore').innerText=`${giocatore.ruolo} - ${giocatore.squadraReale}`;
+                document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
+                document.getElementById('overlay-offerta').innerText='0';
+                const offEl=document.getElementById('overlay-offerente'); offEl.innerText='In attesa di offerte...'; offEl.style.color='';
+                const logEl = document.getElementById('overlay-log'); if (logEl) logEl.innerHTML='';
+                setOverlayBg(giocatore.logoUrl || appLogoUrl);
+                appendLog('start', `Asta avviata per ${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`);
+                if (buzzerModeOn) {
+                    const offertaEl = document.getElementById('overlay-offerta');
+                    if (offertaEl) offertaEl.style.display = 'none';
+                    if (offEl) { offEl.innerText = 'In attesa del BUZZ...'; offEl.style.color = ''; }
+                } else {
+                    const offertaEl = document.getElementById('overlay-offerta');
+                    if (offertaEl) offertaEl.style.display = '';
+                }
 
-          // === HANDLERS HUB ===
-          connection.on("StatoAsta", (stato) => {
-            if (stato?.startUtc) {
-              const curr = localStorage.getItem(LS_START);
-              const incoming = new Date(stato.startUtc).getTime();
-              if (!curr || incoming < new Date(curr).getTime()) {
-                // imposta solo se non c'è o se è più vecchio (evita reset in avanti)
-                localStorage.setItem(LS_START, stato.startUtc);
-              }
-            }
+                const timerEl=document.getElementById('overlay-timer');
+                timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                document.querySelector('.asta-box-footer').style.display='block';
+                document.getElementById('asta-overlay').classList.add('visible');
 
-            if (typeof stato?.pausaAccumulataSec === 'number') {
-              localStorage.setItem(LS_PAUSE_ACC, String(stato.pausaAccumulataSec));
-            } else if (!localStorage.getItem(LS_PAUSE_ACC)) {
-              localStorage.setItem(LS_PAUSE_ACC, "0");
-            }
-
-            const pauseActive = !!stato?.pausaAttiva;
-            localStorage.setItem(LS_PAUSE_ACTIVE, pauseActive ? "true" : "false");
-            if (pauseActive) {
-              if (!localStorage.getItem(LS_PAUSE_AT)) {
-                localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
-              }
-              document.getElementById('btn-pausa').disabled = true;
-              document.getElementById('btn-riprendi').disabled = false;
-            } else {
-              localStorage.removeItem(LS_PAUSE_AT);
-              document.getElementById('btn-pausa').disabled = false;
-              document.getElementById('btn-riprendi').disabled = true;
-            }
-                    if (typeof stato?.buzzerAttivo === 'boolean') {
-          updateBuzzerUI(stato.buzzerAttivo);
-        }
-        updateBuzzerUI(!!stato?.buzzerAttivo);
-
-            startDurataLoop();
-          });
-
-          connection.on("RiepilogoAggiornato",(data)=>{
-            const squads=(data&&(data.squads||data.squadre))?(data.squads||data.squadre):[];
-            squads.forEach(s=>{
-              const cred=document.getElementById(`cred-${s.squadraId}`);
-              const pmax=document.getElementById(`pmax-${s.squadraId}`);
-              if(cred) cred.textContent=s.creditiDisponibili;
-              if(pmax) pmax.textContent=s.puntataMassima;
-              const btn=document.querySelector(`.btn-bonus[data-squadraid="${s.squadraId}"]`);
-              if(btn){ btn.dataset.crediti=s.creditiDisponibili; btn.dataset.pmax=s.puntataMassima; }
+                lastOffertaAdmin=0;
+                clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+                clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
             });
-          });
 
-          connection.on("MostraGiocatoreInAsta",(giocatore)=>{
-            // NON tocchiamo LS_START qui: lo gestisce StatoAsta
-            document.getElementById('overlay-nome-giocatore').innerText=giocatore.nome;
-            document.getElementById('overlay-dettagli-giocatore').innerText=`${giocatore.ruolo} - ${giocatore.squadraReale}`;
-            document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
-            document.getElementById('overlay-offerta').innerText='0';
-            const offEl=document.getElementById('overlay-offerente'); offEl.innerText='In attesa di offerte...'; offEl.style.color='';
-            const logEl = document.getElementById('overlay-log'); if (logEl) logEl.innerHTML='';
-            setOverlayBg(giocatore.logoUrl || appLogoUrl);
-            appendLog('start', `Asta avviata per ${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`);
-                    // Se Buzzer è attivo, nascondi l'importo e mostra testo coerente
-        if (isBuzzer) {
-          const offertaEl = document.getElementById('overlay-offerta');
-          if (offertaEl) offertaEl.style.display = 'none';
-          if (offEl) { offEl.innerText = 'In attesa del BUZZ...'; offEl.style.color = ''; }
-        } else {
-          const offertaEl = document.getElementById('overlay-offerta');
-          if (offertaEl) offertaEl.style.display = '';
-        }
+            connection.on("AggiornaDurataTimer",(nuoviSecondi)=>{
+                const s=parseInt(nuoviSecondi)||0;
+                if(s>0){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); const secInput=document.getElementById('secondiTimer'); if(secInput) secInput.value=s; }
+            });
 
-            const timerEl=document.getElementById('overlay-timer');
-            timerEl.innerText='--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-            document.querySelector('.asta-box-footer').style.display='block';
-            document.getElementById('asta-overlay').classList.add('visible');
+                  connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
+        document.getElementById('overlay-offerente').innerText=offerente||'-';
+        document.getElementById('overlay-offerta').innerText=offerta||0;
+        clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+        clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
 
-            lastOffertaAdmin=0;
-            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
-            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
-          });
+        const timerEl=document.getElementById('overlay-timer');
 
-          connection.on("AggiornaDurataTimer",(nuoviSecondi)=>{
-            const s=parseInt(nuoviSecondi)||0;
-            if(s>0){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); const secInput=document.getElementById('secondiTimer'); if(secInput) secInput.value=s; }
-          });
-
-          connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
-            document.getElementById('overlay-offerente').innerText=offerente||'-';
-            document.getElementById('overlay-offerta').innerText=offerta||0;
-
-            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
-            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
-
-            const timerEl=document.getElementById('overlay-timer');
-
-        // In Buzzer l'offerta può essere 0: NON uscire se c'è fineUtc
         if (!fineUtc) {
           timerEl.innerText = '--';
           timerEl.classList.remove('timer-green','timer-yellow','timer-red');
           lastOffertaAdmin = offerta || 0;
           return;
         }
-
-        // Se siamo in Buzzer e l'offerta è 0, mostra un trattino ma fai partire il timer
-        if (!offerta || offerta <= 0) {
+        if (buzzerModeOn) {
           const valEl = document.getElementById('overlay-offerta');
           if (valEl) valEl.textContent = '—';
         }
+        const isRealBid=(offerta > (lastOffertaAdmin||0));
+        if(isRealBid){
+          // Rimuovi la riproduzione del suono da qui.
+          // try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch{}
+          appendLog('bid', `${offerente} offre ${offerta}`);
+        }
+        lastOffertaAdmin=offerta;
 
+                const end=new Date(fineUtc);
 
-            const isRealBid=(offerta > (lastOffertaAdmin||0));
-            if(isRealBid){
-              try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch{}
-              appendLog('bid', `${offerente} offre ${offerta}`);
+                const paint=(sec)=>{
+                    timerEl.innerText=sec;
+                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                    if(sec>5) timerEl.classList.add('timer-green');
+                    else if(sec>=4) timerEl.classList.add('timer-yellow');
+                    else timerEl.classList.add('timer-red');
+                };
 
-            }
-            lastOffertaAdmin=offerta;
+                let prevSec=-1;
+                const tick=()=>{
+                    const msLeft=end.getTime()-Date.now();
+                    const sec=Math.max(0, Math.ceil(msLeft/1000));
 
-            const end=new Date(fineUtc);
+                    if(sec!==prevSec){
+                        paint(sec);
+                        if(sec>0 && sec <= 10 && prevSec!==-1){
+                            try{ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play().catch(()=>{}); }catch{}
+                        }
+                        prevSec=sec;
+                        if(sec===0){ clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null; return; }
+                    }
 
-            const paint=(sec)=>{
-              timerEl.innerText=sec;
-              timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-              if(sec>5) timerEl.classList.add('timer-green');
-              else if(sec>=4) timerEl.classList.add('timer-yellow');
-              else timerEl.classList.add('timer-red');
-            };
+                    const nextDelay=Math.max(20, msLeft - (sec-1)*1000 + 2);
+                    countdownTimerAdmin=setTimeout(tick,nextDelay);
+                };
+                tick();
 
-            let prevSec=-1;
-            const tick=()=>{
-              const msLeft=end.getTime()-Date.now();
-              const sec=Math.max(0, Math.ceil(msLeft/1000));
-
-              if(sec!==prevSec){
-                paint(sec);
-                if(sec>0 && prevSec!==-1){
-                  try{ const beep=document.getElementById('suono-countdown'); beep.currentTime=0; beep.play().catch(()=>{}); }catch{}
+                const msRemaining=end.getTime()-Date.now();
+                if(msRemaining>0){
+                    closeTimeoutAdmin=setTimeout(()=>{ connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString())); }, msRemaining+2);
+                }else{
+                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
                 }
-                prevSec=sec;
-                if(sec===0){ clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null; return; }
-              }
+            });
 
-              const nextDelay=Math.max(20, msLeft - (sec-1)*1000 + 2);
-              countdownTimerAdmin=setTimeout(tick,nextDelay);
-            };
-            tick();
+            connection.on("Buzz", (offerente, fineUtc) => {
+                const offEl = document.getElementById('overlay-offerente');
+                if (offEl) offEl.innerText = offerente || '-';
 
-            const msRemaining=end.getTime()-Date.now();
-            if(msRemaining>0){
-              closeTimeoutAdmin=setTimeout(()=>{ connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString())); }, msRemaining+2);
-            }else{
-              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err=>console.error(err.toString()));
+                try {
+                    const s = document.getElementById('suono-offerta');
+                    s.currentTime = 0;
+                    s.play().catch(()=>{});
+                } catch {}
+
+                const valEl = document.getElementById('overlay-offerta');
+                if (valEl) valEl.innerText = '—';
+
+                clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
+                clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin = null;
+
+                const timerEl = document.getElementById('overlay-timer');
+
+                if (!fineUtc) {
+                    if (timerEl) {
+                        timerEl.innerText = '--';
+                        timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                    }
+                    return;
+                }
+
+                appendLog('bid', `BUZZ da ${offerente}`);
+
+                const end = new Date(fineUtc);
+                const paint = (sec) => {
+                    if (!timerEl) return;
+                    timerEl.innerText = sec;
+                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+                    if (sec > 5) timerEl.classList.add('timer-green');
+                    else if (sec >= 4) timerEl.classList.add('timer-yellow');
+                    else timerEl.classList.add('timer-red');
+                };
+
+                let prevSec = -1;
+                const tick = () => {
+                    const msLeft = end.getTime() - Date.now();
+                    const sec = Math.max(0, Math.ceil(msLeft / 1000));
+
+                    if (sec !== prevSec) {
+                        paint(sec);
+                        if (sec > 0 && sec <= 10 && prevSec !== -1) {
+                            try { const beep = document.getElementById('suono-countdown'); beep.currentTime = 0; beep.play().catch(()=>{}); } catch {}
+                        }
+                        prevSec = sec;
+                        if (sec === 0) { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; return; }
+                    }
+                    const nextDelay = Math.max(20, msLeft - (sec - 1) * 1000 + 2);
+                    countdownTimerAdmin = setTimeout(tick, nextDelay);
+                };
+                tick();
+
+                const msRemaining = end.getTime() - Date.now();
+                if (msRemaining > 0) {
+                    closeTimeoutAdmin = setTimeout(() => {
+                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+                    }, msRemaining + 2);
+                } else {
+                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+                }
+            });
+
+            connection.on("BuzzerRichiediImporto", (p) => {
+                const id       = p?.giocatoreId || 0;
+                const nome     = p?.nomeGiocatore || '—';
+                const offer    = p?.offerente || '-';
+                const squadraIdPreferita = p?.squadraId || null;
+
+                document.getElementById('buzzerGiocatoreId').value = String(id);
+                document.getElementById('buzzerNomeGiocatore').textContent = nome;
+                document.getElementById('buzzerOfferente').textContent = offer;
+                document.getElementById('buzzerCostoInput').value = '1';
+
+                const bg = document.getElementById('bg-buzzer');
+                if (bg) bg.style.backgroundImage = `url('${appLogoUrl}')`;
+                const logo = document.getElementById('buzzerLogo');
+                if (logo) logo.src = appLogoUrl;
+
+                const sel = document.getElementById('buzzerSquadraSelect');
+                sel.innerHTML = '';
+                (window.squadreArr || []).forEach(s => {
+                    const o = document.createElement('option');
+                    o.value = s.SquadraId;
+                    o.textContent = s.Nickname;
+                    sel.appendChild(o);
+                });
+
+                if (squadraIdPreferita) {
+                    sel.value = String(squadraIdPreferita);
+                } else if (offer) {
+                    const match = (window.squadreArr || []).find(x => (x.Nickname || '').toLowerCase() === String(offer).toLowerCase());
+                    if (match) sel.value = String(match.SquadraId);
+                }
+
+                bootstrap.Modal.getOrCreateInstance(document.getElementById('buzzerModal')).show();
+            });
+
+            connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
+                clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
+                clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin   = null;
+
+                try { const v = document.getElementById('suono-vittoria'); v.currentTime = 0; v.play().catch(()=>{}); } catch {}
+
+                const offEl = document.getElementById('overlay-offerente');
+                const offVal = document.getElementById('overlay-offerta');
+
+                if (buzzerModeOn) {
+                    if (offEl) { offEl.innerText = `${vincitore} ha buzzato per primo. Inserire importo nella modale.`; offEl.style.color = '#2ecc71'; }
+                    if (offVal) offVal.innerText = '—';
+                    appendLog('win', `${nomeGiocatore} → ${vincitore} (Buzzer: in attesa importo)`);
+
+                    const footer = document.querySelector('.asta-box-footer');
+                    if (footer) footer.style.display = 'none';
+                    setTimeout(() => { document.getElementById('asta-overlay')?.classList.remove('visible'); }, 800);
+                    return;
+                }
+
+                if (offEl) { offEl.innerText = `AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color = '#2ecc71'; }
+                if (offVal) offVal.innerText = prezzo || 0;
+                appendLog('win', `${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`);
+                document.querySelector('.asta-box-footer').style.display='none';
+                setTimeout(() => {
+                    document.getElementById('asta-overlay')?.classList.remove('visible');
+                    setTimeout(() => location.reload(), 600);
+                }, 1600);
+
+            });
+
+            connection.on("AstaAnnullata",()=>{
+                clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
+                clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+                document.getElementById('asta-overlay').classList.remove('visible');
+                appendLog('cancel', 'Asta annullata dall’amministratore.');
+            });
+
+            connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
+
+        connection.on("AstaPausa", () => {
+          // 1) Se ero in STOP, finalizza lo STOP e chiudilo
+          if (localStorage.getItem(LS_STOP_ACTIVE) === "true") {
+            const atIso = localStorage.getItem(LS_STOP_AT);
+            if (atIso) {
+              const delta = Math.max(0, Math.floor((Date.now() - new Date(atIso).getTime()) / 1000));
+              const acc   = parseInt(localStorage.getItem(LS_STOP_ACC) || "0");
+              localStorage.setItem(LS_STOP_ACC, String(acc + delta));
             }
-          });
+            localStorage.setItem(LS_STOP_ACTIVE, "false");
+            localStorage.removeItem(LS_STOP_AT);
+          }
 
-                  connection.on("Buzz", (offerente, fineUtc) => {
-          // offerta numerica non usata in Buzzer
-          const offEl = document.getElementById('overlay-offerente');
-          if (offEl) offEl.innerText = offerente || '-';
+          // 2) Attiva PAUSA (non sovrascrivere l'istante se già presente)
+          localStorage.setItem(LS_PAUSE_ACTIVE, "true");
+          if (!localStorage.getItem(LS_PAUSE_AT)) {
+            localStorage.setItem(LS_PAUSE_AT, new Date().toISOString());
+          }
 
-                  try {
-          const s = document.getElementById('suono-offerta');
-          s.currentTime = 0;
-          s.play().catch(()=>{});
-        } catch {}
+          // 3) UI
+          document.getElementById('btn-pausa').disabled = true;
+          document.getElementById('btn-riprendi').disabled = false;
 
-
-          const valEl = document.getElementById('overlay-offerta');
-          if (valEl) valEl.innerText = '—';
-
-          // azzera timer locali
           clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
-          clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin = null;
+          clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin  = null;
 
-          const timerEl = document.getElementById('overlay-timer');
-
-          if (!fineUtc) {
-            if (timerEl) {
-              timerEl.innerText = '--';
-              timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-            }
-            return;
+          const t = document.getElementById('overlay-timer');
+          if (t) {
+            t.textContent = 'PAUSA';
+            t.classList.remove('timer-green','timer-yellow','timer-red');
           }
-
-          // log carino
-          appendLog('bid', `BUZZ da ${offerente}`);
-
-          const end = new Date(fineUtc);
-          const paint = (sec) => {
-            if (!timerEl) return;
-            timerEl.innerText = sec;
-            timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-            if (sec > 5) timerEl.classList.add('timer-green');
-            else if (sec >= 4) timerEl.classList.add('timer-yellow');
-            else timerEl.classList.add('timer-red');
-          };
-
-          let prevSec = -1;
-          const tick = () => {
-            const msLeft = end.getTime() - Date.now();
-            const sec = Math.max(0, Math.ceil(msLeft / 1000));
-
-            if (sec !== prevSec) {
-              paint(sec);
-              if (sec > 0 && prevSec !== -1) {
-                try { const beep = document.getElementById('suono-countdown'); beep.currentTime = 0; beep.play().catch(()=>{}); } catch {}
-              }
-              prevSec = sec;
-              if (sec === 0) { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; return; }
-            }
-            const nextDelay = Math.max(20, msLeft - (sec - 1) * 1000 + 2);
-            countdownTimerAdmin = setTimeout(tick, nextDelay);
-          };
-          tick();
-
-          const msRemaining = end.getTime() - Date.now();
-          if (msRemaining > 0) {
-            closeTimeoutAdmin = setTimeout(() => {
-              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-            }, msRemaining + 2);
-          } else {
-            connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-          }
-        });
-
-          
-          // === BUZZ: solo offerente + timer, nessun importo ===
-        connection.on("Buzz", (offerente, fineUtc) => {
           const offEl = document.getElementById('overlay-offerente');
-          if (offEl) { offEl.innerText = offerente || '-'; offEl.style.color = ''; }
+          if (offEl) { offEl.innerText = 'Asta in pausa…'; offEl.style.color = '#f1c40f'; }
 
-          clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
-          clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin = null;
-
-          const timerEl = document.getElementById('overlay-timer');
-          if (!fineUtc) {
-            if (timerEl) { timerEl.innerText = '--'; timerEl.classList.remove('timer-green','timer-yellow','timer-red'); }
-            return;
-          }
-
-          const end = new Date(fineUtc);
-          let prevSec = -1;
-
-          const paint = (sec) => {
-            if (!timerEl) return;
-            timerEl.innerText = sec;
-            timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-            if (sec > 5) timerEl.classList.add('timer-green');
-            else if (sec >= 4) timerEl.classList.add('timer-yellow');
-            else timerEl.classList.add('timer-red');
-          };
-
-          const tick = () => {
-            const msLeft = end.getTime() - Date.now();
-            const sec = Math.max(0, Math.ceil(msLeft/1000));
-            if (sec !== prevSec) {
-              paint(sec);
-              if (sec === 0) { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; return; }
-              prevSec = sec;
-            }
-            const nextDelay = Math.max(20, msLeft - (sec-1)*1000 + 2);
-            countdownTimerAdmin = setTimeout(tick, nextDelay);
-          };
-          tick();
-
-          const msRemaining = end.getTime() - Date.now();
-          if (msRemaining > 0) {
-            closeTimeoutAdmin = setTimeout(() => {
-              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-            }, msRemaining + 2);
-          } else {
-            connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-          }
-        });
-
-        // === BuzzerRichiediImporto: ri-usa la modale Assegna ===
-        connection.on("BuzzerRichiediImporto", (p) => {
-          try {
-            const id = p?.giocatoreId;
-            const nome = p?.nomeGiocatore || '';
-            const ruolo = p?.ruolo || '';
-            const squadraReale = p?.squadraReale || '';
-            const logo = p?.logoUrl || appLogoUrl;
-            const preSelSquadraId = p?.squadraId || null;
-
-            document.getElementById('idGiocatoreModale').value = id;
-            document.getElementById('nomeGiocatoreModale').innerText = nome;
-            document.getElementById('dettagliGiocatoreAssegna').innerText =
-              (ruolo && squadraReale) ? `Ruolo: ${ruolo} - Squadra: ${squadraReale}` : '';
-            document.getElementById('logoGiocatoreAssegna').src = logo;
-            const bgA = document.getElementById('bg-assegna');
-            if (bgA) bgA.style.backgroundImage = logo ? `url('${logo}')` : 'none';
-
-            const sel = document.getElementById('squadraSelectAssegna');
-            sel.innerHTML = '';
-            (squadreArr || []).forEach(s => {
-              const o = document.createElement('option');
-              o.value = s.SquadraId;
-              o.innerText = s.Nickname;
-              sel.appendChild(o);
-            });
-            if (preSelSquadraId) sel.value = String(preSelSquadraId);
-
-            const costo = document.getElementById('costoAssegnaInput');
-            if (costo) costo.value = '0';
-
-            document.getElementById('asta-overlay')?.classList.remove('visible');
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('assegnaModal')).show();
-          } catch { /* no-op */ }
-        });
-
-          connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
-                    clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
-        clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin  = null;
-
-        try { const v = document.getElementById('suono-vittoria'); v.currentTime = 0; v.play().catch(()=>{}); } catch {}
-
-        const offEl = document.getElementById('overlay-offerente');
-        const offVal = document.getElementById('overlay-offerta');
-
-        if (buzzerModeOn) {
-          // In Buzzer il prezzo numerico non è definitivo; niente reload, aprirà la modale dedicata.
-          if (offEl) { offEl.innerText = `${vincitore} ha buzzato per primo. Inserire importo nella modale.`; offEl.style.color = '#2ecc71'; }
-          if (offVal) offVal.innerText = '—';
-          appendLog('win', `${nomeGiocatore} → ${vincitore} (Buzzer: in attesa importo)`);
-
-          // nascondi footer Annulla, chiudi overlay dopo un attimo, ma NON ricaricare
-          const footer = document.querySelector('.asta-box-footer');
-          if (footer) footer.style.display = 'none';
-          setTimeout(() => { document.getElementById('asta-overlay')?.classList.remove('visible'); }, 800);
-          return; // <-- fondamentale per evitare il reload automatico
-        }
-
-        // Modalità classica (non Buzzer): messaggio standard + reload
-        if (offEl) { offEl.innerText = `AGGIUDICATO a ${vincitore} per ${prezzo} crediti!`; offEl.style.color = '#2ecc71'; }
-        if (offVal) offVal.innerText = prezzo || 0;
-        appendLog('win', `${nomeGiocatore} → ${vincitore} (${prezzo} crediti)`);
-        document.querySelector('.asta-box-footer').style.display='none';
-        setTimeout(() => {
-          document.getElementById('asta-overlay')?.classList.remove('visible');
-          setTimeout(() => location.reload(), 600);
-        }, 1600);
-
-          });
-                  connection.on("BuzzerRichiediImporto", (payload) => {
-          // payload: { giocatoreId, nomeGiocatore, offerente, squadraId? }
-          const id       = payload?.giocatoreId || 0;
-          const nome     = payload?.nomeGiocatore || '—';
-          const offer    = payload?.offerente || '-';
-          const squadraIdPreferita = payload?.squadraId || null;
-
-          // campi modale
-          document.getElementById('buzzerGiocatoreId').value = String(id);
-          document.getElementById('buzzerNomeGiocatore').textContent = nome;
-          document.getElementById('buzzerOfferente').textContent = offer;
-          document.getElementById('buzzerCostoInput').value = '1';
-
-          // watermark/logo
-          const bg = document.getElementById('bg-buzzer');
-          if (bg) bg.style.backgroundImage = `url('${appLogoUrl}')`;
-          const logo = document.getElementById('buzzerLogo');
-          if (logo) logo.src = appLogoUrl;
-
-          // popola select squadre
-          const sel = document.getElementById('buzzerSquadraSelect');
-          sel.innerHTML = '';
-          (window.squadreArr || []).forEach(s => {
-            const o = document.createElement('option');
-            o.value = s.SquadraId;
-            o.textContent = s.Nickname;
-            sel.appendChild(o);
-          });
-
-          // preseleziona: prima per id, altrimenti per nickname offerente
-          if (squadraIdPreferita) {
-            sel.value = String(squadraIdPreferita);
-          } else if (offer) {
-            const match = (window.squadreArr || []).find(x => (x.Nickname || '').toLowerCase() === String(offer).toLowerCase());
-            if (match) sel.value = String(match.SquadraId);
-          }
-
-          bootstrap.Modal.getOrCreateInstance(document.getElementById('buzzerModal')).show();
-        });
-
-          connection.on("AstaAnnullata",()=>{
-            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
-            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
-            document.getElementById('asta-overlay').classList.remove('visible');
-            appendLog('cancel', 'Asta annullata dall’amministratore.');
-            // niente reset della durata globale qui
-          });
-
-          connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
-
-          connection.on("AstaPausa",()=>{
-            localStorage.setItem(LS_PAUSE_ACTIVE,"true");
-            localStorage.setItem(LS_PAUSE_AT,new Date().toISOString());
-            document.getElementById('btn-pausa').disabled=true;
-            document.getElementById('btn-riprendi').disabled=false;
-
-            clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
-            clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
-
-            const t=document.getElementById('overlay-timer'); if(t){ t.textContent='PAUSA'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
-            const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta in pausa…'; offEl.style.color='#f1c40f'; }
-            paintDurata();
-            appendLog('paused', 'Asta in pausa');
-          });
-
-          connection.on("AstaRipresa",()=>{
-            const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
-            const acc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
-            if(pauseAtIso){
-              const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
-              localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
-            }
-            localStorage.setItem(LS_PAUSE_ACTIVE,"false");
-            localStorage.removeItem(LS_PAUSE_AT);
-            document.getElementById('btn-pausa').disabled=false;
-            document.getElementById('btn-riprendi').disabled=true;
-
-            const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta ripresa'; offEl.style.color=''; }
-            paintDurata();
-            appendLog('resumed', 'Asta ripresa');
-
-            try{ connection.invoke("RichiediStatoAttuale"); }catch{}
-          });
-
-          connection.on("DurataResettata", resetDurataLocal);
-
-          connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
-            mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
-            const inputNome=document.querySelector('#filtroForm input[name="nome"]');
-            if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
-          });
-
-                  connection.on("BuzzerModeChanged",  (p) => updateBuzzerUI(!!p?.attivo));
-        connection.on("BuzzerModeAggiornato", (p) => updateBuzzerUI(!!p?.buzzerAttivo));
-
-          // ====== DOM READY ======
-          document.addEventListener('DOMContentLoaded', function(){
-                      const _log = document.getElementById('overlay-log');
-        if (_log) {
-          _log.style.fontFamily = '"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace';
-          _log.style.fontVariantNumeric = 'tabular-nums';
-          _log.style.letterSpacing = '.2px';
-        }
-
-              document.getElementById('asta-overlay')?.classList.remove('visible');
-                      // Allinea la UI al valore corrente dello switch (prima di eventuali eventi hub)
-        updateBuzzerUI(document.getElementById('buzzerSwitch')?.checked);
-
-            // pulizia ?bp=
-            try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
-
-            // squadre per modale Assegna
-        let squadreArr = [];
-        try { squadreArr = @Html.Raw(squadreJson) || []; } catch (e) { squadreArr = []; }
-        window.squadreArr = squadreArr;
-
-
-
-            const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-
-            // Timer input init (server -> fallback localStorage)
-            (function initTimerInput(){
-              const secInput=document.getElementById('secondiTimer');
-              if (!secInput) return;
-              const s=(Number.isFinite(durataTimer) && durataTimer>0) ? durataTimer : parseInt(localStorage.getItem(LS_DEFAULT_TIMER)||'0');
-              if(s>0) secInput.value=s;
-            })();
-                    const elBonus = document.getElementById('bonusModal');
-        if (elBonus) {
-          elBonus.addEventListener('hidden.bs.modal', () => {
-            const bg = document.getElementById('bg-bonus');
-            if (bg) bg.style.backgroundImage = 'none';
-          });
-        }
-
-        const elMsg = document.getElementById('messaggioModale');
-        if (elMsg) {
-          elMsg.addEventListener('hidden.bs.modal', () => {
-            const bg = document.getElementById('bg-msg');
-            if (bg) bg.style.backgroundImage = 'none';
-          });
-        }
-
-            // FILTRI
-            const urlParams=new URLSearchParams(window.location.search);
-            const nomeFilter=document.getElementById('nomeFilterInput');
-            if (urlParams.has('nome') && urlParams.get('nome')!=='' && nomeFilter){
-              nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
-            }
-            const squadraFilter=document.getElementById('squadraFilterInput');
-            nomeFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
-            squadraFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
-
-            // Toggle liste riepilogo
-            document.querySelectorAll('table.table-bordered.table-sm button.btn-toggle-rosa').forEach(btn=>{
-              if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
-              btn.addEventListener('click',(ev)=>{ ev.preventDefault(); ev.stopPropagation(); const td=btn.closest('td'); const ul=td?.querySelector('ul'); if(ul) ul.classList.toggle('d-none'); });
-
-                    // pulizia watermark quando i modali vengono chiusi
-        
-
-            });
-            const elAssegna = document.getElementById('assegnaModal');
-        if (elAssegna) {
-          elAssegna.addEventListener('hidden.bs.modal', () => {
-            const bg = document.getElementById('bg-assegna');
-            if (bg) bg.style.backgroundImage = 'none';
-          });
-        }
-
-        const elSvincola = document.getElementById('svincolaModal');
-        if (elSvincola) {
-          elSvincola.addEventListener('hidden.bs.modal', () => {
-            const bg = document.getElementById('bg-svincola');
-            if (bg) bg.style.backgroundImage = 'none';
-          });
-        }
-
-            // Delegation Asta/Assegna
-            document.addEventListener('click', async (ev) => {
-              const btnAsta = ev.target.closest('.btn-avvia-asta');
-              const btnAssegna = ev.target.closest('.btn-assegna');
-
-                      if (btnAsta) {
-          ev.preventDefault();
-          try {
-            const id = btnAsta.dataset.id;
-            const mantra = btnAsta.dataset.mantra === 'true';
-
-            const r = await fetch('/Admin/AvviaAsta', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
-                'RequestVerificationToken': antiToken
-              },
-              body: `id=${encodeURIComponent(id)}&mantra=${mantra}&lega=${encodeURIComponent(legaAliasAdmin)}`
-            }); // <<<<< QUI si chiude correttamente la fetch
-
-            if (!r.ok) { await mostraMessaggio('Errore', 'Errore avvio asta.'); return; }
-
-            const overlay = document.getElementById('asta-overlay');
-            if (overlay) {
-              document.getElementById('overlay-nome-giocatore').innerText = '…';
-              document.getElementById('overlay-dettagli-giocatore').innerText = 'In attesa…';
-              document.getElementById('overlay-offerta').innerText = '0';
-              document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
-              document.getElementById('overlay-timer').innerText = '--';
-              overlay.classList.add('visible');
-            }
-            try { if (window.connection) await window.connection.invoke("RichiediStatoAttuale"); } catch {}
-          } catch {
-            await mostraMessaggio('Errore', 'Impossibile avviare l’asta.');
-          }
-          return;
-        }
-
-
-
-                
-
-              if (btnAssegna) {
-                ev.preventDefault();
-                try{
-                  const id=btnAssegna.dataset.id, nome=btnAssegna.dataset.nome||'', ruolo=btnAssegna.dataset.ruolo||'', squadra=btnAssegna.dataset.squadra||'', logo=btnAssegna.dataset.logo||'';
-                  document.getElementById('idGiocatoreModale').value=id;
-                  document.getElementById('nomeGiocatoreModale').innerText=nome;
-                  document.getElementById('dettagliGiocatoreAssegna').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
-                  document.getElementById('logoGiocatoreAssegna').src=logo;
-                          const bgA = document.getElementById('bg-assegna');
-        if (bgA) bgA.style.backgroundImage = logo ? `url('${logo}')` : 'none';
-
-
-                          // PRIMA cercavi 'squadraSelect'
-        const sel = document.getElementById('squadraSelectAssegna');
-        sel.innerHTML = '';
-        (squadreArr || []).forEach(s => {
-          const o = document.createElement('option');
-          o.value = s.SquadraId;
-          o.innerText = s.Nickname;
-          sel.appendChild(o);
+          paintDurata();
+          appendLog('paused', 'Asta in pausa');
         });
 
 
-                  bootstrap?.Modal?.getOrCreateInstance?.(document.getElementById('assegnaModal'))?.show();
-                }catch{ await mostraMessaggio('Errore','Impossibile aprire la modale di assegnazione.'); }
-                return;
-              }
+            connection.on("AstaRipresa",()=>{
+                const pauseAtIso=localStorage.getItem(LS_PAUSE_AT);
+                const acc=parseInt(localStorage.getItem(LS_PAUSE_ACC)||"0");
+                if(pauseAtIso){
+                    const delta=Math.max(0, Math.floor((Date.now()-new Date(pauseAtIso).getTime())/1000));
+                    localStorage.setItem(LS_PAUSE_ACC, String(acc+delta));
+                }
+                localStorage.setItem(LS_PAUSE_ACTIVE,"false");
+                localStorage.removeItem(LS_PAUSE_AT);
+                document.getElementById('btn-pausa').disabled=false;
+                document.getElementById('btn-riprendi').disabled=true;
+
+                const offEl=document.getElementById('overlay-offerente'); if(offEl){ offEl.innerText='Asta ripresa'; offEl.style.color=''; }
+                paintDurata();
+                appendLog('resumed', 'Asta ripresa');
+
+                try{ connection.invoke("RichiediStatoAttuale"); }catch{}
             });
 
-            // Svincolo
-            window.apriModaleSvincolo=function(btn){
-              const id=btn.dataset.id, nome=btn.dataset.nome||'', costo=parseInt(btn.dataset.costo)||0, squadra=btn.dataset.squadra||'', logo=btn.dataset.logo||'', ruolo=btn.dataset.ruolo||'';
-                      const bgS = document.getElementById('bg-svincola');
-        if (bgS) bgS.style.backgroundImage = (logo ? `url('${logo}')` : 'none');
-        document.getElementById('idGiocatoreSvincola').value=id;
-              document.getElementById('costoOriginaleSvincolo').innerText=costo;
-              const input=document.getElementById('creditiSvincoloInput'); if(input){ input.min=0; input.removeAttribute('max'); input.value=String(costo); }
-              document.getElementById('logoGiocatoreSvincola').src=logo;
-              document.getElementById('nomeGiocatoreSvincolo').innerText=nome;
-              document.getElementById('dettagliGiocatoreSvincola').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
-              bootstrap.Modal.getOrCreateInstance(document.getElementById('svincolaModal')).show();
-            };
+            connection.on("DurataResettata", resetDurataLocal);
 
-            document.getElementById('btnConfermaSvincolo')?.addEventListener('click',()=>{
-              const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
-              let crediti=parseInt(document.getElementById('creditiSvincoloInput').value); if(isNaN(crediti)||crediti<0) crediti=0;
-              fetch('/Admin/SvincolaGiocatore',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ id, creditiRestituiti:crediti }) })
-                .then(r=>{ if(r.ok) location.reload(); else mostraMessaggio('Errore','Errore durante lo svincolo.'); });
-            });
-                    // ===== Modifica costo =====
-        let modCostoBtnRef = null;
-
-        window.apriModaleModificaCosto = function(btn) {
-          modCostoBtnRef = btn;
-          const id = parseInt(btn.dataset.id);
-          const nome = btn.dataset.nome || '';
-          const ruolo = btn.dataset.ruolo || '';
-          const squadra = btn.dataset.squadra || '';
-          const logo = btn.dataset.logo || '';
-          const costo = parseInt(btn.dataset.costo) || 0;
-          const squadraId = parseInt(btn.dataset.squadraid) || 0;
-
-          document.getElementById('modCostoGiocatoreId').value = id;
-          document.getElementById('modCostoSquadraId').value = squadraId;
-          document.getElementById('modCostoNome').innerText = nome;
-          document.getElementById('modCostoDettagli').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
-          document.getElementById('modCostoLogo').src = logo;
-          document.getElementById('modCostoCorrente').innerText = String(costo);
-          document.getElementById('modCostoInput').value = String(costo);
-
-          const bg = document.getElementById('bg-modcosto');
-          if (bg) bg.style.backgroundImage = logo ? `url('${logo}')` : 'none';
-
-          bootstrap.Modal.getOrCreateInstance(document.getElementById('modificaCostoModal')).show();
-        };
-
-        document.getElementById('modificaCostoModal')?.addEventListener('hidden.bs.modal', () => {
-          const bg = document.getElementById('bg-modcosto');
-          if (bg) bg.style.backgroundImage = 'none';
-        });
-
-        document.getElementById('btnConfermaModificaCosto')?.addEventListener('click', async () => {
-          const idGioc = parseInt(document.getElementById('modCostoGiocatoreId').value);
-          const nuovoCosto = parseInt(document.getElementById('modCostoInput').value);
-          if (!Number.isFinite(nuovoCosto) || nuovoCosto < 0) {
-            await mostraMessaggio('Valore non valido', 'Inserisci un numero >= 0');
-            return;
-          }
-
-          try {
-            const r = await fetch('/Admin/ModificaCostoGiocatore', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-              },
-              body: JSON.stringify({ giocatoreId: idGioc, nuovoCosto })
+            connection.on("GiocatoreSuggerito",(giocatore, suggeritore)=>{
+                mostraMessaggio("Suggerimento Ricevuto", `${suggeritore} ha suggerito: ${giocatore.nome}`);
+                const inputNome=document.querySelector('#filtroForm input[name="nome"]');
+                if(inputNome){ inputNome.value=giocatore.nome; document.getElementById('filtroForm').submit(); }
             });
 
-            if (!r.ok) {
-              let msg = 'Errore durante l’aggiornamento del costo.';
-              try {
-                const data = await r.json();
-                if (data && (data.message || data.error)) msg = data.message || data.error;
-              } catch {}
-              await mostraMessaggio('Operazione bloccata', msg);
-              return;
-            }
+            connection.on("BuzzerModeChanged",  (p) => updateBuzzerUI(!!p?.attivo));
+            connection.on("BuzzerModeAggiornato",(p) => updateBuzzerUI(!!p?.buzzerAttivo));
 
-            const data = await r.json();
+            document.addEventListener('DOMContentLoaded', function(){
+                const _log = document.getElementById('overlay-log');
+                if (_log) {
+                    _log.style.fontFamily = '"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace';
+                    _log.style.fontVariantNumeric = 'tabular-nums';
+                    _log.style.letterSpacing = '.2px';
+                }
 
-            // Aggiorna UI locale del <li> (testo costo) e i dataset dei bottoni
-            if (modCostoBtnRef) {
-              const li = modCostoBtnRef.closest('li');
-              if (li) {
-                // aggiorna lo span "(costo)"
-                const spanCosto = li.querySelector('span.text-nowrap.small');
-                if (spanCosto) spanCosto.textContent = `(${nuovoCosto})`;
+                document.getElementById('asta-overlay')?.classList.remove('visible');
+                updateBuzzerUI(document.getElementById('buzzerSwitch')?.checked);
 
-                // aggiorna dataset del bottone MODIFICA
-                modCostoBtnRef.dataset.costo = String(nuovoCosto);
+                try{ const url=new URL(window.location.href); if (url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
 
-                // aggiorna dataset del bottone SVINCOLA (se presente)
-        const btnSvincola = li.querySelector('button[data-role="btn-svincola"]');
-        if (btnSvincola) btnSvincola.dataset.costo = String(nuovoCosto);
+                let squadreArr = [];
+                try { squadreArr = @Html.Raw(squadreJson) || []; } catch (e) { squadreArr = []; }
+                window.squadreArr = squadreArr;
 
-              }
-            }
+                const antiToken = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
 
-            // Chiudi modale
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('modificaCostoModal')).hide();
+                (function initTimerInput(){
+                    const secInput=document.getElementById('secondiTimer');
+                    if (!secInput) return;
+                    const s=(Number.isFinite(durataTimer) && durataTimer>0) ? durataTimer : parseInt(localStorage.getItem(LS_DEFAULT_TIMER)||'0');
+                    if(s>0) secInput.value=s;
+                })();
+                const elBonus = document.getElementById('bonusModal');
+                if (elBonus) {
+                    elBonus.addEventListener('hidden.bs.modal', () => {
+                        const bg = document.getElementById('bg-bonus');
+                        if (bg) bg.style.backgroundImage = 'none';
+                    });
+                }
 
-            // Info utente
-            await mostraMessaggio('OK', 'Costo aggiornato correttamente.');
+                const elMsg = document.getElementById('messaggioModale');
+                if (elMsg) {
+                    elMsg.addEventListener('hidden.bs.modal', () => {
+                        const bg = document.getElementById('bg-msg');
+                        if (bg) bg.style.backgroundImage = 'none';
+                    });
+                }
 
-            // Il broadcast "RiepilogoAggiornato" dal server aggiornerà crediti/puntata max
-          } catch {
-            await mostraMessaggio('Errore', 'Errore di rete durante l’aggiornamento.');
-          }
-        });
-                // Ripulisci watermark alla chiusura
-        document.getElementById('buzzerModal')?.addEventListener('hidden.bs.modal', () => {
-          const bg = document.getElementById('bg-buzzer');
-          if (bg) bg.style.backgroundImage = 'none';
-        });
+                const urlParams=new URLSearchParams(window.location.search);
+                const nomeFilter=document.getElementById('nomeFilterInput');
+                if (urlParams.has('nome') && urlParams.get('nome')!=='' && nomeFilter){
+                    nomeFilter.focus(); const v=nomeFilter.value; nomeFilter.value=''; nomeFilter.value=v;
+                }
+                const squadraFilter=document.getElementById('squadraFilterInput');
+                nomeFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
+                squadraFilter?.addEventListener('input', ()=>{ const i=document.getElementById('inizialeInput'); if(i) i.value=''; submitFormDebounced(); });
 
-        document.getElementById('btnConfermaBuzzer')?.addEventListener('click', async () => {
-          const giocId   = parseInt(document.getElementById('buzzerGiocatoreId').value);
-          const squadraId= parseInt(document.getElementById('buzzerSquadraSelect').value);
-          const costo    = parseInt(document.getElementById('buzzerCostoInput').value);
+                document.querySelectorAll('table.table-bordered.table-sm button.btn-toggle-rosa').forEach(btn=>{
+                    if (btn.getAttribute('onclick')?.includes('toggleLista(')) btn.removeAttribute('onclick');
+                    btn.addEventListener('click',(ev)=>{ ev.preventDefault(); ev.stopPropagation(); const td=btn.closest('td'); const ul=td?.querySelector('ul'); if(ul) ul.classList.toggle('d-none'); });
+                });
+                const elAssegna = document.getElementById('assegnaModal');
+                if (elAssegna) {
+                    elAssegna.addEventListener('hidden.bs.modal', () => {
+                        const bg = document.getElementById('bg-assegna');
+                        if (bg) bg.style.backgroundImage = 'none';
+                    });
+                }
 
-          if (!giocId || !squadraId || !Number.isFinite(costo) || costo < 0) {
-            await mostraMessaggio('Dati mancanti', 'Seleziona la squadra e inserisci un costo valido.');
-            return;
-          }
+                const elSvincola = document.getElementById('svincolaModal');
+                if (elSvincola) {
+                    elSvincola.addEventListener('hidden.bs.modal', () => {
+                        const bg = document.getElementById('bg-svincola');
+                        if (bg) bg.style.backgroundImage = 'none';
+                    });
+                }
 
-          try {
-            const r = await fetch('/Admin/ConcludiAstaBuzzer', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
-              },
-              body: JSON.stringify({ giocatoreListoneId: giocId, squadraId, costo, lega: legaAliasAdmin })
-            });
+                document.addEventListener('click', async (ev) => {
+                    const btnAsta = ev.target.closest('.btn-avvia-asta');
+                    const btnAssegna = ev.target.closest('.btn-assegna');
 
-            if (!r.ok) {
-              let msg = 'Errore durante il salvataggio.';
-              try { const data = await r.json(); if (data?.message) msg = data.message; } catch {}
-              await mostraMessaggio('Operazione bloccata', msg);
-              return;
-            }
+                    if (btnAsta) {
+                        ev.preventDefault();
+                        try {
+                            const id = btnAsta.dataset.id;
+                            const mantra = btnAsta.dataset.mantra === 'true';
 
-            bootstrap.Modal.getOrCreateInstance(document.getElementById('buzzerModal')).hide();
-            await mostraMessaggio('OK', 'Assegnazione registrata.');
-            location.reload();
-          } catch {
-            await mostraMessaggio('Errore', 'Errore di rete durante il salvataggio.');
-          }
-        });
+                            const r = await fetch('/Admin/AvviaAsta', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                                    'RequestVerificationToken': antiToken
+                                },
+                                body: `id=${encodeURIComponent(id)}&mantra=${mantra}&lega=${encodeURIComponent(legaAliasAdmin)}`
+                            });
 
-            // Bonus crediti
-            let bonusModal, bonusDeltaInput;
-            function calcolaPuntataMax(creditiDisponibili){
-          const slotsRimasti = parseInt(document.getElementById('bonusSlotsRimasti').value) || 0;
-          const minimoPerSlot = 1; // cambia qui se nella tua lega il minimo non è 1
-          const riserva = Math.max(0, (slotsRimasti - 1) * minimoPerSlot);
-          return Math.max(0, creditiDisponibili - riserva);
-        }
+                            if (!r.ok) { await mostraMessaggio('Errore', 'Errore avvio asta.'); return; }
 
-                    function aggiornaPreviewBonus(){
-          const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
-          const delta    = parseInt(bonusDeltaInput.value) || 0;
-          const afterCred = currCred + delta;
-          const afterPMax = calcolaPuntataMax(afterCred);
-          document.getElementById('bonusCreditiDopo').textContent = afterCred;
-          document.getElementById('bonusPMaxDopo').textContent    = afterPMax;
-        }
+                            const overlay = document.getElementById('asta-overlay');
+                            if (overlay) {
+                                document.getElementById('overlay-nome-giocatore').innerText = '…';
+                                document.getElementById('overlay-dettagli-giocatore').innerText = 'In attesa…';
+                                document.getElementById('overlay-offerta').innerText = '0';
+                                document.getElementById('overlay-offerente').innerText = 'In attesa di offerte...';
+                                document.getElementById('overlay-timer').innerText = '--';
+                                overlay.classList.add('visible');
+                            }
+                            try { if (window.connection) await window.connection.invoke("RichiediStatoAttuale"); } catch {}
+                        } catch {
+                            await mostraMessaggio('Errore', 'Impossibile avviare l’asta.');
+                        }
+                        return;
+                    }
 
-                    document.querySelectorAll('.btn-bonus').forEach(btn=>{
-          btn.addEventListener('click',()=>{
-            const sId=parseInt(btn.dataset.squadraid),
-                  nick=btn.dataset.nickname||'',
-                  cred=parseInt(btn.dataset.crediti)||0,
-                  pmax=parseInt(btn.dataset.pmax)||0,
-                  giocatoriCount=parseInt(btn.dataset.giocatori)||0;
+                    if (btnAssegna) {
+                        ev.preventDefault();
+                        try{
+                            const id=btnAssegna.dataset.id, nome=btnAssegna.dataset.nome||'', ruolo=btnAssegna.dataset.ruolo||'', squadra=btnAssegna.dataset.squadra||'', logo=btnAssegna.dataset.logo||'';
+                            document.getElementById('idGiocatoreModale').value=id;
+                            document.getElementById('nomeGiocatoreModale').innerText=nome;
+                            document.getElementById('dettagliGiocatoreAssegna').innerText=`Ruolo: ${ruolo} - Squadra: ${squadra}`;
+                            document.getElementById('logoGiocatoreAssegna').src=logo;
+                            const bgA = document.getElementById('bg-assegna');
+                            if (bgA) bgA.style.backgroundImage = logo ? `url('${logo}')` : 'none';
 
-            document.getElementById('bonusSquadraId').value = sId;
-            document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
-            document.getElementById('bonusNick').textContent = nick;
-            document.getElementById('bonusCreditiAttuali').textContent = cred;
-            document.getElementById('bonusPMaxAttuale').textContent = pmax;
+                            const sel = document.getElementById('squadraSelectAssegna');
+                            sel.innerHTML = '';
+                            (squadreArr || []).forEach(s => {
+                                const o = document.createElement('option');
+                                o.value = s.SquadraId;
+                                o.innerText = s.Nickname;
+                                sel.appendChild(o);
+                            });
 
-            // NEW: deduco gli slot rimasti dalla formula del riepilogo
-            // PMax = Crediti - max(0, (SlotsRimasti - 1))  =>  SlotsRimasti = (Crediti - PMax) + 1
-            const slotsRimasti = Math.max(0, (cred - pmax) + 1);
-            document.getElementById('bonusSlotsRimasti').value = String(slotsRimasti);
+                            bootstrap?.Modal?.getOrCreateInstance?.(document.getElementById('assegnaModal'))?.show();
+                        }catch{ await mostraMessaggio('Errore','Impossibile aprire la modale di assegnazione.'); }
+                        return;
+                    }
+                });
 
-            bonusDeltaInput = document.getElementById('bonusDeltaInput');
-            bonusDeltaInput.value = "0";
-            aggiornaPreviewBonus();
+                window.apriModaleSvincolo=function(btn){
+                    const id=btn.dataset.id, nome=btn.dataset.nome||'', costo=parseInt(btn.dataset.costo)||0, squadra=btn.dataset.squadra||'', logo=btn.dataset.logo||'', ruolo=btn.dataset.ruolo||'';
+                    const bgS = document.getElementById('bg-svincola');
+                    if (bgS) bgS.style.backgroundImage = (logo ? `url('${logo}')` : 'none');
+                    document.getElementById('idGiocatoreSvincola').value=id;
+                    document.getElementById('costoOriginaleSvincolo').innerText=costo;
+                    const input=document.getElementById('creditiSvincoloInput'); if(input){ input.min=0; input.removeAttribute('max'); input.value=String(costo); }
+                    document.getElementById('logoGiocatoreSvincola').src=logo;
+                    document.getElementById('nomeGiocatoreSvincolo').innerText=nome;
+                    document.getElementById('dettagliGiocatoreSvincola').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('svincolaModal')).show();
+                };
 
-            if(!bonusModal) bonusModal=bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
+                document.getElementById('btnConfermaSvincolo')?.addEventListener('click',()=>{
+                    const id=parseInt(document.getElementById('idGiocatoreSvincola').value);
+                    let crediti=parseInt(document.getElementById('creditiSvincoloInput').value); if(isNaN(crediti)||crediti<0) crediti=0;
+                    fetch('/Admin/SvincolaGiocatore',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ id, creditiRestituiti:crediti }) })
+                        .then(r=>{ if(r.ok) location.reload(); else mostraMessaggio('Errore','Errore durante lo svincolo.'); });
+                });
+                let modCostoBtnRef = null;
 
-            // watermark con logo app
-            const bgB = document.getElementById('bg-bonus');
-            if (bgB) bgB.style.backgroundImage = `url('${appLogoUrl}')`;
+                window.apriModaleModificaCosto = function(btn) {
+                    modCostoBtnRef = btn;
+                    const id = parseInt(btn.dataset.id);
+                    const nome = btn.dataset.nome || '';
+                    const ruolo = btn.dataset.ruolo || '';
+                    const squadra = btn.dataset.squadra || '';
+                    const logo = btn.dataset.logo || '';
+                    const costo = parseInt(btn.dataset.costo) || 0;
+                    const squadraId = parseInt(btn.dataset.squadraid) || 0;
 
-            bonusModal.show();
-          });
-        });
+                    document.getElementById('modCostoGiocatoreId').value = id;
+                    document.getElementById('modCostoSquadraId').value = squadraId;
+                    document.getElementById('modCostoNome').innerText = nome;
+                    document.getElementById('modCostoDettagli').innerText = `Ruolo: ${ruolo} - Squadra: ${squadra}`;
+                    document.getElementById('modCostoLogo').src = logo;
+                    document.getElementById('modCostoCorrente').innerText = String(costo);
+                    document.getElementById('modCostoInput').value = String(costo);
 
-            document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
-            document.getElementById('btnConfermaBonus')?.addEventListener('click', async ()=>{
-              const sId=parseInt(document.getElementById('bonusSquadraId').value);
-              const delta=parseInt(document.getElementById('bonusDeltaInput').value)||0;
-              try{
-                const r=await fetch('/Admin/AggiornaCreditiBonus',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ squadraId:sId, delta }) });
-                if(!r.ok) throw new Error('HTTP '+r.status);
-                bonusModal?.hide();
-              }catch{ await mostraMessaggio('Errore','Impossibile applicare il bonus.'); }
-            });
+                    const bg = document.getElementById('bg-modcosto');
+                    if (bg) bg.style.backgroundImage = logo ? `url('${logo}')` : 'none';
 
-            // TIMER / SWITCHES
-            document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
-              e.preventDefault();
-              const s=parseInt(document.getElementById('secondiTimer').value||"0");
-              if(!Number.isFinite(s)||s<2){ await mostraMessaggio('Valore non valido','Inserisci un numero >= 2'); return; }
-                      const r=await fetch('/Admin/ImpostaTimer',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken},
-         body: JSON.stringify({ secondi: s, lega: legaAliasAdmin })
-        });
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('modificaCostoModal')).show();
+                };
 
-              if(r.ok){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); document.getElementById('secondiTimer').value=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
-              else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
-            });
+                document.getElementById('modificaCostoModal')?.addEventListener('hidden.bs.modal', () => {
+                    const bg = document.getElementById('bg-modcosto');
+                    if (bg) bg.style.backgroundImage = 'none';
+                });
 
-         document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
-          try{ const url=new URL(window.location.href); if(url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
-          const isAttivo=this.checked;
-          const r=await fetch('/Admin/ImpostaBloccoPortieri',{
-            method:'POST',
-            headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken},
-            body:JSON.stringify({ attivo:isAttivo, lega: legaAliasAdmin })
-          });
-          if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
-          else await mostraMessaggio('Errore','Errore aggiornamento regola.');
-        });
+                document.getElementById('btnConfermaModificaCosto')?.addEventListener('click', async () => {
+                    const idGioc = parseInt(document.getElementById('modCostoGiocatoreId').value);
+                    const nuovoCosto = parseInt(document.getElementById('modCostoInput').value);
+                    if (!Number.isFinite(nuovoCosto) || nuovoCosto < 0) {
+                        await mostraMessaggio('Valore non valido', 'Inserisci un numero >= 0');
+                        return;
+                    }
+
+                    try {
+                        const r = await fetch('/Admin/ModificaCostoGiocatore', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                            },
+                            body: JSON.stringify({ giocatoreId: idGioc, nuovoCosto })
+                        });
+
+                        if (!r.ok) {
+                            let msg = 'Errore durante l’aggiornamento del costo.';
+                            try {
+                                const data = await r.json();
+                                if (data && (data.message || data.error)) msg = data.message || data.error;
+                            } catch {}
+                            await mostraMessaggio('Operazione bloccata', msg);
+                            return;
+                        }
+
+                        const data = await r.json();
+
+                        if (modCostoBtnRef) {
+                            const li = modCostoBtnRef.closest('li');
+                            if (li) {
+                                const spanCosto = li.querySelector('span.text-nowrap.small');
+                                if (spanCosto) spanCosto.textContent = `(${nuovoCosto})`;
+
+                                modCostoBtnRef.dataset.costo = String(nuovoCosto);
+
+                                const btnSvincola = li.querySelector('button[data-role="btn-svincola"]');
+                                if (btnSvincola) btnSvincola.dataset.costo = String(nuovoCosto);
+
+                            }
+                        }
+
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('modificaCostoModal')).hide();
+
+                        await mostraMessaggio('OK', 'Costo aggiornato correttamente.');
+
+                    } catch {
+                        await mostraMessaggio('Errore', 'Errore di rete durante l’aggiornamento.');
+                    }
+                });
+                document.getElementById('buzzerModal')?.addEventListener('hidden.bs.modal', () => {
+                    const bg = document.getElementById('bg-buzzer');
+                    if (bg) bg.style.backgroundImage = 'none';
+                });
+
+                document.getElementById('btnConfermaBuzzer')?.addEventListener('click', async () => {
+                    const giocId   = parseInt(document.getElementById('buzzerGiocatoreId').value);
+                    const squadraId= parseInt(document.getElementById('buzzerSquadraSelect').value);
+                    const costo    = parseInt(document.getElementById('buzzerCostoInput').value);
+
+                    if (!giocId || !squadraId || !Number.isFinite(costo) || costo < 0) {
+                        await mostraMessaggio('Dati mancanti', 'Seleziona la squadra e inserisci un costo valido.');
+                        return;
+                    }
+
+                    try {
+                        const r = await fetch('/Admin/ConcludiAstaBuzzer', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                            },
+                            body: JSON.stringify({ giocatoreListoneId: giocId, squadraId, costo, lega: legaAliasAdmin })
+                        });
+
+                        if (!r.ok) {
+                            let msg = 'Errore durante il salvataggio.';
+                            try { const data = await r.json(); if (data?.message) msg = data.message; } catch {}
+                            await mostraMessaggio('Operazione bloccata', msg);
+                            return;
+                        }
+
+                        bootstrap.Modal.getOrCreateInstance(document.getElementById('buzzerModal')).hide();
+                        await mostraMessaggio('OK', 'Assegnazione registrata.');
+                        location.reload();
+                    } catch {
+                        await mostraMessaggio('Errore', 'Errore di rete durante il salvataggio.');
+                    }
+                });
+
+                let bonusModal, bonusDeltaInput;
+                function calcolaPuntataMax(creditiDisponibili){
+                    const slotsRimasti = parseInt(document.getElementById('bonusSlotsRimasti').value) || 0;
+                    const minimoPerSlot = 1;
+                    const riserva = Math.max(0, (slotsRimasti - 1) * minimoPerSlot);
+                    return Math.max(0, creditiDisponibili - riserva);
+                }
+
+                function aggiornaPreviewBonus(){
+                    const currCred = parseInt(document.getElementById('bonusCreditiAttuali').textContent) || 0;
+                    const delta    = parseInt(bonusDeltaInput.value) || 0;
+                    const afterCred = currCred + delta;
+                    const afterPMax = calcolaPuntataMax(afterCred);
+                    document.getElementById('bonusCreditiDopo').textContent = afterCred;
+                    document.getElementById('bonusPMaxDopo').textContent    = afterPMax;
+                }
+
+                document.querySelectorAll('.btn-bonus').forEach(btn=>{
+                    btn.addEventListener('click',()=>{
+                        const sId=parseInt(btn.dataset.squadraid),
+                              nick=btn.dataset.nickname||'',
+                              cred=parseInt(btn.dataset.crediti)||0,
+                              pmax=parseInt(btn.dataset.pmax)||0,
+                              giocatoriCount=parseInt(btn.dataset.giocatori)||0;
+
+                        document.getElementById('bonusSquadraId').value = sId;
+                        document.getElementById('bonusGiocatoriCount').value = giocatoriCount;
+                        document.getElementById('bonusNick').textContent = nick;
+                        document.getElementById('bonusCreditiAttuali').textContent = cred;
+                        document.getElementById('bonusPMaxAttuale').textContent = pmax;
+
+                        const slotsRimasti = Math.max(0, (cred - pmax) + 1);
+                        document.getElementById('bonusSlotsRimasti').value = String(slotsRimasti);
+
+                        bonusDeltaInput = document.getElementById('bonusDeltaInput');
+                        bonusDeltaInput.value = "0";
+                        aggiornaPreviewBonus();
+
+                        if(!bonusModal) bonusModal=bootstrap.Modal.getOrCreateInstance(document.getElementById('bonusModal'));
+
+                        const bgB = document.getElementById('bg-bonus');
+                        if (bgB) bgB.style.backgroundImage = `url('${appLogoUrl}')`;
+
+                        bonusModal.show();
+                    });
+                });
+
+                document.getElementById('bonusDeltaInput')?.addEventListener('input', aggiornaPreviewBonus);
+                document.getElementById('btnConfermaBonus')?.addEventListener('click', async ()=>{
+                    const sId=parseInt(document.getElementById('bonusSquadraId').value);
+                    const delta=parseInt(document.getElementById('bonusDeltaInput').value)||0;
+                    try{
+                        const r=await fetch('/Admin/AggiornaCreditiBonus',{ method:'POST', headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken}, body:JSON.stringify({ squadraId:sId, delta }) });
+                        if(!r.ok) throw new Error('HTTP '+r.status);
+                        bonusModal?.hide();
+                    }catch{ await mostraMessaggio('Errore','Impossibile applicare il bonus.'); }
+                });
+
+                document.getElementById('formTimer')?.addEventListener('submit', async (e)=>{
+                    e.preventDefault();
+                    const s=parseInt(document.getElementById('secondiTimer').value||"0");
+                    if(!Number.isFinite(s)||s<2){ await mostraMessaggio('Valore non valido','Inserisci un numero >= 2'); return; }
+                    const r=await fetch('/Admin/ImpostaTimer',{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken},
+                        body: JSON.stringify({ secondi: s, lega: legaAliasAdmin })
+                    });
+
+                    if(r.ok){ durataTimer=s; localStorage.setItem(LS_DEFAULT_TIMER,String(s)); document.getElementById('secondiTimer').value=s; await mostraMessaggio('Timer Aggiornato','Timer aggiornato a '+s+' secondi!'); }
+                    else { await mostraMessaggio('Errore','Errore aggiornamento timer.'); }
+                });
+
+                document.getElementById('bloccoPortieriSwitch')?.addEventListener('change', async function(){
+                    try{ const url=new URL(window.location.href); if(url.searchParams.has('bp')){ url.searchParams.delete('bp'); history.replaceState(null,'',url); } }catch{}
+                    const isAttivo=this.checked;
+                    const r=await fetch('/Admin/ImpostaBloccoPortieri',{
+                        method:'POST',
+                        headers:{'Content-Type':'application/json','RequestVerificationToken':antiToken},
+                        body:JSON.stringify({ attivo:isAttivo, lega: legaAliasAdmin })
+                    });
+                    if(r.ok) await mostraMessaggio('Regola Aggiornata','Blocco Portieri '+(isAttivo?'ATTIVATO':'DISATTIVATO'));
+                    else await mostraMessaggio('Errore','Errore aggiornamento regola.');
+                });
 
                 document.getElementById('buzzerSwitch')?.addEventListener('change', async function(){
-          const isAttivo = this.checked;
-          try {
-            const r = await fetch('/Admin/ImpostaBuzzerMode', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiToken },
-              body: JSON.stringify({ attivo: isAttivo, lega: legaAliasAdmin })
-            });
-            if (!r.ok) throw new Error('HTTP ' + r.status);
-            updateBuzzerUI(isAttivo);
-            await mostraMessaggio('Modalità Buzzer', isAttivo ? 'Modalità Buzzer ATTIVATA' : 'Modalità Buzzer DISATTIVATA');
-          } catch {
-            await mostraMessaggio('Errore', 'Impossibile aggiornare la modalità Buzzer.');
-            this.checked = !isAttivo; // rollback visivo
-          }
-        });
+                    const isAttivo = this.checked;
+                    try {
+                        const r = await fetch('/Admin/ImpostaBuzzerMode', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': antiToken },
+                            body: JSON.stringify({ attivo: isAttivo, lega: legaAliasAdmin })
+                        });
+                        if (!r.ok) throw new Error('HTTP ' + r.status);
+                        updateBuzzerUI(isAttivo);
+                        await mostraMessaggio('Modalità Buzzer', isAttivo ? 'Modalità Buzzer ATTIVATA' : 'Modalità Buzzer DISATTIVATA');
+                    } catch {
+                        await mostraMessaggio('Errore', 'Impossibile aggiornare la modalità Buzzer.');
+                        this.checked = !isAttivo;
+                    }
+                });
 
         document.getElementById('mantraSwitch')?.addEventListener('change', async function () {
           const isOn = this.checked;
 
-          // mantieni il valore nell’hidden (coerente con la tua view)
+          // 1) aggiorna l’hidden field del form
           const hidden = document.getElementById('mantraInput');
           if (hidden) hidden.value = isOn ? 'true' : 'false';
 
-          // prepara l’URL con i nuovi parametri
-          const url = new URL(window.location.href);
-          url.searchParams.set('mantra', isOn);
-          url.searchParams.set('page', '1'); // reset paginazione
+          // 2) **reset coerente del filtro ruolo** (UI + querystring)
+          const selectRuolo = document.querySelector('#filtroForm select[name="ruolo"]');
+          if (selectRuolo) selectRuolo.value = '';          // UI → “Tutti i ruoli”
 
-          // messaggio per l’admin prima del reload
+          const url = new URL(window.location.href);
+          url.searchParams.set('mantra', String(isOn));     // true/false
+          url.searchParams.set('page', '1');                // riparti dalla prima pagina
+          url.searchParams.delete('ruolo');                 // <-- QUI il fix: rimuove il filtro ruolo
+
+          // (opzionale) se vuoi azzerare anche l’eventuale lettera sorteggiata:
+          // url.searchParams.delete('iniziale');
+
           const titolo = 'Modalità Mantra';
           const msg = isOn ? 'Modalità Mantra ATTIVATA' : 'Modalità Mantra DISATTIVATA';
           if (typeof mostraMessaggio === 'function') {
@@ -2402,214 +2258,182 @@
             alert(msg);
           }
 
-          // ricarica con i nuovi parametri
           window.location.href = url.toString();
         });
 
 
-        document.getElementById('sorteggioSwitch')?.addEventListener('change', async function () {
-          const isOn = this.checked;
 
-          // mantieni il valore nell’hidden (coerente con la tua view)
-          const sorteggioInput = document.getElementById('sorteggioInput');
-          if (sorteggioInput) sorteggioInput.value = isOn ? 'true' : 'false';
+                document.getElementById('sorteggioSwitch')?.addEventListener('change', async function () {
+                    const isOn = this.checked;
 
-          // prepara l’URL con i nuovi parametri
-          const url = new URL(window.location.href);
-          url.searchParams.set('sorteggio', isOn);
-          url.searchParams.set('page', '1'); // reset paginazione
-          if (!isOn) url.searchParams.delete('iniziale'); // se disattivi, rimuovi la lettera selezionata
+                    const sorteggioInput = document.getElementById('sorteggioInput');
+                    if (sorteggioInput) sorteggioInput.value = isOn ? 'true' : 'false';
 
-          // messaggio per l’admin prima del reload
-          const titolo = 'Sorteggio lettere';
-          const msg = isOn ? 'Sorteggio lettere ATTIVATO' : 'Sorteggio lettere DISATTIVATO';
-          if (typeof mostraMessaggio === 'function') {
-            await mostraMessaggio(titolo, msg);
-          } else {
-            alert(msg);
-          }
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('sorteggio', isOn);
+                    url.searchParams.set('page', '1');
+                    if (!isOn) url.searchParams.delete('iniziale');
 
-          // ricarica con i nuovi parametri
-          window.location.href = url.toString();
-        });
+                    const titolo = 'Sorteggio lettere';
+                    const msg = isOn ? 'Sorteggio lettere ATTIVATO' : 'Sorteggio lettere DISATTIVATO';
+                    if (typeof mostraMessaggio === 'function') {
+                        await mostraMessaggio(titolo, msg);
+                    } else {
+                        alert(msg);
+                    }
 
-            // Annulla asta (Hub con fallback HTTP)
-                   // Annulla asta (SignalR con fallback HTTP) — chiusura ottimistica
-        document.getElementById('btnAnnullaAsta')?.addEventListener('click', async () => {
-          const ok = await mostraMessaggio('Annulla Asta', 'Sei sicuro?', true);
-          if (!ok) return;
+                    window.location.href = url.toString();
+                });
 
-          let done = false;
+                document.getElementById('btnAnnullaAsta')?.addEventListener('click', async () => {
+                    const ok = await mostraMessaggio('Annulla Asta', 'Sei sicuro?', true);
+                    if (!ok) return;
 
-          // 1) Prova SignalR con alias lega
-          try { await connection.invoke("AnnullaAsta", legaAliasAdmin); done = true; } catch {}
+                    let done = false;
 
-          // 2) Prova SignalR senza alias (vecchi client/Hub)
-          if (!done) { try { await connection.invoke("AnnullaAsta"); done = true; } catch {} }
+                    try { await connection.invoke("AnnullaAsta", legaAliasAdmin); done = true; } catch {}
 
-          // 3) Fallback HTTP: passa anche l'alias di lega
-          if (!done) {
-            try {
-              const r = await fetch(`/Admin/AnnullaAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
-                method: 'POST',
-                headers: { 'RequestVerificationToken': antiToken }
-              });
-              if (r.ok) done = true;
-            } catch {}
-          }
+                    if (!done) { try { await connection.invoke("AnnullaAsta"); done = true; } catch {} }
 
-          if (done) {
-            // Chiudi SUBITO l’overlay lato admin; il broadcast farà il resto altrove
-            const overlay = document.getElementById('asta-overlay');
-            if (overlay) overlay.classList.remove('visible');
-          } else {
-            await mostraMessaggio('Errore', 'Errore durante l’annullamento dell’asta.');
-          }
-        });
+                    if (!done) {
+                        try {
+                            const r = await fetch(`/Admin/AnnullaAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
+                                method: 'POST',
+                                headers: { 'RequestVerificationToken': antiToken }
+                            });
+                            if (r.ok) done = true;
+                        } catch {}
+                    }
+
+                    if (done) {
+                        const overlay = document.getElementById('asta-overlay');
+                        if (overlay) overlay.classList.remove('visible');
+                    } else {
+                        await mostraMessaggio('Errore', 'Errore durante l’annullamento dell’asta.');
+                    }
+                });
+
+                document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async () => {
+                    const idGioc    = parseInt(document.getElementById('idGiocatoreModale').value);
+                    const squadraId = parseInt(document.getElementById('squadraSelectAssegna').value);
+                    const costo     = parseInt(document.getElementById('costoAssegnaInput').value);
 
 
+                    if (!idGioc || !squadraId || isNaN(costo) || costo < 0) {
+                        await mostraMessaggio('Dati mancanti', 'Controlla squadra e costo.');
+                        return;
+                    }
 
+                    const modalEl = document.getElementById('assegnaModal');
+                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
 
-            // Assegna manuale (non tocca timer globale)
-        document.getElementById('btnSalvaAssegnazione')?.addEventListener('click', async () => {
-                  const idGioc    = parseInt(document.getElementById('idGiocatoreModale').value);
-        const squadraId = parseInt(document.getElementById('squadraSelectAssegna').value);
-        const costo     = parseInt(document.getElementById('costoAssegnaInput').value);
+                    try {
+                        const r = await fetch('/Admin/AssegnaManualmente', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': antiToken
+                            },
+                            body: JSON.stringify({ giocatoreId: idGioc, squadraId, costo })
+                        });
 
+                        if (!r.ok) {
+                            let msg = 'Errore durante l’assegnazione.';
+                            try {
+                                const data = await r.json();
+                                if (data && (data.message || data.error)) {
+                                    msg = data.message || data.error;
+                                }
+                            } catch (_) {
+                            }
 
-          if (!idGioc || !squadraId || isNaN(costo) || costo < 0) {
-            await mostraMessaggio('Dati mancanti', 'Controlla squadra e costo.');
-            return;
-          }
+                            await mostraMessaggio('Operazione bloccata', msg);
 
-          // Chiudo la modale prima di inviare (come ora)
-          const modalEl = document.getElementById('assegnaModal');
-          bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                            return;
+                        }
 
-          try {
-            const r = await fetch('/Admin/AssegnaManualmente', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'RequestVerificationToken': antiToken
-              },
-              body: JSON.stringify({ giocatoreId: idGioc, squadraId, costo })
+                        location.reload();
+                    } catch {
+                        await mostraMessaggio('Errore', 'Errore di rete durante l’assegnazione.');
+                        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                    }
+                });
+
+                renderLettersChips();
+                document.getElementById('btnSorteggiaLettera')?.addEventListener('click', ()=>{
+                    const archived=getArchivedLetters(); const pool=ALPH.filter(l=>!archived.includes(l));
+                    if(pool.length===0){ mostraMessaggio('Sorteggio lettera','Tutte le lettere sono già state estratte. Premi "Reset lettere" o riabilita un singolo chip.'); return; }
+                    const letter=pool[Math.floor(Math.random()*pool.length)];
+                    setArchivedLetters([...archived, letter]); applyInitialFilter(letter);
+                });
+                document.getElementById('btnResetLettere')?.addEventListener('click', ()=>{
+                    setArchivedLetters([]); const i=document.getElementById('inizialeInput'); if(i) i.value=''; document.getElementById('filtroForm').submit();
+                });
+
+                connection.start().then(()=>{
+                    connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
+                    setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
+                    connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin).catch(()=>{});
+                    connection.invoke("RichiediStatoAttuale").catch(()=>{});
+                }).catch(err=>console.error(err));
+
+                document.getElementById('btn-pausa')?.addEventListener('click', async () => {
+                    let ok=false;
+                    try { await connection.invoke("PausaAsta", legaAliasAdmin); ok=true; } catch {}
+                    if(!ok){ try { await connection.invoke("PausaAsta"); ok=true; } catch {} }
+                    if(!ok){
+                        try {
+                            await fetch(`/Admin/PausaAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
+                                method: 'POST',
+                                headers: { 'RequestVerificationToken': antiToken }
+                            });
+                        } catch {}
+                    }
+                    try { await connection.invoke("RichiediStatoAttuale"); } catch {}
+                });
+
+                document.getElementById('btn-riprendi')?.addEventListener('click', async () => {
+                    let ok=false;
+                    try { await connection.invoke("RiprendiAsta", legaAliasAdmin); ok=true; } catch {}
+                    if(!ok){ try { await connection.invoke("RiprendiAsta"); ok=true; } catch {} }
+                    if(!ok){
+                        try {
+                            await fetch(`/Admin/RiprendiAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
+                                method: 'POST',
+                                headers: { 'RequestVerificationToken': antiToken }
+                            });
+                        } catch {}
+                    }
+                    try { await connection.invoke("RichiediStatoAttuale"); } catch {}
+                });
+
+                document.getElementById('btn-reset')?.addEventListener('click', async ()=>{
+                    resetDurataLocal();
+                    try{ await connection.invoke("ResetDurataAsta", legaAliasAdmin); }catch{}
+                });
+
+                document.getElementById('btn-stop')?.addEventListener('click', toggleStop);
+
+                (function initStopUI(){
+                    const stopBtn=document.getElementById('btn-stop'); if(!stopBtn) return;
+                    if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){ stopBtn.dataset.state='stop'; stopBtn.textContent='Riprendi Timer'; stopDurataLoop(); paintDurata(); }
+                    else { stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; startDurataLoop(); }
+                })();
+
+                window.paintPartecipanti=function(list){
+                    list.forEach(p=>{
+                        const nick=(p.nick||p.Nick||'').toString();
+                        const el=document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) || document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
+                        if(!el) return;
+                        el.classList.remove('dot-online','dot-offline','dot-waiting');
+                        const stato=(p.stato||p.Stato||'offline').toLowerCase();
+                        if(stato==='waiting') el.classList.add('dot-waiting');
+                        else if(stato==='online') el.classList.add('dot-online');
+                        else el.classList.add('dot-offline');
+                    });
+                };
             });
-
-            if (!r.ok) {
-              // Provo a leggere un messaggio dettagliato dal server (es. 409 Conflict)
-              let msg = 'Errore durante l’assegnazione.';
-              try {
-                const data = await r.json();
-                if (data && (data.message || data.error)) {
-                  msg = data.message || data.error;
-                }
-              } catch (_) {
-                // se non è JSON, tengo il messaggio generico
-              }
-
-              await mostraMessaggio('Operazione bloccata', msg);
-
-              // opzionale: riapro la modale per permettere correzioni senza perdere il contesto
-              bootstrap.Modal.getOrCreateInstance(modalEl).show();
-              return;
-            }
-
-            // OK -> ricarico per aggiornare la vista
-            location.reload();
-          } catch {
-            await mostraMessaggio('Errore', 'Errore di rete durante l’assegnazione.');
-            // opzionale: riapro la modale
-            bootstrap.Modal.getOrCreateInstance(modalEl).show();
-          }
-        });
-
-
-            // LETTERE
-            renderLettersChips();
-            document.getElementById('btnSorteggiaLettera')?.addEventListener('click', ()=>{
-              const archived=getArchivedLetters(); const pool=ALPH.filter(l=>!archived.includes(l));
-              if(pool.length===0){ mostraMessaggio('Sorteggio lettera','Tutte le lettere sono già state estratte. Premi "Reset lettere" o riabilita un singolo chip.'); return; }
-              const letter=pool[Math.floor(Math.random()*pool.length)];
-              setArchivedLetters([...archived, letter]); applyInitialFilter(letter);
-            });
-            document.getElementById('btnResetLettere')?.addEventListener('click', ()=>{
-              setArchivedLetters([]); const i=document.getElementById('inizialeInput'); if(i) i.value=''; document.getElementById('filtroForm').submit();
-            });
-
-            // Avvio connessione
-            connection.start().then(()=>{
-              connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
-              setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
-              connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin).catch(()=>{});
-              connection.invoke("RichiediStatoAttuale").catch(()=>{});
-            }).catch(err=>console.error(err));
-
-            // Bottoni top bar (Pausa/Riprendi con fallback, Reset, Stop)
-            document.getElementById('btn-pausa')?.addEventListener('click', async () => {
-              let ok=false;
-              try { await connection.invoke("PausaAsta", legaAliasAdmin); ok=true; } catch {}
-              if(!ok){ try { await connection.invoke("PausaAsta"); ok=true; } catch {} }
-              if(!ok){
-                try {
-        // Fallback HTTP
-        await fetch(`/Admin/PausaAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
-          method: 'POST',
-          headers: { 'RequestVerificationToken': antiToken }
-        });
-
-                } catch {}
-              }
-              try { await connection.invoke("RichiediStatoAttuale"); } catch {}
-            });
-
-            document.getElementById('btn-riprendi')?.addEventListener('click', async () => {
-              let ok=false;
-              try { await connection.invoke("RiprendiAsta", legaAliasAdmin); ok=true; } catch {}
-              if(!ok){ try { await connection.invoke("RiprendiAsta"); ok=true; } catch {} }
-              if(!ok){
-        // fallback HTTP
-        try {
-          await fetch(`/Admin/RiprendiAsta?lega=${encodeURIComponent(legaAliasAdmin)}`, {
-            method: 'POST',
-            headers: { 'RequestVerificationToken': antiToken }
-          });
-        } catch {}
-
-
-
-              }
-              try { await connection.invoke("RichiediStatoAttuale"); } catch {}
-            });
-
-            document.getElementById('btn-reset')?.addEventListener('click', async ()=>{
-              resetDurataLocal();
-              try{ await connection.invoke("ResetDurataAsta", legaAliasAdmin); }catch{}
-            });
-
-            document.getElementById('btn-stop')?.addEventListener('click', toggleStop);
-
-            // init Stop UI
-            (function initStopUI(){
-              const stopBtn=document.getElementById('btn-stop'); if(!stopBtn) return;
-              if(localStorage.getItem(LS_STOP_ACTIVE)==="true"){ stopBtn.dataset.state='stop'; stopBtn.textContent='Riprendi Timer'; stopDurataLoop(); paintDurata(); }
-              else { stopBtn.dataset.state='go'; stopBtn.textContent='Stop'; startDurataLoop(); }
-            })();
-
-            // paint partecipanti
-            window.paintPartecipanti=function(list){
-              list.forEach(p=>{
-                const nick=(p.nick||p.Nick||'').toString();
-                const el=document.querySelector(`.status-dot[data-nick="${CSS.escape(nick)}"]`) || document.querySelector(`.status-dot[title="${CSS.escape(nick)}"]`);
-                if(!el) return;
-                el.classList.remove('dot-online','dot-offline','dot-waiting');
-                const stato=(p.stato||p.Stato||'offline').toLowerCase();
-                if(stato==='waiting') el.classList.add('dot-waiting');
-                else if(stato==='online') el.classList.add('dot-online');
-                else el.classList.add('dot-offline');
-              });
-            };
-          });
         })();
     </script>
 }
