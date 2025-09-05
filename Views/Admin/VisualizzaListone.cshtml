@@ -1222,6 +1222,9 @@
             let closeTimeoutAdmin = null;
             let lastOffertaAdmin = 0;
             let isBuzzer = false;
+                    let astaAperta = false;
+                            let astaAttiva = false;
+
             function updateBuzzerUI(on) {
                 isBuzzer = !!on;
                 const offertaEl   = document.getElementById('overlay-offerta');
@@ -1263,6 +1266,7 @@
             }
 
             function closeAdminOverlayImmediate() {
+                        astaAperta = false;
                 try { clearTimeout(countdownTimerAdmin); } catch {}
                 try { clearTimeout(closeTimeoutAdmin); } catch {}
                 countdownTimerAdmin = null;
@@ -1550,6 +1554,7 @@ function toggleStop(){
             });
 
             connection.on("MostraGiocatoreInAsta",(giocatore)=>{
+                        astaAperta = true;
                 document.getElementById('overlay-nome-giocatore').innerText=giocatore.nome;
                 document.getElementById('overlay-dettagli-giocatore').innerText=`${giocatore.ruolo} - ${giocatore.squadraReale}`;
                 document.getElementById('overlay-logo-squadra').src=giocatore.logoUrl;
@@ -1583,6 +1588,7 @@ function toggleStop(){
             });
 
                   connection.on("AggiornaOfferta",(offerente, offerta, fineUtc)=>{
+                              if (!astaAperta) return;
         document.getElementById('overlay-offerente').innerText=offerente||'-';
         document.getElementById('overlay-offerta').innerText=offerta||0;
         clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
@@ -1645,71 +1651,88 @@ function toggleStop(){
                 }
             });
 
-            connection.on("Buzz", (offerente, fineUtc) => {
-                const offEl = document.getElementById('overlay-offerente');
-                if (offEl) offEl.innerText = offerente || '-';
+                    connection.on("Buzz", (offerente, fineUtc) => {
+          // Guardie immediate: modalità corretta + asta davvero aperta
+          if (!buzzerModeOn || !astaAperta) return;
 
+          // L’overlay dev’essere visibile (altrimenti ignora qualsiasi BUZZ “residuo”)
+          const overlay = document.getElementById('asta-overlay');
+          const visibile = overlay && overlay.classList.contains('visible');
+          if (!visibile) return;
+
+          // Serve un fineUtc valido e futuro
+          if (!fineUtc) return;
+          const end = new Date(fineUtc);
+          if (isNaN(end.getTime())) return;
+          const msRemaining0 = end.getTime() - Date.now();
+          if (msRemaining0 <= 0) return;
+
+          // UI base
+          const offEl = document.getElementById('overlay-offerente');
+          if (offEl) offEl.innerText = offerente || '-';
+
+          const valEl = document.getElementById('overlay-offerta');
+          if (valEl) valEl.innerText = '—';
+
+          // Stoppa timer preesistenti prima di ripartire
+          try { clearTimeout(countdownTimerAdmin); } catch {}
+          try { clearTimeout(closeTimeoutAdmin); } catch {}
+          countdownTimerAdmin = null;
+          closeTimeoutAdmin   = null;
+
+          // Play “moneta” SOLO dopo tutti i controlli
+          try {
+            const s = document.getElementById('suono-offerta');
+            s.currentTime = 0;
+            s.play().catch(()=>{});
+          } catch {}
+
+          appendLog('bid', `BUZZ da ${offerente}`);
+
+          const timerEl = document.getElementById('overlay-timer');
+          const paint = (sec) => {
+            if (!timerEl) return;
+            timerEl.innerText = sec;
+            timerEl.classList.remove('timer-green','timer-yellow','timer-red');
+            if (sec > 5) timerEl.classList.add('timer-green');
+            else if (sec >= 4) timerEl.classList.add('timer-yellow');
+            else timerEl.classList.add('timer-red');
+          };
+
+          let prevSec = -1;
+          const tick = () => {
+            const msLeft = end.getTime() - Date.now();
+            const sec = Math.max(0, Math.ceil(msLeft / 1000));
+
+            if (sec !== prevSec) {
+              paint(sec);
+              if (sec > 0 && sec <= 10 && prevSec !== -1) {
                 try {
-                    const s = document.getElementById('suono-offerta');
-                    s.currentTime = 0;
-                    s.play().catch(()=>{});
+                  const beep = document.getElementById('suono-countdown');
+                  beep.currentTime = 0;
+                  beep.play().catch(()=>{});
                 } catch {}
+              }
+              prevSec = sec;
+              if (sec === 0) { try { clearTimeout(countdownTimerAdmin); } catch {} countdownTimerAdmin = null; return; }
+            }
 
-                const valEl = document.getElementById('overlay-offerta');
-                if (valEl) valEl.innerText = '—';
+            // correzione drift
+            const nextDelay = Math.max(20, msLeft - (sec - 1) * 1000 + 2);
+            countdownTimerAdmin = setTimeout(tick, nextDelay);
+          };
+          tick();
 
-                clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
-                clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin = null;
+          const msRemaining = end.getTime() - Date.now();
+          if (msRemaining > 0) {
+            closeTimeoutAdmin = setTimeout(() => {
+              connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+            }, msRemaining + 2);
+          } else {
+            connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
+          }
+        });
 
-                const timerEl = document.getElementById('overlay-timer');
-
-                if (!fineUtc) {
-                    if (timerEl) {
-                        timerEl.innerText = '--';
-                        timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-                    }
-                    return;
-                }
-
-                appendLog('bid', `BUZZ da ${offerente}`);
-
-                const end = new Date(fineUtc);
-                const paint = (sec) => {
-                    if (!timerEl) return;
-                    timerEl.innerText = sec;
-                    timerEl.classList.remove('timer-green','timer-yellow','timer-red');
-                    if (sec > 5) timerEl.classList.add('timer-green');
-                    else if (sec >= 4) timerEl.classList.add('timer-yellow');
-                    else timerEl.classList.add('timer-red');
-                };
-
-                let prevSec = -1;
-                const tick = () => {
-                    const msLeft = end.getTime() - Date.now();
-                    const sec = Math.max(0, Math.ceil(msLeft / 1000));
-
-                    if (sec !== prevSec) {
-                        paint(sec);
-                        if (sec > 0 && sec <= 10 && prevSec !== -1) {
-                            try { const beep = document.getElementById('suono-countdown'); beep.currentTime = 0; beep.play().catch(()=>{}); } catch {}
-                        }
-                        prevSec = sec;
-                        if (sec === 0) { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; return; }
-                    }
-                    const nextDelay = Math.max(20, msLeft - (sec - 1) * 1000 + 2);
-                    countdownTimerAdmin = setTimeout(tick, nextDelay);
-                };
-                tick();
-
-                const msRemaining = end.getTime() - Date.now();
-                if (msRemaining > 0) {
-                    closeTimeoutAdmin = setTimeout(() => {
-                        connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-                    }, msRemaining + 2);
-                } else {
-                    connection.invoke("TerminaAsta", legaAliasAdmin).catch(err => console.error(err.toString()));
-                }
-            });
 
             connection.on("BuzzerRichiediImporto", (p) => {
                 const id       = p?.giocatoreId || 0;
@@ -1747,6 +1770,7 @@ function toggleStop(){
             });
 
             connection.on("AstaTerminata",(giocatoreId, nomeGiocatore, vincitore, prezzo)=>{
+                        astaAperta = false;
                 clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null;
                 clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin   = null;
 
@@ -1778,11 +1802,26 @@ function toggleStop(){
             });
 
             connection.on("AstaAnnullata",()=>{
+                        astaAperta = false;
                 clearTimeout(countdownTimerAdmin); countdownTimerAdmin=null;
                 clearTimeout(closeTimeoutAdmin);  closeTimeoutAdmin=null;
+                        try{ ['suono-offerta','suono-countdown'].forEach(id => { const a=document.getElementById(id); a.pause?.(); a.currentTime=0; }); }catch{}
                 document.getElementById('asta-overlay').classList.remove('visible');
                 appendLog('cancel', 'Asta annullata dall’amministratore.');
             });
+                    connection.on("BuzzerHardReset", () => {
+          astaAttiva = false;
+          // chiudi overlay/timer, azzera eventuali timeout (safe)
+          try { clearTimeout(countdownTimerAdmin); countdownTimerAdmin = null; } catch {}
+          try { clearTimeout(closeTimeoutAdmin);   closeTimeoutAdmin   = null; } catch {}
+          document.getElementById('asta-overlay')?.classList.remove('visible');
+          const t = document.getElementById('overlay-timer');
+          if (t) { t.textContent = '--'; t.classList.remove('timer-green','timer-yellow','timer-red'); }
+          const offEl = document.getElementById('overlay-offerente');
+          if (offEl) { offEl.textContent = '—'; offEl.style.color = ''; }
+          const offVal = document.getElementById('overlay-offerta');
+          if (offVal) offVal.textContent = '0';
+        });
 
             connection.on("StatoPartecipanti",(p)=>{ if(p?.partecipanti) window.paintPartecipanti(p.partecipanti); });
 
