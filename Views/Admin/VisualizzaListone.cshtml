@@ -1606,13 +1606,21 @@ function toggleStop(){
           const valEl = document.getElementById('overlay-offerta');
           if (valEl) valEl.textContent = '—';
         }
-        const isRealBid=(offerta > (lastOffertaAdmin||0));
-        if(isRealBid){
-          // Rimuovi la riproduzione del suono da qui.
-          // try{ const s=document.getElementById('suono-offerta'); s.currentTime=0; s.play().catch(()=>{}); }catch{}
+                const isRealBid = (offerta > (lastOffertaAdmin || 0));
+        if (isRealBid) {
+          // Suona la moneta SOLO in classico, con overlay visibile e asta aperta
+          const overlayVisibile = document.getElementById('asta-overlay')?.classList.contains('visible');
+          if (!buzzerModeOn && astaAperta && overlayVisibile) {
+            try {
+              const s = document.getElementById('suono-offerta');
+              s.currentTime = 0;
+              s.play().catch(() => {});
+            } catch {}
+          }
           appendLog('bid', `${offerente} offre ${offerta}`);
         }
-        lastOffertaAdmin=offerta;
+        lastOffertaAdmin = offerta;
+
 
                 const end=new Date(fineUtc);
 
