@@ -479,6 +479,133 @@
         font-variant-numeric: tabular-nums;
         letter-spacing: .2px;
     }
+    /* Riga log + partecipanti */
+    .log-panel-row {
+        display: grid;
+        grid-template-columns: 2fr 1.2fr;
+        gap: 12px;
+        align-items: start;
+    }
+    @@media (max-width: 992px) {
+        .log-panel-row
+
+    {
+        grid-template-columns: 1fr;
+    }
+
+    }
+
+    /* Colonna log (usa già #overlay-log) */
+    #overlay-log {
+        height: 50vh; /* fissa SEMPRE l’altezza a metà schermo */
+        overflow-y: auto; /* scroll verticale */
+        overflow-x: hidden; /* niente scroll orizzontale */
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 8px;
+        background: rgba(15,23,42,.35);
+    }
+
+
+
+    /* Colonna partecipanti */
+    #overlay-partecipanti {
+        max-height: 50vh;
+        overflow: auto;
+        border: 1px solid #334155;
+        border-radius: 12px;
+        padding: 8px;
+        background: rgba(15,23,42,.35);
+    }
+
+    /* Card nickname */
+    .bidder {
+        border: 2px solid transparent;
+        border-radius: 10px;
+        padding: 8px 10px;
+        margin-bottom: 8px;
+        background: rgba(2,6,23,.35);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        row-gap: 4px;
+    }
+
+        .bidder .nick {
+            font-weight: 800;
+            letter-spacing: .2px;
+        }
+
+        .bidder .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 999px;
+            display: inline-block;
+            margin-left: 6px;
+        }
+
+            .bidder .dot.online {
+                background: #22c55e;
+            }
+
+            .bidder .dot.waiting {
+                background: #f59e0b;
+            }
+
+            .bidder .dot.offline {
+                background: #64748b;
+            }
+
+        .bidder .line {
+            grid-column: 1/-1;
+            display: flex;
+            gap: 10px;
+            font-size: .9rem;
+            opacity: .9;
+        }
+
+        .bidder .val {
+            font-weight: 700;
+        }
+
+    /* Last bidder: bordo giallo lampeggiante */
+    @@keyframes pulseBorder {
+        0%,100%
+
+    {
+        box-shadow: 0 0 0 0 rgba(245,158,11,.0);
+    }
+
+    50% {
+        box-shadow: 0 0 0 3px rgba(245,158,11,.9);
+    }
+
+    }
+
+    .bidder.is-active {
+        border-color: #f59e0b;
+        animation: pulseBorder .9s linear infinite;
+    }
+
+    /* Over-cap: sfondo rosso quando offerta corrente > pmax di quel nick */
+    .bidder.over-cap {
+        background: rgba(239,68,68,.18);
+        border-color: #ef4444;
+    }
+
+    /* Micro badge numeri allineati a destra */
+    .bidder .kv {
+        display: flex;
+        gap: 4px;
+    }
+
+        .bidder .kv .lbl {
+            opacity: .75;
+        }
+
+        .bidder .kv .val {
+            min-width: 36px;
+            text-align: right;
+        }
 
     #overlay-log .log-item {
         font-size: .95rem;
@@ -488,6 +615,103 @@
         font-size: .8rem;
         opacity: .9;
     }
+    /* overlay più largo (adatta se vuoi) */
+    #asta-overlay .asta-box {
+        max-width: 1200px; /* prima era molto più stretta */
+        width: 95vw;
+    }
+
+    /* griglia partecipanti: almeno 5 colonne quando c’è spazio */
+    .participants-grid {
+        margin-top: 12px;
+        display: grid;
+        gap: 12px;
+        /* su mobile si adatta, su desktop punta a 5+ colonne */
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    }
+
+    /* forza 5 colonne se la box è >1100px */
+    @@media (min-width: 1100px) {
+        .participants-grid
+
+    {
+        grid-template-columns: repeat(5, 1fr);
+    }
+
+    }
+
+    /* card/base */
+    .participants-grid .bidder {
+        border-radius: 12px;
+        background: rgba(0,0,0,.25);
+        padding: 10px 12px;
+        border: 1px solid rgba(255,255,255,.08);
+        transition: box-shadow .2s, border-color .2s, background-color .2s;
+    }
+
+        .participants-grid .bidder .nick {
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .participants-grid .bidder .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+            .participants-grid .bidder .dot.online {
+                background: #22c55e;
+            }
+
+            .participants-grid .bidder .dot.offline {
+                background: #64748b;
+            }
+
+            .participants-grid .bidder .dot.waiting {
+                background: #f59e0b;
+            }
+
+        .participants-grid .bidder .line {
+            display: flex;
+            gap: 16px;
+            font-size: .95rem;
+            opacity: .95;
+        }
+
+        .participants-grid .bidder .kv .lbl {
+            opacity: .7;
+            margin-right: 4px;
+        }
+
+        /* lampeggio giallo per last bidder */
+        .participants-grid .bidder.is-active {
+            animation: nickBlink .9s linear infinite;
+            box-shadow: 0 0 0 2px rgba(234,179,8,.55) inset;
+        }
+    @@keyframes nickBlink {
+        0%,100%
+
+    {
+        outline: 2px solid rgba(234,179,8,0);
+    }
+
+    50% {
+        outline: 2px solid rgba(234,179,8,.95);
+    }
+
+    }
+
+    /* rosso SOLO se offerta >= pmax */
+    .participants-grid .bidder.over-cap {
+        background: rgba(239,68,68,.14);
+        border-color: rgba(239,68,68,.45);
+    }
+
 
 </style>
 
@@ -1245,25 +1469,264 @@
             const LOG_ICONS  = { start:'🚀', bid:'💰', paused:'⏸️', resumed:'▶️', win:'🏆', cancel:'🛑', info:'ℹ️' };
             const LOG_COLORS = { start:'#94a3b8', bid:'#0ea5e9', paused:'#f59e0b', resumed:'#14b8a6', win:'#22c55e', cancel:'#ef4444', info:'#94a3b8' };
 
-            function appendLog(type, text){
-                const el = document.getElementById('overlay-log'); if (!el) return;
-                const t  = new Date().toLocaleTimeString();
-                const ic = LOG_ICONS[type]  || LOG_ICONS.info;
-                const col= LOG_COLORS[type] || LOG_COLORS.info;
+        function appendLog(type, text) {
+            const el = document.getElementById('overlay-log');
+            if (!el) return;
 
-                const html = `
-                    <div class="log-item log-${type}"
-                         style="--accent:${col}; font-family:${LOG_FONT_STACK}; font-variant-numeric:tabular-nums; letter-spacing:.2px;">
-                      <span class="log-ic"    style="font-family:${LOG_FONT_STACK}">${ic}</span>
-                      <span class="log-text" style="font-family:${LOG_FONT_STACK}">${escapeHtml(text)}</span>
-                      <span class="log-time" style="font-family:${LOG_FONT_STACK}">${t}</span>
-                    </div>`;
+            const t  = new Date().toLocaleTimeString();
+            const ic = LOG_ICONS[type]  || LOG_ICONS.info;
+            const col= LOG_COLORS[type] || LOG_COLORS.info;
 
-                el.insertAdjacentHTML('afterbegin', html);
+            const html = `
+                <div class="log-item log-${type}"
+                     style="--accent:${col}; font-family:${LOG_FONT_STACK}; font-variant-numeric:tabular-nums; letter-spacing:.2px;">
+                  <span class="log-ic"   style="font-family:${LOG_FONT_STACK}">${ic}</span>
+                  <span class="log-text" style="font-family:${LOG_FONT_STACK}">${escapeHtml(text)}</span>
+                  <span class="log-time" style="font-family:${LOG_FONT_STACK}">${t}</span>
+                </div>`;
 
-                const items = el.querySelectorAll('.log-item');
-                if (items.length > 100) for (let i=100; i<items.length; i++) items[i].remove();
+            // aggiungi SEMPRE in cima → ordine decrescente
+            el.insertAdjacentHTML('afterbegin', html);
+
+            // mantieni massimo 100 eventi
+            const items = el.querySelectorAll('.log-item');
+            if (items.length > 100) {
+                for (let i = 100; i < items.length; i++) {
+                    items[i].remove();
+                }
             }
+
+            // blocca lo scroll sempre in alto (sul più recente)
+            el.scrollTop = 0;
+        }
+
+
+         // === PARTECIPANTI PANEL (admin) ============================================
+        (function () {
+          // nickname -> { nickname, crediti, pmax, stato }
+          const P = new Map();
+          let lastBidder = null;
+          let bootDone = false;
+                  const RED_LOCK = new Set();                    // <- nicks bloccati in rosso fino a fine asta
+        const toKey = n => (n || '').toLowerCase();    // normalizza nickname
+
+
+          function isAdminNick(n) {
+            const admin = (window.nickname || '').toLowerCase();
+            return (n || '').toLowerCase() === admin;
+          }
+
+          function escapeHtml(s) {
+            return (s || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+          }
+          function num(v) {
+            const n = typeof v === 'string' ? parseInt(v, 10) : v;
+            return Number.isFinite(n) ? n : 0;
+          }
+
+          // Layout: pannello SOTTO al log (griglia responsive)
+          function setupLogPanel() {
+            const log = document.getElementById('overlay-log');
+            if (!log || log.dataset.enhanced) return;
+            const panel = document.createElement('div');
+            panel.id = 'overlay-partecipanti';
+            panel.className = 'participants-grid';
+            log.insertAdjacentElement('afterend', panel);
+            log.dataset.enhanced = '1';
+          }
+
+        function renderPanel() {
+          const el = document.getElementById('overlay-partecipanti');
+          if (!el) return;
+
+          const arr = Array.from(P.values())
+            .filter(x => x.nickname && !isAdminNick(x.nickname))
+            .sort((a, b) => a.nickname.localeCompare(b.nickname, 'it'));
+
+          el.innerHTML = arr.map(x => {
+            const key = toKey(x.nickname);
+            const overClass = RED_LOCK.has(key) ? ' over-cap' : '';   // resta rosso se bloccato
+            return `
+              <div class="bidder${overClass}" data-nick="${escapeHtml(x.nickname)}" data-pmax="${num(x.pmax)}">
+                <div class="nick">
+                  ${escapeHtml(x.nickname)}
+                  <span class="dot ${(x.stato || 'offline').toLowerCase()}"></span>
+                </div>
+                <div></div>
+                <div class="line">
+                  <span class="kv"><span class="lbl">Crediti:</span> <span class="val">${num(x.crediti)}</span></span>
+                  <span class="kv"><span class="lbl">Max:</span>     <span class="val">${num(x.pmax)}</span></span>
+                </div>
+              </div>`;
+          }).join('');
+
+          // ri-applica il lampeggio giallo al last bidder
+          if (lastBidder) {
+            document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
+              card.classList.toggle('is-active', toKey(card.dataset.nick) === toKey(lastBidder));
+            });
+          }
+        }
+
+
+          // --- fonti dati ----------------------------------------------------------
+          function applyPresence(list) {
+            (list || []).forEach(p => {
+              const nick = (p.nick || p.Nick || '').toString();
+              if (!nick || isAdminNick(nick)) return;
+              const rec = P.get(nick) || { nickname: nick, crediti: 0, pmax: 0, stato: 'offline' };
+              rec.stato = (p.stato || p.Stato || 'offline');
+              P.set(nick, rec);
+            });
+            renderPanel();
+          }
+
+          function applyCreditsFromArray(arr) {
+            (arr || []).forEach(s => {
+              const nick = s.nickname || s.Nickname || '';
+              if (!nick || isAdminNick(nick)) return;
+
+              const cred = ('creditiDisponibili' in s) ? s.creditiDisponibili : s.CreditiDisponibili;
+              const pmax = ('puntataMassima'    in s) ? s.puntataMassima    : s.PuntataMassima;
+
+              const rec = P.get(nick) || { nickname: nick, crediti: 0, pmax: 0, stato: 'offline' };
+              if (cred !== undefined) rec.crediti = num(cred);
+              if (pmax !== undefined) rec.pmax    = num(pmax);
+              P.set(nick, rec);
+            });
+            renderPanel();
+          }
+
+          // Fallback: leggi la tabella “Riepilogo Squadre” (server-side)
+          function applyCreditsFromTable() {
+            const table = document.querySelector('h4.mt-4 + .table-responsive table');
+            if (!table) return false;
+            const rows = table.querySelectorAll('tbody tr');
+            if (!rows.length) return false;
+
+            rows.forEach(tr => {
+              const nick = (tr.querySelector('.td-nick .nick-label')?.textContent || '').trim();
+              if (!nick || isAdminNick(nick)) return;
+              // colonne crediti/pmax sono gli <span id="cred-..."> e <span id="pmax-...">
+              const credEl = tr.querySelector('td:nth-child(3) span[id^="cred-"]');
+              const pmaxEl = tr.querySelector('td:nth-child(4) span[id^="pmax-"]');
+
+              const rec = P.get(nick) || { nickname: nick, crediti: 0, pmax: 0, stato: 'offline' };
+              if (credEl) rec.crediti = num(credEl.textContent);
+              if (pmaxEl) rec.pmax    = num(pmaxEl.textContent);
+              P.set(nick, rec);
+            });
+            renderPanel();
+            return true;
+          }
+
+          // Evidenze (lampeggio + “rosso” se offerta >= pmax)
+          function setActiveBidder(nick, offerta) {
+            if (nick && isAdminNick(nick)) nick = null;
+            lastBidder = nick || null;
+        if (Number.isFinite(offerta)) {
+            // blocca in rosso tutti quelli con pmax < offerta attuale
+            P.forEach(rec => {
+              if (!rec?.nickname) return;
+              if (offerta > num(rec.pmax)) RED_LOCK.add(toKey(rec.nickname)); // “oltre la soglia”
+            });
+          }
+                          renderPanel(); 
+                   
+            document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
+              const isMine = nick && card.dataset.nick.toLowerCase() === nick.toLowerCase();
+              card.classList.toggle('is-active', !!isMine);
+            });
+
+            if (typeof offerta === 'number' && Number.isFinite(offerta)) {
+              document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
+                const pmax = parseInt(card.dataset.pmax || '0', 10) || 0;
+                card.classList.toggle('over-cap', offerta >= pmax);
+              });
+            } else {
+              document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => card.classList.remove('over-cap'));
+            }
+          }
+
+        function clearActive() {
+          lastBidder = null;
+                  RED_LOCK.clear();
+                          renderPanel();
+          document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
+            // tolgo solo il lampeggio giallo
+            card.classList.remove('is-active');
+            // lascio l'over-cap intatto (resta rosso finché non si resetta manualmente)
+          });
+        }
+
+          // Bootstrap iniziale (sia da window.squadreArr che dalla tabella)
+          function bootCredits() {
+            // 1) prova da array globale
+            const arr = (window.squadreArr || []);
+            if (Array.isArray(arr) && arr.length) {
+              applyCreditsFromArray(arr);
+            }
+            // 2) se ancora vuoto/zeri, usa la tabella server-side
+            const needFallback = Array.from(P.values()).every(x => !x.crediti && !x.pmax);
+            if (needFallback) applyCreditsFromTable();
+          }
+
+          // riprova finché squadreArr non è poplato (10s max)
+          function bootWhenReady(tries = 0) {
+            if (bootDone) return;
+            const arr = (window.squadreArr || []);
+            if ((Array.isArray(arr) && arr.length) || tries >= 200) {
+              bootCredits();
+              bootDone = true;
+              return;
+            }
+            setTimeout(() => bootWhenReady(tries + 1), 50);
+          }
+
+        function attachWhenReady() {
+          if (!window.connection) { setTimeout(attachWhenReady, 50); return; }
+          const connection = window.connection;
+
+          connection.on("RiepilogoAggiornato", (data) => {
+            const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+            applyCreditsFromArray(squads);
+          });
+
+          connection.on("StatoPartecipanti", (p) => {
+            if (p?.partecipanti) applyPresence(p.partecipanti);
+          });
+
+          connection.on("AggiornaOfferta", (offerente, offerta) => {
+            if (offerente && !isAdminNick(offerente)) {
+              setActiveBidder(offerente, Number(offerta));
+            }
+          });
+
+          connection.on("Buzz", (offerente) => {
+            if (offerente && !isAdminNick(offerente)) {
+              setActiveBidder(offerente, undefined);
+            }
+          });
+
+          connection.on("AstaTerminata", clearActive);
+          connection.on("AstaAnnullata", clearActive);
+
+          // 🔴 Reset dei rossi quando parte una nuova asta
+          connection.on("MostraGiocatoreInAsta", () => {
+            document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
+              card.classList.remove('over-cap');
+            });
+          });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+          setupLogPanel();
+          attachWhenReady();
+          bootWhenReady(); // parte il bootstrap (array o tabella)
+        });
+
+        })(); // <<< IIFE INVOCATA
+
 
             function closeAdminOverlayImmediate() {
                         astaAperta = false;
@@ -1285,6 +1748,8 @@
 
             const legaAliasAdmin = "@ViewBag.LegaAlias";
             const adminNick = "@(ViewBag.AdminNick ?? "ADMIN")";
+                    window.legaAlias = legaAliasAdmin;
+        window.nickname  = adminNick;
             const appLogoUrl = '@appLogoUrl';
         let buzzerModeOn = false;
         function updateBuzzerUI(isOn){
@@ -1502,8 +1967,41 @@ function toggleStop(){
                 });
             }
 
-            const connection=new signalR.HubConnectionBuilder().withUrl("/bazzerHub").build();
-            window.connection=connection;
+                    const connection = new signalR.HubConnectionBuilder()
+          .withUrl("/bazzerHub")           // usa lo stesso percorso/casing che già funziona
+          .withAutomaticReconnect()        // <— fondamentale
+          .build();
+
+        connection.serverTimeoutInMilliseconds = 60000;
+        connection.keepAliveIntervalInMilliseconds = 15000;
+
+        window.connection = connection;     // mantieni la reference globale
+
+                async function rejoin() {
+          try {
+            await connection.invoke("RegistratiAllaLega", window.legaAlias, window.nickname, true); // true = admin
+            console.log("[SignalR] Rejoined groups for", window.legaAlias, "as admin");
+          } catch (e) {
+            console.error("Rejoin failed:", e);
+          }
+        }
+
+        // Rientra nei gruppi quando SignalR si riconnette (nuovo ConnectionId)
+        connection.onreconnected(async () => {
+          console.log("[SignalR] Reconnected:", connection.connectionId);
+          await rejoin();
+        });
+
+        // In caso di chiusura, prova a ripartire e rejoinare
+        connection.onclose(async () => {
+          console.warn("[SignalR] Connection closed, restarting…");
+          try {
+            await connection.start();
+            await rejoin();
+          } catch (e) {
+            console.error("Restart failed:", e);
+          }
+        });
 
             connection.on("StatoAsta", (stato) => {
                 if (stato?.startUtc) {
@@ -2418,12 +2916,18 @@ function toggleStop(){
                     setArchivedLetters([]); const i=document.getElementById('inizialeInput'); if(i) i.value=''; document.getElementById('filtroForm').submit();
                 });
 
-                connection.start().then(()=>{
-                    connection.invoke("RegistratiAllaLega", legaAliasAdmin, adminNick, true).catch(()=>{});
-                    setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
-                    connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin).catch(()=>{});
-                    connection.invoke("RichiediStatoAttuale").catch(()=>{});
-                }).catch(err=>console.error(err));
+
+        connection.start().then(async ()=>{
+            console.log("[SignalR] Connected:", connection.connectionId);
+            await rejoin(); // primo join centralizzato
+
+            // resto come prima
+            setInterval(()=>{ connection.invoke("Ping", legaAliasAdmin, adminNick).catch(()=>{}); }, 20000);
+            // (facoltativo) questa chiamata è superflua perché rejoin() già aggiunge al gruppo admin:
+            // connection.invoke("AggiungiAdminAlGruppo", legaAliasAdmin).catch(()=>{});
+            connection.invoke("RichiediStatoAttuale").catch(()=>{});
+        }).catch(err=>console.error(err));
+
 
                 document.getElementById('btn-pausa')?.addEventListener('click', async () => {
                     let ok=false;
