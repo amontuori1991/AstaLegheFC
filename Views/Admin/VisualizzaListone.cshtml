@@ -1620,33 +1620,32 @@
             return true;
           }
 
-          // Evidenze (lampeggio + “rosso” se offerta >= pmax)
-          function setActiveBidder(nick, offerta) {
-            if (nick && isAdminNick(nick)) nick = null;
-            lastBidder = nick || null;
-        if (Number.isFinite(offerta)) {
-            // blocca in rosso tutti quelli con pmax < offerta attuale
+        function setActiveBidder(nick, offerta) {
+          if (nick && isAdminNick(nick)) nick = null;
+          lastBidder = nick || null;
+
+          // Se ho un importo reale, aggiorno il RED_LOCK (solo ADD, mai remove qui)
+          if (Number.isFinite(offerta)) {
             P.forEach(rec => {
               if (!rec?.nickname) return;
-              if (offerta > num(rec.pmax)) RED_LOCK.add(toKey(rec.nickname)); // “oltre la soglia”
+              if (offerta >= num(rec.pmax)) {
+                RED_LOCK.add(toKey(rec.nickname)); // resta rosso fino a reset
+              }
             });
           }
-                          renderPanel(); 
-                   
-            document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
-              const isMine = nick && card.dataset.nick.toLowerCase() === nick.toLowerCase();
-              card.classList.toggle('is-active', !!isMine);
-            });
 
-            if (typeof offerta === 'number' && Number.isFinite(offerta)) {
-              document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
-                const pmax = parseInt(card.dataset.pmax || '0', 10) || 0;
-                card.classList.toggle('over-cap', offerta >= pmax);
-              });
-            } else {
-              document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => card.classList.remove('over-cap'));
-            }
-          }
+          // Rendi la UI
+          renderPanel();
+
+          // Evidenzia il last bidder in giallo (lampeggio)
+          document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
+            const isMine = nick && card.dataset.nick.toLowerCase() === nick.toLowerCase();
+            card.classList.toggle('is-active', !!isMine);
+          });
+
+          // ❌ NON toccare più over-cap qui, né rimuoverlo quando offerta è undefined
+        }
+
 
         function clearActive() {
           lastBidder = null;
@@ -1712,11 +1711,10 @@
           connection.on("AstaAnnullata", clearActive);
 
           // 🔴 Reset dei rossi quando parte una nuova asta
-          connection.on("MostraGiocatoreInAsta", () => {
-            document.querySelectorAll('#overlay-partecipanti .bidder').forEach(card => {
-              card.classList.remove('over-cap');
-            });
-          });
+        connection.on("MostraGiocatoreInAsta", () => {
+          clearActive(); // azzera lastBidder + RED_LOCK + rerender
+        });
+
         }
 
         document.addEventListener('DOMContentLoaded', () => {
