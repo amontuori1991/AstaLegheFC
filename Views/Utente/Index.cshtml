@@ -1104,6 +1104,7 @@
                         <small id="label-da" class="text-muted">da</small>
                         <h6 id="label-offerente-buzzer" class="text-muted mb-1" style="display:none; letter-spacing:.3px;">ATTUALE OFFERENTE</h6>
                         <h3 id="offerente" class="text-info mb-0">@Model.OfferenteAttuale</h3>
+                        <small id="offerente-max" class="text-warning ms-2 d-block mt-1"></small>
                     </div>
                 </div>
             </div>
@@ -1412,6 +1413,41 @@
           let pauseLockUntil = 0;
           let buzzerAttivoClient = false;
           let buzzerModeOn = false;
+                  // === Puntata massima per nickname (cache) ==============================
+        const pmaxByNick = new Map();                          // key: nick in lower-case
+
+        function setPmax(nick, pmax) {
+          if (!nick) return;
+          pmaxByNick.set(String(nick).toLowerCase(), Number(pmax) || 0);
+        }
+        function getPmax(nick) {
+          if (!nick) return 0;
+          return pmaxByNick.get(String(nick).toLowerCase()) ?? 0;
+        }
+
+        // Aggiorna la label accanto al nome offerente
+        function renderOfferenteExtras(nick) {
+          const extra = document.getElementById('offerente-max');
+          if (!extra) return;
+          const clean = (nick || '').trim();
+          if (!clean || clean === '-' || clean === 'NESSUNO') { extra.textContent = ''; return; }
+          const pmax = getPmax(clean);
+          extra.textContent = pmax ? `Max: ${pmax}` : '';     // se non lo conosciamo ancora, resta vuoto
+        }
+
+        // Precarica pmax da /utente/riepilogo (tutte le squadre)
+        async function preloadPmax() {
+          try {
+            const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+            squads.forEach(s => { if (s?.nickname != null) setPmax(s.nickname, s.puntataMassima); });
+            // refresh se c'è già un offerente a schermo
+            const shown = (document.getElementById('offerente')?.textContent || '').trim();
+            renderOfferenteExtras(shown);
+          } catch {}
+        }
 
           let resumePollId = null;
           function startResumePolling(){
@@ -1940,6 +1976,9 @@
 
             document.getElementById("offerente").textContent = "NESSUNO";
             document.getElementById("offerta").textContent = "0";
+                    const extraEl = document.getElementById('offerente-max');
+        if (extraEl) extraEl.textContent = '';
+
                     try {
           const me = (nickname || '').trim().toLowerCase();
           const off = (offerente || '').trim().toLowerCase();
@@ -1984,6 +2023,7 @@
             connection.on('Buzz', (offerente, fineUtc) => {
               const offerenteEl = document.getElementById("offerente");
               if (offerenteEl) offerenteEl.textContent = offerente || "-";
+              renderOfferenteExtras(offerente);
 
               const offEl = document.getElementById("offerta");
               if (offEl) offEl.textContent = buzzerModeOn ? '—' : '0';
@@ -2002,6 +2042,7 @@
             connection.on("AggiornaOfferta", (offerente, offerta, fineIso) => {
               const offerenteEl = document.getElementById("offerente");
               if (offerenteEl) offerenteEl.textContent = offerente || "-";
+              renderOfferenteExtras(offerente);
 
               if (!buzzerModeOn) {
                 const offEl = document.getElementById("offerta");
@@ -2170,17 +2211,37 @@
           });
 
           // === Riepilogo & crediti live ===
-          connection.on("RiepilogoAggiornato", (data) => {
-            aggiornaCrediti();
-            const squads = (data && (data.squadre || data.squads)) ? (data.squadre || data.squads) : [];
-            squads.forEach(s => {
-              const credChip = document.getElementById(`cred-${s.squadraId}`);
-              if (credChip && typeof s.creditiDisponibili === 'number') credChip.textContent = s.creditiDisponibili;
-              const maxChip = document.getElementById(`max-${s.squadraId}`);
-              if (maxChip && typeof s.puntataMassima === 'number') maxChip.textContent = s.puntataMassima;
-            });
-            if (modalRoseAperto()) apriRiepilogo();
+        connection.on("RiepilogoAggiornato", (data) => {
+          aggiornaCrediti();
+
+          const squads = (data && (data.squadre || data.squads))
+            ? (data.squadre || data.squads)
+            : [];
+
+          squads.forEach(s => {
+            // chip in accordion
+            const credChip = document.getElementById(`cred-${s.squadraId}`);
+            if (credChip && typeof s.creditiDisponibili === 'number') {
+              credChip.textContent = s.creditiDisponibili;
+            }
+            const maxChip = document.getElementById(`max-${s.squadraId}`);
+            if (maxChip && typeof s.puntataMassima === 'number') {
+              maxChip.textContent = s.puntataMassima;
+            }
+
+            // aggiorna cache puntata massima per nickname
+            if (s?.nickname != null && typeof s.puntataMassima === 'number') {
+              setPmax(s.nickname, s.puntataMassima);
+            }
           });
+
+          // refresh micro-label accanto al nome offerente
+          const shownNick = (document.getElementById('offerente')?.textContent || '').trim();
+          renderOfferenteExtras(shownNick);
+
+          if (modalRoseAperto()) apriRiepilogo();
+        });
+
 
           connection.on("AggiornaUtente", ()=>{ aggiornaCrediti(); caricaListone(); });
           connection.on("AggiornaDurataTimer", (nuoviSecondi)=>{ timerSecondi = nuoviSecondi; });
@@ -2265,6 +2326,7 @@
             aggiornaStatoPulsantiBazzer();
             caricaListone();
             aggiornaCrediti();
+            preloadPmax();
             startPing();
           }
 
