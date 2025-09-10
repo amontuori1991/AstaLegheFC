@@ -247,9 +247,25 @@
             font-weight: 600;
             font-size: .95rem;
         }
+    /* --- MOBILE: la barra NON è fissa, scorre col contenuto --- */
+    @@media (max-width: 576px) {
+        #crediti-bar
 
+    {
+        position: static !important; /* non più fixed */
+        bottom: auto !important;
+        left: auto !important;
+        right: auto !important;
+        z-index: auto !important; /* modali/toast possono coprirla */
+        box-shadow: none; /* meno “peso” visivo se non è fissa */
+        padding-bottom: 10px; /* rimuovo extra safe-area */
+    }
+
+    /* lo spacer non serve più se la barra non è fissa */
     .spacer-crediti {
-        height: calc(64px + env(safe-area-inset-bottom, 0px));
+        height: 0 !important;
+    }
+
     }
 
     /* Modal/Accordion dark */
@@ -527,10 +543,6 @@
     #crediti-bar {
         bottom: env(safe-area-inset-bottom, 0px);
         padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-    }
-
-    .spacer-crediti {
-        height: calc(64px + env(safe-area-inset-bottom, 0px));
     }
 
     .badge-myteam {
