@@ -1070,6 +1070,87 @@
         font-weight: 800;
         opacity: .85;
     }
+    /* board: prendi tutta la riga nel card-body */
+    .pmax-board {
+        width: 100%;
+        margin-top: .75rem;
+        padding: .75rem;
+        border: 1px solid #33495e;
+        border-radius: 12px;
+        background: #1e2a33;
+    }
+
+    /* griglia fluida: più colonne quando c’è spazio */
+    .pmax-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* 2–6 colonne */
+        gap: 10px;
+    }
+
+    /* Razor: usa @@ per @@media */
+    @@media (min-width:1200px) {
+        .pmax-grid
+
+    {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+
+    }
+
+    /* card singola */
+    .pmax-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid #2a3a4a;
+        border-radius: 10px;
+        background: #223448;
+        font-weight: 600;
+    }
+
+        .pmax-item .nick {
+            color: #5dade2;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* wrapper dei valori */
+        .pmax-item .vals {
+            display: inline-flex;
+            align-items: baseline;
+            gap: 6px;
+            font-weight: 800;
+        }
+
+        .pmax-item .disp {
+            color: #9bd3ff;
+        }
+        /* disponibili: azzurrino */
+        .pmax-item .sep {
+            opacity: .65;
+        }
+        /* separatore / */
+        .pmax-item .max {
+            color: #f1c40f;
+        }
+        /* massimo: giallo */
+
+
+        .pmax-item .disp {
+            color: #2ecc71;
+        }
+        /* Disponibili = verde */
+        .pmax-item .sep {
+            opacity: .65;
+        }
+        /* slash “/” più leggero */
+        .pmax-item .max {
+            color: #f1c40f;
+        }
+    /* Max = giallo */
+
 
 </style>
 
@@ -1108,6 +1189,8 @@
                     </div>
                 </div>
             </div>
+            <!-- Board Limiti offerta (solo desktop) -->
+            <div id="pmax-board" class="pmax-board d-none d-md-block"></div>
 
             <div class="card-footer bg-dark text-white">
                 <span class="text-muted">Tempo Rimanente:</span>
@@ -1120,8 +1203,10 @@
         <div class="card shadow mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Offri</h5>
+                <button id="btnPmaxMobile" class="btn btn-outline-info btn-sm mx-2 d-md-none">Limiti offerta</button>
                 <span class="text-muted small">Rilanci rapidi</span>
             </div>
+
             <div class="card-body">
                 <!-- UI CLASSICA (offerte) -->
                 <div id="bidUi">
@@ -1189,6 +1274,17 @@
 
 
 
+<!-- Drawer Limiti Offerta (mobile) -->
+<div class="offcanvas offcanvas-bottom" tabindex="-1" id="pmaxDrawer"
+     aria-labelledby="pmaxDrawerLabel" style="height: 70vh;">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="pmaxDrawerLabel">Limiti offerta</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Chiudi"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div id="pmax-board-mobile"></div>
+    </div>
+</div>
 
 
 <!-- Barra compatta crediti in basso -->
@@ -1424,6 +1520,41 @@
           if (!nick) return 0;
           return pmaxByNick.get(String(nick).toLowerCase()) ?? 0;
         }
+                // === Cache completa per la board Disp/Max (desktop) ====================
+        const pmaxStore = new Map(); // key: "id:<squadraId>" oppure "nick:<nickname>"
+
+        function keyOf(s) {
+          if (s && s.squadraId != null) return `id:${s.squadraId}`;
+          if (s && s.nickname) return `nick:${String(s.nickname).toLowerCase()}`;
+          return null;
+        }
+
+        function normalizeSquad(s) {
+          return {
+            key: keyOf(s),
+            squadraId: s?.squadraId ?? null,
+            nickname: s?.nickname ?? s?.nomeSquadra ?? s?.teamName ?? "",
+            creditiDisponibili: Number.isFinite(s?.creditiDisponibili) ? s.creditiDisponibili : 0,
+            puntataMassima:    Number.isFinite(s?.puntataMassima)    ? s.puntataMassima    : 0,
+          };
+        }
+
+        function mergeSquadsIntoStore(squads) {
+          (squads || []).forEach(raw => {
+            const n = normalizeSquad(raw);
+            if (!n.key) return;
+            const prev = pmaxStore.get(n.key) || {};
+            // se dal payload manca il nickname, mantieni il precedente
+            const nickname = n.nickname || prev.nickname || "";
+            const merged = { ...prev, ...n, nickname };
+            pmaxStore.set(n.key, merged);
+            if (nickname) setPmax(nickname, merged.puntataMassima); // allinea anche la cache per la micro-label
+          });
+        }
+
+        function getPmaxStoreArray() {
+          return Array.from(pmaxStore.values());
+        }
 
         // Aggiorna la label accanto al nome offerente
         function renderOfferenteExtras(nick) {
@@ -1446,7 +1577,45 @@
             // refresh se c'è già un offerente a schermo
             const shown = (document.getElementById('offerente')?.textContent || '').trim();
             renderOfferenteExtras(shown);
+        // popola la cache completa e renderizza la board
+        mergeSquadsIntoStore(squads);
+        renderPmaxGrid('pmaxBoard'); // render dalla cache
+
           } catch {}
+        }
+                // === Board Limiti Offerta ===============================================
+        function renderPmaxGrid(targetId, squadsToMerge) {
+          const host = document.getElementById(targetId);
+          if (!host) return;
+
+          // se arriva un update parziale, mergialo in cache
+          if (Array.isArray(squadsToMerge)) mergeSquadsIntoStore(squadsToMerge);
+
+          const list = getPmaxStoreArray()
+            .filter(x => Number.isFinite(x.puntataMassima) || Number.isFinite(x.creditiDisponibili))
+            .sort((a, b) => (b.puntataMassima || 0) - (a.puntataMassima || 0)); // ordina per Max
+
+          host.innerHTML = `
+            <div class="pmax-grid">
+              ${list.map(s => `
+                <div class="pmax-item" title="${s.nickname} — Disp.: ${s.creditiDisponibili} / Max: ${s.puntataMassima}">
+                  <span class="nick">${s.nickname || '—'}</span>
+                  <span class="vals">
+                    <span class="disp">${s.creditiDisponibili}</span>
+                    <span class="sep">/</span>
+                    <span class="max">${s.puntataMassima}</span>
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+
+
+        function refreshPmaxBoardsFromRiepilogoData(data) {
+          const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+          renderPmaxGrid('pmax-board', squads);         // desktop
+          renderPmaxGrid('pmax-board-mobile', squads);  // mobile (drawer)
         }
 
           let resumePollId = null;
@@ -1887,6 +2056,20 @@
             }finally{ riepilogoLoading.style.display = 'none'; }
           }
           document.getElementById('btnRiepilogo').addEventListener('click', () => { bootstrap.Modal.getOrCreateInstance(modalEl).show(); apriRiepilogo(); });
+                  // Bottone mobile "Limiti offerta"
+        const btnPmaxMobile = document.getElementById('btnPmaxMobile');
+        if (btnPmaxMobile) {
+          btnPmaxMobile.addEventListener('click', async () => {
+            try {
+              const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+              if (res.ok) {
+                const data = await res.json();
+                refreshPmaxBoardsFromRiepilogoData(data);
+              }
+            } catch {}
+            bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('pmaxDrawer')).show();
+          });
+        }
 
           // ===== Ricerca/Suggerimento giocatore ==============================
           const inputRicerca = document.getElementById('input-ricerca-giocatore');
@@ -2238,6 +2421,11 @@
           // refresh micro-label accanto al nome offerente
           const shownNick = (document.getElementById('offerente')?.textContent || '').trim();
           renderOfferenteExtras(shownNick);
+                  // refresh board desktop + mobile
+        refreshPmaxBoardsFromRiepilogoData(data);
+                // merge anche se l'update è parziale (desktop board)
+        mergeSquadsIntoStore(squads);
+        renderPmaxGrid('pmaxBoard'); // re-render completo dalla cache
 
           if (modalRoseAperto()) apriRiepilogo();
         });
@@ -2327,6 +2515,15 @@
             caricaListone();
             aggiornaCrediti();
             preloadPmax();
+        // Primo render della board Limiti Offerta
+        try {
+          const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+          if (res.ok) {
+            const data = await res.json();
+            refreshPmaxBoardsFromRiepilogoData(data);
+          }
+        } catch {}
+
             startPing();
           }
 
