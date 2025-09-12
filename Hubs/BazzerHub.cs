@@ -529,7 +529,7 @@ namespace AstaLegheFC.Hubs
             await BroadcastStatoPartecipantiAsync(legaLower);
         }
 
-        public async Task AnnullaAsta(string legaAlias = "")
+        public async Task AnnullaAsta(string legaAlias = "", bool silent = false)
         {
             var legaLower = string.IsNullOrWhiteSpace(legaAlias)
                 ? (TryGetCallerLega(out var l) ? l : "")
@@ -538,14 +538,15 @@ namespace AstaLegheFC.Hubs
 
             _bazzerService.AnnullaAstaCorrente(legaLower);
 
-            // Notifica standard
-            await Clients.Group(legaLower).SendAsync("AstaAnnullata");
-            // Resetta immediatamente stato visuale/timer lato client
+            // Notifica annullamento
+            await Clients.Group(legaLower).SendAsync("AstaAnnullata", new { silent });
+
+            // Reset stato/timer lato client
             await Clients.Group(legaLower).SendAsync("AggiornaOfferta", "-", 0, null);
-            // 🔒 Hard-reset buzzer: i client ignorano qualsiasi BUZZ residuo
             await Clients.Group(legaLower).SendAsync("BuzzerHardReset");
             ResetCooldowns(legaLower);
         }
+
 
 
 

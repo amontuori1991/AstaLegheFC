@@ -1507,6 +1507,9 @@
           let lastFineUtcStr = null;
           let countdownTimerUtente = null;
           let finalizeGuard = false;
+                  // ——— Guard per ignorare MostraGiocatoreInAsta subito dopo uno svincolo
+        let ignoreMostraUntil = 0; // millisec epoch; se > Date.now() ignoriamo il “Mostra…”
+
 
           let maxPortieri = @Model.MaxPortieri;
           let maxDifensori = @Model.MaxDifensori;
@@ -1791,6 +1794,10 @@
 
             connection.on("AstaAnnullata", () => { lastOfferente = null; fineUtcISO = null; setTimeout(recomputeButton, 0); });
             connection.on("AstaTerminata",  () => { lastOfferente = null; fineUtcISO = null; setTimeout(recomputeButton, 0); });
+                    // ——— Svincolo: per ~2.5s ignora “MostraGiocatoreInAsta”
+        connection.on("GiocatoreSvincolato", () => { ignoreMostraUntil = Date.now() + 2500; });
+        connection.on("SvincoloEseguito",    () => { ignoreMostraUntil = Date.now() + 2500; });
+
           })();
 
           // ===== Utils UI ====================================================
@@ -2154,6 +2161,9 @@
 
           // ===== SignalR Handlers (UI) =======================================
           connection.on("MostraGiocatoreInAsta", (giocatore) => {
+                    if ((ignoreMostraUntil && Date.now() < ignoreMostraUntil) || giocatore?.fromRelease === true) {
+          return;
+        }
             const logoImg = document.getElementById("logo-giocatore-in-asta");
 
             idListoneAttuale = giocatore.id;
@@ -2296,46 +2306,61 @@
             });
           }
 
-          if (!window.__uiAstaAnnullataBound) {
-            window.__uiAstaAnnullataBound = true;
-            connection.on("AstaAnnullata", () => {
+        if (!window.__uiAstaAnnullataBound) {
+          window.__uiAstaAnnullataBound = true;
+          connection.on("AstaAnnullata", (payload) => {
+            const silent = payload && payload.silent;
+
+            // azzera stato asta utente
+            idListoneAttuale = 0;
+            ruoloGiocatoreAttuale = "";
+
+            const nomeEl   = document.getElementById("giocatore");
+            const logoEl   = document.getElementById("logo-giocatore-in-asta");
+            const offerEl  = document.getElementById("offerente");
+            const valEl    = document.getElementById("offerta");
+            const timerEl  = document.getElementById("timer");
+            const pausaEl  = document.getElementById("pausa-overlay");
+
+            if (nomeEl)  nomeEl.textContent = "Nessun giocatore";
+            if (logoEl)  logoEl.style.display = "none";
+            if (offerEl) offerEl.textContent = "-";
+            if (valEl)   valEl.textContent   = "0";
+            const extraEl = document.getElementById('offerente-max');
+            if (extraEl) extraEl.textContent = '';
+
+            fineUtcCorrente = null;
+            lastFineUtcStr  = null;
+            finalizeGuard   = false;
+            stopCountdown();
+            if (timerEl) timerEl.textContent = "-";
+
+            pausaAttivaClient = false;
+            if (pausaEl) pausaEl.classList.remove("visible");
+
+            lastPlayerLogoUrl = null;
+            setOffertaBg(appLogoUrl);
+            setPausaBg(appLogoUrl);
+
+            aggiornaStatoPulsantiBazzer();
+
+            // aggiorna crediti + listone per riflettere subito l'annullamento
+            try { aggiornaCrediti(); } catch {}
+            try { caricaListone();  } catch {}
+
+            // messaggio SOLO se non silenzioso
+            if (!silent) {
               if (typeof mostraMessaggio === "function") {
-                mostraMessaggio("Asta Annullata", "L'amministratore ha annullato l'asta corrente.");
+                mostraMessaggio("Asta annullata", "L'amministratore ha annullato l'asta corrente.");
               } else {
-                alert("Asta Annullata");
+                               alert("Asta annullata");
               }
+            }
+          });
+        }
 
-              idListoneAttuale = 0;
-              ruoloGiocatoreAttuale = "";
 
-              const nomeEl = document.getElementById("giocatore");
-              const logoEl = document.getElementById("logo-giocatore-in-asta");
-              const offerenteEl = document.getElementById("offerente");
-              const offertaEl = document.getElementById("offerta");
-              const timerEl = document.getElementById("timer");
-
-              if (nomeEl)  nomeEl.textContent = "Nessun giocatore";
-              if (logoEl)  logoEl.style.display = "none";
-              if (offerenteEl) offerenteEl.textContent = "-";
-              if (offertaEl)   offertaEl.textContent = "0";
-
-              fineUtcCorrente = null;
-              lastFineUtcStr = null;
-              finalizeGuard = false;
-              stopCountdown();
-              if (timerEl) timerEl.textContent = "-";
-
-              pausaAttivaClient = false;
-              const pausaEl = document.getElementById("pausa-overlay");
-              if (pausaEl) pausaEl.classList.remove("visible");
-
-              lastPlayerLogoUrl = null;
-              setOffertaBg(appLogoUrl);
-              setPausaBg(appLogoUrl);
-
-              aggiornaStatoPulsantiBazzer();
-            });
-          }
+ 
 
           // ► Pausa
           connection.on("AstaPausa", (payload) => {
@@ -2407,6 +2432,11 @@
 
           // === Riepilogo & crediti live ===
         connection.on("RiepilogoAggiornato", (data) => {
+          // Fallback anti-riapertura asta dopo SVINCOLO (alza il guard per ~2.5s)
+          if (data && (data.lastAction === 'svincolo' || data.azione === 'svincolo' || data.eventType === 'svincolo')) {
+            ignoreMostraUntil = Date.now() + 2500;
+          }
+
           aggiornaCrediti();
 
           const squads = (data && (data.squadre || data.squads))
@@ -2433,11 +2463,13 @@
           // refresh micro-label accanto al nome offerente
           const shownNick = (document.getElementById('offerente')?.textContent || '').trim();
           renderOfferenteExtras(shownNick);
-                  // refresh board desktop + mobile
-        refreshPmaxBoardsFromRiepilogoData(data);
-                // merge anche se l'update è parziale (desktop board)
-        mergeSquadsIntoStore(squads);
-        renderPmaxGrid('pmaxBoard'); // re-render completo dalla cache
+
+          // refresh board desktop + mobile
+          refreshPmaxBoardsFromRiepilogoData(data);
+
+          // merge anche se l'update è parziale (desktop board)
+          mergeSquadsIntoStore(squads);
+          renderPmaxGrid('pmaxBoard'); // re-render completo dalla cache
 
           if (modalRoseAperto()) apriRiepilogo();
         });
