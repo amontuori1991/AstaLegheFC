@@ -1,4 +1,4 @@
-﻿﻿@using AstaLegheFC.Models
+﻿@using AstaLegheFC.Models
 @model AstaLegheFC.Models.UtenteViewModel
 
 @{
@@ -8,6 +8,9 @@
 }
 
 <style>
+    /* Rimossa la graffa extra che rompeva tutto */
+    /* ... (altri stili non modificati) ... */
+
     .card-header h5, .card-header p {
         margin-bottom: 0;
     }
@@ -219,8 +222,6 @@
         }
     }
 
-
-
     /* Barra crediti */
     #crediti-bar {
         position: fixed;
@@ -247,25 +248,22 @@
             font-weight: 600;
             font-size: .95rem;
         }
+
     /* --- MOBILE: la barra NON è fissa, scorre col contenuto --- */
     @@media (max-width: 576px) {
-        #crediti-bar
-
-    {
-        position: static !important; /* non più fixed */
-        bottom: auto !important;
-        left: auto !important;
-        right: auto !important;
-        z-index: auto !important; /* modali/toast possono coprirla */
-        box-shadow: none; /* meno “peso” visivo se non è fissa */
-        padding-bottom: 10px; /* rimuovo extra safe-area */
-    }
-
-    /* lo spacer non serve più se la barra non è fissa */
-    .spacer-crediti {
-        height: 0 !important;
-    }
-
+        #crediti-bar {
+            position: static !important; /* non più fixed */
+            bottom: auto !important;
+            left: auto !important;
+            right: auto !important;
+            z-index: auto !important; /* modali/toast possono coprirla */
+            box-shadow: none; /* meno “peso” visivo se non è fissa */
+            padding-bottom: 10px; /* rimuovo extra safe-area */
+        }
+        /* lo spacer non serve più se la barra non è fissa */
+        .spacer-crediti {
+            height: 0 !important;
+        }
     }
 
     /* Modal/Accordion dark */
@@ -481,6 +479,7 @@
             flex-wrap: wrap;
             gap: var(--gap);
         }
+
             .pulsanti-offerta-container .btn {
                 padding: .35rem .25rem;
                 font-size: .9rem;
@@ -1042,7 +1041,6 @@
             box-shadow: none;
         }
 
-
     .buzzer-ring {
         position: absolute;
         inset: 14px;
@@ -1068,6 +1066,7 @@
         font-size: 1.1rem;
         text-shadow: 0 2px 8px rgba(0,0,0,.5);
     }
+
     /* Evidenziazione offerente in modalità Buzzer */
     .offerente-buzzer {
         font-size: clamp(2rem, 8vw, 3rem) !important;
@@ -1082,6 +1081,7 @@
         font-weight: 800;
         opacity: .85;
     }
+
     /* board: prendi tutta la riga nel card-body */
     .pmax-board {
         width: 100%;
@@ -1101,12 +1101,9 @@
 
     /* Razor: usa @@ per @@media */
     @@media (min-width:1200px) {
-        .pmax-grid
-
-    {
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    }
-
+        .pmax-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        }
     }
 
     /* card singola */
@@ -1139,31 +1136,70 @@
         .pmax-item .disp {
             color: #9bd3ff;
         }
+
         /* disponibili: azzurrino */
         .pmax-item .sep {
             opacity: .65;
         }
+
         /* separatore / */
         .pmax-item .max {
             color: #f1c40f;
         }
+
         /* massimo: giallo */
-
-
         .pmax-item .disp {
             color: #2ecc71;
         }
+
         /* Disponibili = verde */
         .pmax-item .sep {
             opacity: .65;
         }
+
         /* slash “/” più leggero */
         .pmax-item .max {
             color: #f1c40f;
         }
+
     /* Max = giallo */
+    .timer-red {
+        color: #e74c3c; /* Rosso */
+    }
 
+    .timer-yellow {
+        color: #f1c40f; /* Giallo */
+    }
 
+    .timer-green {
+        color: #2ecc71; /* Verde */
+    }
+
+    /* Stili per il pulsante "Limiti offerta" e il logo non in asta */
+    #btnPmaxMobile {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: none !important;
+    }
+
+    @@media (max-width: 576px) {
+        .card-header {
+            justify-content: space-between;
+        }
+
+        #btnPmaxMobile {
+            display: block !important;
+        }
+    }
+
+    /* Stili aggiuntivi per il timer */
+    .timer-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
 </style>
 
 <div class="row mt-md-4">
@@ -1201,13 +1237,8 @@
                     </div>
                 </div>
             </div>
-            <!-- Board Limiti offerta (solo desktop) -->
-            <div id="pmax-board" class="pmax-board d-none d-md-block"></div>
 
-            <div class="card-footer bg-dark text-white">
-                <span class="text-muted">Tempo Rimanente:</span>
-                <strong id="timer" class="fs-4 ms-2">-</strong>
-            </div>
+            <div id="pmax-board" class="pmax-board d-none d-md-block"></div>
         </div>
     </div>
 
@@ -1215,15 +1246,18 @@
         <div class="card shadow mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Offri</h5>
-                <button id="btnPmaxMobile" class="btn btn-outline-info btn-sm mx-2 d-md-none">Limiti offerta</button>
+                <button id="btnPmaxMobile" class="btn btn-outline-info btn-sm d-md-none" data-bs-toggle="offcanvas" data-bs-target="#pmaxDrawer" aria-controls="pmaxDrawer">Limiti offerta</button>
                 <span class="text-muted small">Rilanci rapidi</span>
             </div>
 
             <div class="card-body">
-                <!-- UI CLASSICA (offerte) -->
+                <div class="timer-container">
+                    <span class="text-warning fw-bold text-uppercase small">Tempo Rimanente</span>
+                    <strong id="timer" class="display-3 fw-bold my-1 text-warning">-</strong>
+                </div>
+
                 <div id="bidUi">
                     <div id="avviso-ruolo-completo" class="alert alert-danger" style="display:none;"></div>
-
                     <div class="pulsanti-offerta-container d-flex flex-wrap gap-2">
                         @foreach (var incremento in new[] { 1, 2, 3, 4, 5, 10, 15, 20, 25, 30, 40, 50 })
                         {
@@ -1238,7 +1272,6 @@
                     </div>
                 </div>
 
-                <!-- UI BUZZER (mostrata solo in modalità buzzer) -->
                 <div id="buzzerClientArea" class="d-none text-center my-3">
                     <button id="btnClientBuzzer" type="button" class="btn btn-lg btn-buzzer">
                         <span class="buzzer-ring">
@@ -1251,10 +1284,8 @@
                          class="alert alert-danger mt-3 d-none"
                          role="alert"
                          aria-live="polite"></div>
-
                 </div>
             </div>
-
         </div>
 
         <div class="card shadow">
@@ -1267,10 +1298,8 @@
     </div>
 </div>
 
-<!-- Toast suggerimento -->
 <div id="toast-suggerimento" class="toast-sug" role="status" aria-live="polite" aria-atomic="true">
     <button type="button" class="toast-close" aria-label="Chiudi">&times;</button>
-
     <div class="ts-hero">
         <img id="toast-logo" alt="Logo squadra" />
         <div class="ts-player">
@@ -1278,15 +1307,10 @@
             <div id="toast-dettagli" class="ts-player-sub">-</div>
         </div>
     </div>
-
     <div class="ts-ok">✅ <span>Suggerimento inviato all’admin</span></div>
-
     <div class="ts-progress"><span id="toast-progress"></span></div>
 </div>
 
-
-
-<!-- Drawer Limiti Offerta (mobile) -->
 <div class="offcanvas offcanvas-bottom" tabindex="-1" id="pmaxDrawer"
      aria-labelledby="pmaxDrawerLabel" style="height: 70vh;">
     <div class="offcanvas-header">
@@ -1298,15 +1322,12 @@
     </div>
 </div>
 
-
-<!-- Barra compatta crediti in basso -->
 <div id="crediti-bar" aria-live="polite">
     <span class="chip">Disp.: <strong id="crediti-bottom">@Model.CreditiDisponibili</strong></span>
     <span class="chip">Max: <strong id="puntata-bottom">@Model.PuntataMassima</strong></span>
 </div>
 <div class="spacer-crediti"></div>
 
-<!-- Modal riepilogo rose -->
 <div class="modal fade" id="modalRiepilogo" tabindex="-1" aria-labelledby="modalRiepilogoLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen-sm-down modal-lg">
         <div class="modal-content">
@@ -1325,7 +1346,6 @@
     </div>
 </div>
 
-<!-- Overlay Pausa -->
 <div id="pausa-overlay" aria-live="polite">
     <div id="pausa-box" class="modal-base">
         <div class="modal-squad-bg" id="bg-pausa"></div>
@@ -1341,7 +1361,6 @@
     </div>
 </div>
 
-<!-- Overlay Reconnect -->
 <div id="reconnect-overlay" aria-live="polite">
     <div id="reconnect-box">
         <h4>Connessione persa</h4>
@@ -1350,12 +1369,10 @@
     </div>
 </div>
 
-<!-- Modale Messaggi generici -->
 <div class="modal fade" id="messaggioModale" tabindex="-1" aria-labelledby="messaggioModaleLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content modal-base">
             <div class="modal-squad-bg" id="bg-msg-user" style="background-image:url('@appLogoUrl')"></div>
-
             <div class="modal-header">
                 <h5 class="modal-title d-flex align-items-center gap-2" id="messaggioModaleLabel">
                     <img src="@appLogoUrl" alt="Logo" style="width:20px;height:20px;object-fit:contain" />
@@ -1363,22 +1380,19 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
             </div>
-
             <div class="modal-body">
                 <p id="messaggioModaleCorpo" class="mb-0">-</p>
             </div>
-
             <div id="msg-progress" aria-hidden="true"><span></span></div>
-
             <div class="modal-footer">
                 <div id="msg-progress"><span id="msg-progress-fill"></span></div>
                 <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal" id="messaggioModaleBtnAnnulla" style="display:none;">Annulla</button>
                 <button type="button" class="btn btn-primary" id="messaggioModaleBtnOk">OK</button>
             </div>
-
         </div>
     </div>
 </div>
+
 <audio id="suono-offerta" src="~/sounds/coin.mp3" preload="auto"></audio>
 
 @section Scripts {
@@ -1389,228 +1403,228 @@
 
         // ===== Modal messaggi (con autodismiss opzionale) ===================
         window.mostraMessaggio = function (titolo, corpo, conferma = false, opts = {}) {
-          const mEl = document.getElementById('messaggioModale');
-          if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
+            const mEl = document.getElementById('messaggioModale');
+            if (!mEl) { alert(corpo || titolo || ''); return Promise.resolve(true); }
 
-          const titleEl = document.getElementById('messaggioModaleTitolo');
-          const bodyEl  = document.getElementById('messaggioModaleCorpo');
-          let   btnOk   = document.getElementById('messaggioModaleBtnOk');
-          let   btnAnn  = document.getElementById('messaggioModaleBtnAnnulla');
+            const titleEl = document.getElementById('messaggioModaleTitolo');
+            const bodyEl = document.getElementById('messaggioModaleCorpo');
+            let btnOk = document.getElementById('messaggioModaleBtnOk');
+            let btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
 
-          titleEl.textContent = titolo || 'Info';
-          bodyEl.textContent  = corpo  || '';
+            titleEl.textContent = titolo || 'Info';
+            bodyEl.textContent = corpo || '';
 
-          btnAnn.style.display = conferma ? '' : 'none';
+            btnAnn.style.display = conferma ? '' : 'none';
 
-          const bs = bootstrap.Modal.getOrCreateInstance(mEl);
+            const bs = bootstrap.Modal.getOrCreateInstance(mEl);
 
-          // reset handlers
-          btnOk.replaceWith(btnOk.cloneNode(true));
-          btnAnn.replaceWith(btnAnn.cloneNode(true));
-          btnOk  = document.getElementById('messaggioModaleBtnOk');
-          btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
+            // reset handlers
+            btnOk.replaceWith(btnOk.cloneNode(true));
+            btnAnn.replaceWith(btnAnn.cloneNode(true));
+            btnOk = document.getElementById('messaggioModaleBtnOk');
+            btnAnn = document.getElementById('messaggioModaleBtnAnnulla');
 
-          // watermark
-          const bgMsg = document.getElementById('bg-msg-user');
-          if (bgMsg) bgMsg.style.backgroundImage = `url('${appLogoUrl}')`;
+            // watermark
+            const bgMsg = document.getElementById('bg-msg-user');
+            if (bgMsg) bgMsg.style.backgroundImage = `url('${appLogoUrl}')`;
 
-          const timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 1800;
-          let decided = false;
-          let autoTimer = null;
+            const timeoutMs = Number.isFinite(opts.timeoutMs) ? opts.timeoutMs : 1800;
+            let decided = false;
+            let autoTimer = null;
 
-          return new Promise((resolve) => {
-            const cleanup = () => {
-              mEl.removeEventListener('hidden.bs.modal', onHidden);
-              clearTimeout(autoTimer);
-            };
-            const resolveWith = (val) => { if (decided) return; decided = true; cleanup(); resolve(val); };
-            const onHidden = () => { if (!decided) resolveWith(conferma ? false : true); };
-            const onOk     = () => { mEl.addEventListener('hidden.bs.modal', () => resolveWith(true), { once:true }); bs.hide(); };
-            const onAnn    = () => { mEl.addEventListener('hidden.bs.modal', () => resolveWith(false), { once:true }); bs.hide(); };
+            return new Promise((resolve) => {
+                const cleanup = () => {
+                    mEl.removeEventListener('hidden.bs.modal', onHidden);
+                    clearTimeout(autoTimer);
+                };
+                const resolveWith = (val) => { if (decided) return; decided = true; cleanup(); resolve(val); };
+                const onHidden = () => { if (!decided) resolveWith(conferma ? false : true); };
+                const onOk = () => { mEl.addEventListener('hidden.bs.modal', () => resolveWith(true), { once: true }); bs.hide(); };
+                const onAnn = () => { mEl.addEventListener('hidden.bs.modal', () => resolveWith(false), { once: true }); bs.hide(); };
 
-            btnOk.addEventListener('click', onOk, { once:true });
-            if (conferma) btnAnn.addEventListener('click', onAnn, { once:true });
-            mEl.addEventListener('hidden.bs.modal', onHidden);
+                btnOk.addEventListener('click', onOk, { once: true });
+                if (conferma) btnAnn.addEventListener('click', onAnn, { once: true });
+                mEl.addEventListener('hidden.bs.modal', onHidden);
 
-            bs.show();
+                bs.show();
 
-            // progress bar
-            const startBar = () => {
-              const barFill = document.getElementById('msg-progress-fill');
-              if (!barFill) return;
-              barFill.style.transition = 'none';
-              barFill.style.width = '100%';
-              requestAnimationFrame(() => {
-                const dur = Math.max(600, timeoutMs);
-                requestAnimationFrame(() => {
-                  barFill.style.transition = `width ${dur}ms linear`;
-                  barFill.style.width = '0%';
-                });
-              });
-            };
-            if (mEl.classList.contains('show')) startBar();
-            else mEl.addEventListener('shown.bs.modal', startBar, { once:true });
+                // progress bar
+                const startBar = () => {
+                    const barFill = document.getElementById('msg-progress-fill');
+                    if (!barFill) return;
+                    barFill.style.transition = 'none';
+                    barFill.style.width = '100%';
+                    requestAnimationFrame(() => {
+                        const dur = Math.max(600, timeoutMs);
+                        requestAnimationFrame(() => {
+                            barFill.style.transition = `width ${dur}ms linear`;
+                            barFill.style.width = '0%';
+                        });
+                    });
+                };
+                if (mEl.classList.contains('show')) startBar();
+                else mEl.addEventListener('shown.bs.modal', startBar, { once: true });
 
-            if (!conferma) {
-              autoTimer = setTimeout(() => {
-                mEl.addEventListener('hidden.bs.modal', () => resolveWith(true), { once:true });
-                bs.hide();
-              }, Math.max(600, timeoutMs));
-            }
-          });
+                if (!conferma) {
+                    autoTimer = setTimeout(() => {
+                        mEl.addEventListener('hidden.bs.modal', () => resolveWith(true), { once: true });
+                        bs.hide();
+                    }, Math.max(600, timeoutMs));
+                }
+            });
         };
 
         document.addEventListener('DOMContentLoaded', function () {
 
-          // ===== Helpers =====================================================
-          function teamSlug(name){ return (name||'').toLowerCase().replace(/\s+/g,'-'); }
-          function getTeamLogo(squadra){ return squadra ? `https://content.fantacalcio.it/web/img/team/${teamSlug(squadra)}.png` : ''; }
+            // ===== Helpers =====================================================
+            function teamSlug(name) { return (name || '').toLowerCase().replace(/\s+/g, '-'); }
+            function getTeamLogo(squadra) { return squadra ? `https://content.fantacalcio.it/web/img/team/${teamSlug(squadra)}.png` : ''; }
 
-          function setOffertaBg(url){
-            const panel = document.getElementById('offertaPanel');
-            if (panel) panel.style.setProperty('--offerta-bg', url ? `url('${url}')` : 'none');
-          }
-          function setPausaBg(url){
-            const bg = document.getElementById('bg-pausa');
-            if (bg) bg.style.backgroundImage = url ? `url('${url}')` : 'none';
-          }
-          (function initOffertaBg(){
-            const headerLogo = (document.getElementById('logo-giocatore-in-asta')?.src || '').trim();
-            setOffertaBg(headerLogo || appLogoUrl);
-          })();
+            function setOffertaBg(url) {
+                const panel = document.getElementById('offertaPanel');
+                if (panel) panel.style.setProperty('--offerta-bg', url ? `url('${url}')` : 'none');
+            }
+            function setPausaBg(url) {
+                const bg = document.getElementById('bg-pausa');
+                if (bg) bg.style.backgroundImage = url ? `url('${url}')` : 'none';
+            }
+            (function initOffertaBg() {
+                const headerLogo = (document.getElementById('logo-giocatore-in-asta')?.src || '').trim();
+                setOffertaBg(headerLogo || appLogoUrl);
+            })();
 
-          function playCoin(){
-            try {
-              const s = document.getElementById('suono-offerta');
-              if (!s) return;
-              s.currentTime = 0;
-              s.play().catch(()=>{});
-            } catch {}
-          }
+            function playCoin() {
+                try {
+                    const s = document.getElementById('suono-offerta');
+                    if (!s) return;
+                    s.currentTime = 0;
+                    s.play().catch(() => { });
+                } catch { }
+            }
 
-          // ===== Stato globale ===============================================
-          let listoneCompleto = [];
-          const nickname = "@Model.Nickname";
-          const legaAlias = (() => {
-            const qs = new URLSearchParams(window.location.search);
-            let v = (qs.get('lega') || '').trim();
-            if (!v) { try { v = (localStorage.getItem('fb:lega') || '').trim(); } catch {} }
-            if (!v) { v = '@(Context?.Request?.Query["lega"].ToString() ?? "")'.trim(); }
-            return v;
-          })();
+            // ===== Stato globale ===============================================
+            let listoneCompleto = [];
+            const nickname = "@Model.Nickname";
+            const legaAlias = (() => {
+                const qs = new URLSearchParams(window.location.search);
+                let v = (qs.get('lega') || '').trim();
+                if (!v) { try { v = (localStorage.getItem('fb:lega') || '').trim(); } catch { } }
+                if (!v) { v = '@(Context?.Request?.Query["lega"].ToString() ?? "")'.trim(); }
+                return v;
+            })();
 
-          let offertaAttuale = parseInt("@Model.OffertaAttuale") || 0;
-          let idListoneAttuale = parseInt("@(Model.CalciatoreInAsta?.IdListone ?? 0)");
-          let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
-          let timerSecondi = @Model.TimerAsta;
-          let fineUtcCorrente = null;
-          let lastFineUtcStr = null;
-          let countdownTimerUtente = null;
-          let finalizeGuard = false;
-                  // ——— Guard per ignorare MostraGiocatoreInAsta subito dopo uno svincolo
-        let ignoreMostraUntil = 0; // millisec epoch; se > Date.now() ignoriamo il “Mostra…”
+            let offertaAttuale = parseInt("@Model.OffertaAttuale") || 0;
+            let idListoneAttuale = parseInt("@(Model.CalciatoreInAsta?.IdListone ?? 0)");
+            let ruoloGiocatoreAttuale = "@(Model.CalciatoreInAsta?.Ruolo ?? "")";
+            let timerSecondi = @Model.TimerAsta;
+            let fineUtcCorrente = null;
+            let lastFineUtcStr = null;
+            let countdownTimerUtente = null;
+            let finalizeGuard = false;
+            // ——— Guard per ignorare MostraGiocatoreInAsta subito dopo uno svincolo
+            let ignoreMostraUntil = 0; // millisec epoch; se > Date.now() ignoriamo il “Mostra…”
 
 
-          let maxPortieri = @Model.MaxPortieri;
-          let maxDifensori = @Model.MaxDifensori;
-          let maxCentrocampisti = @Model.MaxCentrocampisti;
-          let maxAttaccanti = @Model.MaxAttaccanti;
-          let portieriAttuali = @Model.PortieriAcquistati;
-          let difensoriAttuali = @Model.DifensoriAcquistati;
-          let centrocampistiAttuali = @Model.CentrocampistiAcquistati;
-          let attaccantiAttuali = @Model.AttaccantiAcquistati;
+            let maxPortieri = @Model.MaxPortieri;
+            let maxDifensori = @Model.MaxDifensori;
+            let maxCentrocampisti = @Model.MaxCentrocampisti;
+            let maxAttaccanti = @Model.MaxAttaccanti;
+            let portieriAttuali = @Model.PortieriAcquistati;
+            let difensoriAttuali = @Model.DifensoriAcquistati;
+            let centrocampistiAttuali = @Model.CentrocampistiAcquistati;
+            let attaccantiAttuali = @Model.AttaccantiAcquistati;
 
-          let pausaAttivaClient = false;
-          let pauseLockUntil = 0;
-          let buzzerAttivoClient = false;
-          let buzzerModeOn = false;
-                  // === Puntata massima per nickname (cache) ==============================
-        const pmaxByNick = new Map();                          // key: nick in lower-case
+            let pausaAttivaClient = false;
+            let pauseLockUntil = 0;
+            let buzzerAttivoClient = false;
+            let buzzerModeOn = false;
+            // === Puntata massima per nickname (cache) ==============================
+            const pmaxByNick = new Map(); // key: nick in lower-case
 
-        function setPmax(nick, pmax) {
-          if (!nick) return;
-          pmaxByNick.set(String(nick).toLowerCase(), Number(pmax) || 0);
-        }
-        function getPmax(nick) {
-          if (!nick) return 0;
-          return pmaxByNick.get(String(nick).toLowerCase()) ?? 0;
-        }
-                // === Cache completa per la board Disp/Max (desktop) ====================
-        const pmaxStore = new Map(); // key: "id:<squadraId>" oppure "nick:<nickname>"
+            function setPmax(nick, pmax) {
+                if (!nick) return;
+                pmaxByNick.set(String(nick).toLowerCase(), Number(pmax) || 0);
+            }
+            function getPmax(nick) {
+                if (!nick) return 0;
+                return pmaxByNick.get(String(nick).toLowerCase()) ?? 0;
+            }
+            // === Cache completa per la board Disp/Max (desktop) ====================
+            const pmaxStore = new Map(); // key: "id:<squadraId>" oppure "nick:<nickname>"
 
-        function keyOf(s) {
-          if (s && s.squadraId != null) return `id:${s.squadraId}`;
-          if (s && s.nickname) return `nick:${String(s.nickname).toLowerCase()}`;
-          return null;
-        }
+            function keyOf(s) {
+                if (s && s.squadraId != null) return `id:${s.squadraId}`;
+                if (s && s.nickname) return `nick:${String(s.nickname).toLowerCase()}`;
+                return null;
+            }
 
-        function normalizeSquad(s) {
-          return {
-            key: keyOf(s),
-            squadraId: s?.squadraId ?? null,
-            nickname: s?.nickname ?? s?.nomeSquadra ?? s?.teamName ?? "",
-            creditiDisponibili: Number.isFinite(s?.creditiDisponibili) ? s.creditiDisponibili : 0,
-            puntataMassima:    Number.isFinite(s?.puntataMassima)    ? s.puntataMassima    : 0,
-          };
-        }
+            function normalizeSquad(s) {
+                return {
+                    key: keyOf(s),
+                    squadraId: s?.squadraId ?? null,
+                    nickname: s?.nickname ?? s?.nomeSquadra ?? s?.teamName ?? "",
+                    creditiDisponibili: Number.isFinite(s?.creditiDisponibili) ? s.creditiDisponibili : 0,
+                    puntataMassima: Number.isFinite(s?.puntataMassima) ? s.puntataMassima : 0,
+                };
+            }
 
-        function mergeSquadsIntoStore(squads) {
-          (squads || []).forEach(raw => {
-            const n = normalizeSquad(raw);
-            if (!n.key) return;
-            const prev = pmaxStore.get(n.key) || {};
-            // se dal payload manca il nickname, mantieni il precedente
-            const nickname = n.nickname || prev.nickname || "";
-            const merged = { ...prev, ...n, nickname };
-            pmaxStore.set(n.key, merged);
-            if (nickname) setPmax(nickname, merged.puntataMassima); // allinea anche la cache per la micro-label
-          });
-        }
+            function mergeSquadsIntoStore(squads) {
+                (squads || []).forEach(raw => {
+                    const n = normalizeSquad(raw);
+                    if (!n.key) return;
+                    const prev = pmaxStore.get(n.key) || {};
+                    // se dal payload manca il nickname, mantieni il precedente
+                    const nickname = n.nickname || prev.nickname || "";
+                    const merged = { ...prev, ...n, nickname };
+                    pmaxStore.set(n.key, merged);
+                    if (nickname) setPmax(nickname, merged.puntataMassima); // allinea anche la cache per la micro-label
+                });
+            }
 
-        function getPmaxStoreArray() {
-          return Array.from(pmaxStore.values());
-        }
+            function getPmaxStoreArray() {
+                return Array.from(pmaxStore.values());
+            }
 
-        // Aggiorna la label accanto al nome offerente
-        function renderOfferenteExtras(nick) {
-          const extra = document.getElementById('offerente-max');
-          if (!extra) return;
-          const clean = (nick || '').trim();
-          if (!clean || clean === '-' || clean === 'NESSUNO') { extra.textContent = ''; return; }
-          const pmax = getPmax(clean);
-          extra.textContent = pmax ? `Max: ${pmax}` : '';     // se non lo conosciamo ancora, resta vuoto
-        }
+            // Aggiorna la label accanto al nome offerente
+            function renderOfferenteExtras(nick) {
+                const extra = document.getElementById('offerente-max');
+                if (!extra) return;
+                const clean = (nick || '').trim();
+                if (!clean || clean === '-' || clean === 'NESSUNO') { extra.textContent = ''; return; }
+                const pmax = getPmax(clean);
+                extra.textContent = pmax ? `Max: ${pmax}` : ''; // se non lo conosciamo ancora, resta vuoto
+            }
 
-        // Precarica pmax da /utente/riepilogo (tutte le squadre)
-        async function preloadPmax() {
-          try {
-            const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
-            if (!res.ok) return;
-            const data = await res.json();
-            const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
-            squads.forEach(s => { if (s?.nickname != null) setPmax(s.nickname, s.puntataMassima); });
-            // refresh se c'è già un offerente a schermo
-            const shown = (document.getElementById('offerente')?.textContent || '').trim();
-            renderOfferenteExtras(shown);
-        // popola la cache completa e renderizza la board
-        mergeSquadsIntoStore(squads);
-        renderPmaxGrid('pmaxBoard'); // render dalla cache
+            // Precarica pmax da /utente/riepilogo (tutte le squadre)
+            async function preloadPmax() {
+                try {
+                    const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+                    squads.forEach(s => { if (s?.nickname != null) setPmax(s.nickname, s.puntataMassima); });
+                    // refresh se c'è già un offerente a schermo
+                    const shown = (document.getElementById('offerente')?.textContent || '').trim();
+                    renderOfferenteExtras(shown);
+                    // popola la cache completa e renderizza la board
+                    mergeSquadsIntoStore(squads);
+                    renderPmaxGrid('pmaxBoard'); // render dalla cache
 
-          } catch {}
-        }
-                // === Board Limiti Offerta ===============================================
-        function renderPmaxGrid(targetId, squadsToMerge) {
-          const host = document.getElementById(targetId);
-          if (!host) return;
+                } catch { }
+            }
+            // === Board Limiti Offerta ===============================================
+            function renderPmaxGrid(targetId, squadsToMerge) {
+                const host = document.getElementById(targetId);
+                if (!host) return;
 
-          // se arriva un update parziale, mergialo in cache
-          if (Array.isArray(squadsToMerge)) mergeSquadsIntoStore(squadsToMerge);
+                // se arriva un update parziale, mergialo in cache
+                if (Array.isArray(squadsToMerge)) mergeSquadsIntoStore(squadsToMerge);
 
-          const list = getPmaxStoreArray()
-            .filter(x => Number.isFinite(x.puntataMassima) || Number.isFinite(x.creditiDisponibili))
-            .sort((a, b) => (b.puntataMassima || 0) - (a.puntataMassima || 0)); // ordina per Max
+                const list = getPmaxStoreArray()
+                    .filter(x => Number.isFinite(x.puntataMassima) || Number.isFinite(x.creditiDisponibili))
+                    .sort((a, b) => (b.puntataMassima || 0) - (a.puntataMassima || 0)); // ordina per Max
 
-          host.innerHTML = `
+                host.innerHTML = `
             <div class="pmax-grid">
               ${list.map(s => `
                 <div class="pmax-item" title="${s.nickname} — Disp.: ${s.creditiDisponibili} / Max: ${s.puntataMassima}">
@@ -1624,1038 +1638,1053 @@
               `).join('')}
             </div>
           `;
-        }
-
-
-        function refreshPmaxBoardsFromRiepilogoData(data) {
-          const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
-          renderPmaxGrid('pmax-board', squads);         // desktop
-          renderPmaxGrid('pmax-board-mobile', squads);  // mobile (drawer)
-        }
-
-          let resumePollId = null;
-          function startResumePolling(){
-            if (resumePollId) return;
-            resumePollId = setInterval(async () => { try{ await connection.invoke("RichiediStatoAttuale"); } catch{} }, 2000);
-          }
-          function stopResumePolling(){ if (resumePollId){ clearInterval(resumePollId); resumePollId = null; } }
-
-          // ===== Reconnect overlay & SignalR ================================
-          let pingIntervalId = null;
-          let manualReconnectTimer = null;
-          let manualAttempts = 0;
-          const MAX_AUTO_ATTEMPTS = 120;
-          const reconnectOverlay = document.getElementById('reconnect-overlay');
-          const reconnectAttemptEl = document.getElementById('reconnect-attempt');
-
-          function showReconnectOverlay(attempt){ reconnectAttemptEl.textContent = attempt ?? 0; reconnectOverlay.classList.add('visible'); setBidControlsEnabled(false); stopCountdown(); }
-          function hideReconnectOverlay(){ reconnectOverlay.classList.remove('visible'); aggiornaStatoPulsantiBazzer(); }
-
-          const connection = new signalR.HubConnectionBuilder()
-            .withUrl("/bazzerHub")
-            .withAutomaticReconnect({ nextRetryDelayInMilliseconds: (ctx) => ctx.previousRetryCount < MAX_AUTO_ATTEMPTS ? 1000 : null })
-            .build();
-          window.connection = connection;
-
-          // ===== Click BUZZER ===============================================
-        document.getElementById('btnClientBuzzer')?.addEventListener('click', async ()=>{
-          if (pausaAttivaClient){
-            if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi buzzare durante la pausa.");
-            return;
-          }
-          try {
-            await connection.invoke('Buzz', legaAlias, nickname);
-            // Nessun suono qui: lo suoneremo solo se arriva l'evento Buzz dal server.
-            window.__muteOwnBuzz = true; // manteniamo la logica esistente
-          } catch (e) {
-            console.error(e);
-          }
-        });
-
-
-          // ===== Logica bottone BUZZER (gating + riabilitazione) =============
-          (function(){
-            const myNick = (typeof nickname === 'string' && nickname)
-              ? nickname
-              : (window.myNick || window.NickUtente || window.NICK || "");
-
-            function getBuzzerBtn(){
-              return document.getElementById("btnClientBuzzer")
-                  || document.getElementById("btnBuzzer")
-                  || document.querySelector(".btn-buzzer")
-                  || document.querySelector("[data-buzzer]");
             }
 
-            function canBuzzNow(){
-              const hubState = connection.state;
-              const slotLibero = !(
-                (ruoloGiocatoreAttuale === 'P' && portieriAttuali       >= maxPortieri)       ||
-                (ruoloGiocatoreAttuale === 'D' && difensoriAttuali      >= maxDifensori)      ||
-                (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) ||
-                (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali     >= maxAttaccanti)
-              );
-              return buzzerAttivoClient &&
-                     idListoneAttuale > 0 &&
-                     !pausaAttivaClient &&
-                     hubState === signalR.HubConnectionState.Connected &&
-                     slotLibero;
+
+            function refreshPmaxBoardsFromRiepilogoData(data) {
+                const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+                renderPmaxGrid('pmax-board', squads); // desktop
+                renderPmaxGrid('pmax-board-mobile', squads); // mobile (drawer)
             }
 
-            let lastOfferente = null;
-            let fineUtcISO = null;
-            let reenableTimer = null;
-
-            const parseISO = (s)=> s ? new Date(s) : null;
-            const msLeft = ()=> {
-              const d = parseISO(fineUtcISO);
-              if(!d) return 0;
-              const diff = d.getTime() - Date.now();
-              return diff > 0 ? diff : 0;
-            };
-
-            function setBuzzerEnabled(enabled){
-              const btn = getBuzzerBtn();
-              if(!btn) return;
-              btn.disabled = !enabled;
-              btn.style.opacity = enabled ? "" : "0.6";
-              btn.style.pointerEvents = enabled ? "" : "none";
+            let resumePollId = null;
+            function startResumePolling() {
+                if (resumePollId) return;
+                resumePollId = setInterval(async () => { try { await connection.invoke("RichiediStatoAttuale"); } catch { } }, 2000);
             }
+            function stopResumePolling() { if (resumePollId) { clearInterval(resumePollId); resumePollId = null; } }
 
-            function scheduleReenableOnExpiry(){
-              if(reenableTimer){ clearTimeout(reenableTimer); reenableTimer = null; }
-              const left = msLeft();
-              if(left > 0){
-                reenableTimer = setTimeout(()=>{ setBuzzerEnabled(canBuzzNow()); }, left + 60);
-              } else {
-                setBuzzerEnabled(canBuzzNow());
-              }
-            }
+            // ===== Reconnect overlay & SignalR ================================
+            let pingIntervalId = null;
+            let manualReconnectTimer = null;
+            let manualAttempts = 0;
+            const MAX_AUTO_ATTEMPTS = 120;
+            const reconnectOverlay = document.getElementById('reconnect-overlay');
+            const reconnectAttemptEl = document.getElementById('reconnect-attempt');
 
-            function recomputeButton(){
-              if(!canBuzzNow()){ setBuzzerEnabled(false); return; }
-              const iAmLast = lastOfferente && myNick &&
-                lastOfferente.trim().toLowerCase() === myNick.trim().toLowerCase();
-              const active = msLeft() > 0;
-              setBuzzerEnabled(!(iAmLast && active));
-              scheduleReenableOnExpiry();
-            }
+            function showReconnectOverlay(attempt) { reconnectAttemptEl.textContent = attempt ?? 0; reconnectOverlay.classList.add('visible'); setBidControlsEnabled(false); stopCountdown(); }
+            function hideReconnectOverlay() { reconnectOverlay.classList.remove('visible'); aggiornaStatoPulsantiBazzer(); }
 
-            if (window.connection && typeof window.connection.on === "function") {
-              window.__muteOwnBuzz = false;
-              window.__muteOwnBuzzTO = null;
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl("/bazzerHub")
+                .withAutomaticReconnect({ nextRetryDelayInMilliseconds: (ctx) => ctx.previousRetryCount < MAX_AUTO_ATTEMPTS ? 1000 : null })
+                .build();
+            window.connection = connection;
 
-              // Solo stato per il gating del bottone
-              connection.on("Buzz", (offerente, fineIso) => {
-                if (typeof offerente === "string") lastOfferente = offerente;
-                if (fineIso) fineUtcISO = fineIso;
+            // ===== Click BUZZER ===============================================
+            document.getElementById('btnClientBuzzer')?.addEventListener('click', async () => {
+                if (pausaAttivaClient) {
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi buzzare durante la pausa.");
+                    return;
+                }
+                try {
+                    await connection.invoke('Buzz', legaAlias, nickname);
+                    // Nessun suono qui: lo suoneremo solo se arriva l'evento Buzz dal server.
+                    window.__muteOwnBuzz = true; // manteniamo la logica esistente
+                } catch (e) {
+                    console.error(e);
+                }
+            });
+
+
+            // ===== Logica bottone BUZZER (gating + riabilitazione) =============
+            (function () {
+                const myNick = (typeof nickname === 'string' && nickname)
+                    ? nickname
+                    : (window.myNick || window.NickUtente || window.NICK || "");
+
+                function getBuzzerBtn() {
+                    return document.getElementById("btnClientBuzzer")
+                        || document.getElementById("btnBuzzer")
+                        || document.querySelector(".btn-buzzer")
+                        || document.querySelector("[data-buzzer]");
+                }
+
+                function canBuzzNow() {
+                    const hubState = connection.state;
+                    const slotLibero = !(
+                        (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) ||
+                        (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) ||
+                        (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) ||
+                        (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti)
+                    );
+                    return buzzerAttivoClient &&
+                        idListoneAttuale > 0 &&
+                        !pausaAttivaClient &&
+                        hubState === signalR.HubConnectionState.Connected &&
+                        slotLibero;
+                }
+
+                let lastOfferente = null;
+                let fineUtcISO = null;
+                let reenableTimer = null;
+
+                const parseISO = (s) => s ? new Date(s) : null;
+                const msLeft = () => {
+                    const d = parseISO(fineUtcISO);
+                    if (!d) return 0;
+                    const diff = d.getTime() - Date.now();
+                    return diff > 0 ? diff : 0;
+                };
+
+                function setBuzzerEnabled(enabled) {
+                    const btn = getBuzzerBtn();
+                    if (!btn) return;
+                    btn.disabled = !enabled;
+                    btn.style.opacity = enabled ? "" : "0.6";
+                    btn.style.pointerEvents = enabled ? "" : "none";
+                }
+
+                function scheduleReenableOnExpiry() {
+                    if (reenableTimer) { clearTimeout(reenableTimer); reenableTimer = null; }
+                    const left = msLeft();
+                    if (left > 0) {
+                        reenableTimer = setTimeout(() => { setBuzzerEnabled(canBuzzNow()); }, left + 60);
+                    } else {
+                        setBuzzerEnabled(canBuzzNow());
+                    }
+                }
+
+                function recomputeButton() {
+                    if (!canBuzzNow()) { setBuzzerEnabled(false); return; }
+                    const iAmLast = lastOfferente && myNick &&
+                        lastOfferente.trim().toLowerCase() === myNick.trim().toLowerCase();
+                    const active = msLeft() > 0;
+                    setBuzzerEnabled(!(iAmLast && active));
+                    scheduleReenableOnExpiry();
+                }
+
+                if (window.connection && typeof window.connection.on === "function") {
+                    window.__muteOwnBuzz = false;
+                    window.__muteOwnBuzzTO = null;
+
+                    // Solo stato per il gating del bottone
+                    connection.on("Buzz", (offerente, fineIso) => {
+                        if (typeof offerente === "string") lastOfferente = offerente;
+                        if (fineIso) fineUtcISO = fineIso;
+                        recomputeButton();
+
+                        // sblocca suono locale quando cambia offerente o allo scadere
+                        try {
+                            const me = (typeof nickname === 'string' ? nickname : (window.NICK || '')).trim().toLowerCase();
+                            const off = (typeof offerente === 'string' ? offerente : '').trim().toLowerCase();
+                            if (off && me && off !== me) { window.__muteOwnBuzz = false; }
+                            if (typeof fineIso === 'string') {
+                                const t = new Date(fineIso).getTime() - Date.now();
+                                if (t > 0) { clearTimeout(window.__muteOwnBuzzTO); window.__muteOwnBuzzTO = setTimeout(() => { window.__muteOwnBuzz = false; }, t + 50); }
+                            }
+                        } catch { }
+                    });
+
+                    connection.on("AggiornaOfferta", (offerente, importo, fineIso) => {
+                        if (typeof offerente === "string") lastOfferente = offerente;
+                        if (fineIso) fineUtcISO = fineIso;
+                        recomputeButton();
+
+                        try {
+                            const me = (typeof nickname === 'string' ? nickname : (window.NICK || '')).trim().toLowerCase();
+                            const off = (typeof offerente === 'string' ? offerente : '').trim().toLowerCase();
+                            if (off && me && off !== me) { window.__muteOwnBuzz = false; }
+                            if (typeof fineIso === 'string') {
+                                const t = new Date(fineIso).getTime() - Date.now();
+                                if (t > 0) { clearTimeout(window.__muteOwnBuzzTO); window.__muteOwnBuzzTO = setTimeout(() => { window.__muteOwnBuzz = false; }, t + 50); }
+                            }
+                        } catch { }
+                    });
+
+                    connection.on("MostraGiocatoreInAsta", () => {
+                        lastOfferente = null;
+                        fineUtcISO = null;
+                        setTimeout(recomputeButton, 0);
+                    });
+                }
+
+                const btn = getBuzzerBtn();
+                if (btn) { btn.addEventListener("click", function () { setTimeout(recomputeButton, 0); }); }
+
+                if (window.__lastOfferente) { lastOfferente = window.__lastOfferente; }
+                if (window.__fineUtcISO) { fineUtcISO = window.__fineUtcISO; }
                 recomputeButton();
 
-                // sblocca suono locale quando cambia offerente o allo scadere
-                try {
-                  const me  = (typeof nickname === 'string' ? nickname : (window.NICK || '')).trim().toLowerCase();
-                  const off = (typeof offerente === 'string' ? offerente : '').trim().toLowerCase();
-                  if (off && me && off !== me) { window.__muteOwnBuzz = false; }
-                  if (typeof fineIso === 'string') {
-                    const t = new Date(fineIso).getTime() - Date.now();
-                    if (t > 0) { clearTimeout(window.__muteOwnBuzzTO); window.__muteOwnBuzzTO = setTimeout(() => { window.__muteOwnBuzz = false; }, t + 50); }
-                  }
-                } catch {}
-              });
+                connection.on("AstaAnnullata", () => { lastOfferente = null; fineUtcISO = null; setTimeout(recomputeButton, 0); });
+                connection.on("AstaTerminata", () => { lastOfferente = null; fineUtcISO = null; setTimeout(recomputeButton, 0); });
+                // ——— Svincolo: per ~2.5s ignora “MostraGiocatoreInAsta”
+                connection.on("GiocatoreSvincolato", () => { ignoreMostraUntil = Date.now() + 2500; });
+                connection.on("SvincoloEseguito", () => { ignoreMostraUntil = Date.now() + 2500; });
 
-              connection.on("AggiornaOfferta", (offerente, importo, fineIso) => {
-                if (typeof offerente === "string") lastOfferente = offerente;
-                if (fineIso) fineUtcISO = fineIso;
-                recomputeButton();
+            })();
 
-                try {
-                  const me  = (typeof nickname === 'string' ? nickname : (window.NICK || '')).trim().toLowerCase();
-                  const off = (typeof offerente === 'string' ? offerente : '').trim().toLowerCase();
-                  if (off && me && off !== me) { window.__muteOwnBuzz = false; }
-                  if (typeof fineIso === 'string') {
-                    const t = new Date(fineIso).getTime() - Date.now();
-                    if (t > 0) { clearTimeout(window.__muteOwnBuzzTO); window.__muteOwnBuzzTO = setTimeout(() => { window.__muteOwnBuzz = false; }, t + 50); }
-                  }
-                } catch {}
-              });
-
-              connection.on("MostraGiocatoreInAsta", () => {
-                lastOfferente = null;
-                fineUtcISO = null;
-                setTimeout(recomputeButton, 0);
-              });
-            }
-
-            const btn = getBuzzerBtn();
-            if(btn){ btn.addEventListener("click", function(){ setTimeout(recomputeButton, 0); }); }
-
-            if(window.__lastOfferente){ lastOfferente = window.__lastOfferente; }
-            if(window.__fineUtcISO){ fineUtcISO = window.__fineUtcISO; }
-            recomputeButton();
-
-            connection.on("AstaAnnullata", () => { lastOfferente = null; fineUtcISO = null; setTimeout(recomputeButton, 0); });
-            connection.on("AstaTerminata",  () => { lastOfferente = null; fineUtcISO = null; setTimeout(recomputeButton, 0); });
-                    // ——— Svincolo: per ~2.5s ignora “MostraGiocatoreInAsta”
-        connection.on("GiocatoreSvincolato", () => { ignoreMostraUntil = Date.now() + 2500; });
-        connection.on("SvincoloEseguito",    () => { ignoreMostraUntil = Date.now() + 2500; });
-
-          })();
-
-          // ===== Utils UI ====================================================
-          function setPauseUI(isPaused){
-            const overlay = document.getElementById('pausa-overlay');
-            if (!overlay) return;
-            if (isPaused) {
-              overlay.classList.add('visible');
-              setBidControlsEnabled(false);
-              stopCountdown();
-            } else {
-              const hide = () => overlay.classList.remove('visible');
-              hide(); setTimeout(hide, 0); setTimeout(hide, 150); setTimeout(hide, 400);
-              aggiornaStatoPulsantiBazzer();
-            }
-          }
-          function setBidControlsEnabled(enabled){
-            document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata")
-              .forEach(el => el.disabled = !enabled);
-          }
-
-          // ===== UI: Buzzer/Offerta panels ==================================
-          function setBuzzerUI(on){
-            buzzerModeOn = !!on;
-            const titleOff = document.querySelector('.offerta-content .card-title');
-            const offVal   = document.getElementById('offerta');
-            const labelDa  = document.getElementById('label-da');
-            const buzLbl   = document.getElementById('label-offerente-buzzer');
-            const offName  = document.getElementById('offerente');
-
-            if (buzzerModeOn){
-              if (titleOff) titleOff.style.display = 'none';
-              if (offVal)   offVal.style.display   = 'none';
-              if (labelDa)  labelDa.style.display  = 'none';
-              if (buzLbl)   buzLbl.style.display   = '';
-              if (offName)  offName.classList.add('offerente-buzzer');
-            } else {
-              if (titleOff) titleOff.style.display = '';
-              if (offVal)   offVal.style.display   = '';
-              if (labelDa)  labelDa.style.display  = '';
-              if (buzLbl)   buzLbl.style.display   = 'none';
-              if (offName)  offName.classList.remove('offerente-buzzer');
-            }
-          }
-
-          function showBuzzerUI(on){
-            buzzerAttivoClient = !!on;
-            const bidUi  = document.getElementById('bidUi');
-            const buzzer = document.getElementById('buzzerClientArea');
-            if (buzzer) buzzer.classList.toggle('d-none', !on);
-            if (bidUi)  bidUi.classList.toggle('d-none',  on);
-            setBidControlsEnabled(!on);
-            aggiornaStatoPulsantiBazzer();
-          }
-
-          function aggiornaStatoPulsantiBazzer(){
-            const hubState = connection.state;
-            let abilitato = idListoneAttuale > 0 && !pausaAttivaClient && hubState === signalR.HubConnectionState.Connected;
-            let messaggio = "";
-            if (abilitato){
-              if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri){ abilitato=false; messaggio=`Non puoi fare offerte, hai già raggiunto il numero massimo di portieri (${maxPortieri}).`; }
-              else if (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori){ abilitato=false; messaggio=`Non puoi fare offerte, hai già raggiunto il numero massimo di difensori (${maxDifensori}).`; }
-              else if (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti){ abilitato=false; messaggio=`Non puoi fare offerte, hai già raggiunto il numero massimo di centrocampisti (${maxCentrocampisti}).`; }
-              else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti){ abilitato=false; messaggio=`Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`; }
-            }
-            setBidControlsEnabled(abilitato);
-
-            const buzBtn = document.getElementById('btnClientBuzzer');
-            if (buzBtn) {
-              const hubState = connection.state;
-              const slotLibero = !(
-                (ruoloGiocatoreAttuale === 'P' && portieriAttuali       >= maxPortieri)       ||
-                (ruoloGiocatoreAttuale === 'D' && difensoriAttuali      >= maxDifensori)      ||
-                (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) ||
-                (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali     >= maxAttaccanti)
-              );
-
-              const buzzerEnabled =
-                buzzerAttivoClient &&
-                idListoneAttuale > 0 &&
-                !pausaAttivaClient &&
-                hubState === signalR.HubConnectionState.Connected &&
-                slotLibero;
-
-              buzBtn.disabled = !buzzerEnabled;
-              buzBtn.setAttribute('aria-disabled', String(!buzzerEnabled));
-            }
-
-            const avvisoDiv    = document.getElementById('avviso-ruolo-completo');
-            const avvisoBuzzer = document.getElementById('avviso-ruolo-completo-buzzer');
-            const show = (!abilitato && !!messaggio);
-
-            if (avvisoDiv) {
-              avvisoDiv.innerText = show ? messaggio : '';
-              avvisoDiv.style.display = show ? 'block' : 'none';
-            }
-
-            if (avvisoBuzzer) {
-              const showBuzzer = buzzerAttivoClient && show;
-              avvisoBuzzer.textContent = showBuzzer ? messaggio : '';
-              avvisoBuzzer.classList.toggle('d-none', !showBuzzer);
-
-              const buzBtn2 = document.getElementById('btnClientBuzzer');
-              if (buzBtn2) {
-                if (showBuzzer) buzBtn2.setAttribute('aria-describedby', 'avviso-ruolo-completo-buzzer');
-                else buzBtn2.removeAttribute('aria-describedby');
-              }
-            }
-          }
-
-          // ===== Timer =======================================================
-          function stopCountdown(){ clearTimeout(countdownTimerUtente); countdownTimerUtente = null; }
-          function aggiornaCountdownDaFineUtc(){
-            const timerEl = document.getElementById("timer");
-            stopCountdown();
-            if (!idListoneAttuale || !fineUtcCorrente){ if (timerEl) timerEl.textContent = "-"; return; }
-            const end = new Date(fineUtcCorrente);
-            let prevSec = -1;
-            const tick = () => {
-              const msLeft = end.getTime() - Date.now();
-              const sec = Math.max(0, Math.ceil(msLeft / 1000));
-              if (sec !== prevSec){
-                if (timerEl) timerEl.textContent = sec;
-                prevSec = sec;
-                if (sec === 0){
-                  stopCountdown();
-                  setBidControlsEnabled(false);
-                  if (typeof richiestaChiusuraAstaSafeguard === 'function') richiestaChiusuraAstaSafeguard();
-                  return;
+            // ===== Utils UI ====================================================
+            function setPauseUI(isPaused) {
+                const overlay = document.getElementById('pausa-overlay');
+                if (!overlay) return;
+                if (isPaused) {
+                    overlay.classList.add('visible');
+                    setBidControlsEnabled(false);
+                    stopCountdown();
+                } else {
+                    const hide = () => overlay.classList.remove('visible');
+                    hide(); setTimeout(hide, 0); setTimeout(hide, 150); setTimeout(hide, 400);
+                    aggiornaStatoPulsantiBazzer();
                 }
-              }
-              const nextDelay = Math.max(50, msLeft - (sec - 1) * 1000);
-              countdownTimerUtente = setTimeout(tick, nextDelay);
-            };
-            tick();
-          }
+            }
+            function setBidControlsEnabled(enabled) {
+                document.querySelectorAll(".bazzer, #offertaPersonalizzataInput, #btnOffertaPersonalizzata")
+                    .forEach(el => el.disabled = !enabled);
+            }
 
-          // ===== Crediti / listone ===========================================
-          async function aggiornaCrediti(){
-            try{
-              const res = await fetch(`/utente/crediti?nick=${encodeURIComponent(nickname)}&lega=${encodeURIComponent(legaAlias)}`);
-              if (!res.ok) return;
-              const data = await res.json();
-              document.getElementById("crediti-bottom").textContent = data.creditiDisponibili;
-              document.getElementById("puntata-bottom").textContent = data.puntataMassima;
-              portieriAttuali = data.portieri; difensoriAttuali = data.difensori; centrocampistiAttuali = data.centrocampisti; attaccantiAttuali = data.attaccanti;
-              aggiornaStatoPulsantiBazzer();
-            }catch(e){ console.error("Errore aggiornamento crediti:", e); }
-          }
+            // ===== UI: Buzzer/Offerta panels ==================================
+            function setBuzzerUI(on) {
+                buzzerModeOn = !!on;
+                const titleOff = document.querySelector('.offerta-content .card-title');
+                const offVal = document.getElementById('offerta');
+                const labelDa = document.getElementById('label-da');
+                const buzLbl = document.getElementById('label-offerente-buzzer');
+                const offName = document.getElementById('offerente');
 
-          async function caricaListone(){
-            try{
-              const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
-              if (!res.ok) return;
-              const raw = await res.json();
-              const norm = (s) => (s || "").normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
-              const seen = new Set();
-              listoneCompleto = raw.filter(g => {
-                const key = `${norm(g.nome)}|${norm(g.ruolo)}|${norm(g.squadra ?? g.squadraReale)}`;
-                if (seen.has(key)) return false; seen.add(key); return true;
-              });
-            }catch(e){ console.error("Errore nel caricamento del listone:", e); }
-          }
-
-          function modalRoseAperto(){
-            const el = document.getElementById('modalRiepilogo');
-            return !!el && el.classList.contains('show');
-          }
-
-          const modalEl = document.getElementById('modalRiepilogo');
-          const riepilogoContainer = document.getElementById('riepilogoContainer');
-          const riepilogoLoading = document.getElementById('riepilogo-loading');
-
-          function renderListaGiocatori(titolo, arr, mantraAttivo){
-            const colorClassFromOriginal = (roleOriginal) => {
-              const L = (roleOriginal || '').toString().trim().toUpperCase().charAt(0);
-              return ['P','D','C','A'].includes(L) ? `role-${L}` : null;
-            };
-            const makeBadge = (textToShow, roleOriginal) => {
-              const colorCls = colorClassFromOriginal(roleOriginal);
-              return colorCls ? `<span class="role-badge ${colorCls}">${textToShow}</span>` : null;
-            };
-            const items = (arr || []).map(p => {
-              const ruoloOriginale = p.ruolo;
-              const ruoloMantra = p.ruoloMantra;
-              const ruoloVisibile = mantraAttivo ? (ruoloMantra || ruoloOriginale) : ruoloOriginale;
-              let ruoloMarkup;
-              if (mantraAttivo){
-                const badge = makeBadge(ruoloVisibile, ruoloOriginale);
-                ruoloMarkup = badge ? `<span class="pl-role">${badge}</span>` : `<span class="pl-role">${ruoloVisibile || ''}</span>`;
-              }else{
-                const L = (ruoloVisibile || '').toString().trim().toUpperCase();
-                if (L.length === 1 && ['P','D','C','A'].includes(L)){
-                  const badge = makeBadge(L, L);
-                  ruoloMarkup = `<span class="pl-role">${badge}</span>`;
-                }else{
-                  ruoloMarkup = `<span class="pl-role">${ruoloVisibile || ''}</span>`;
+                if (buzzerModeOn) {
+                    if (titleOff) titleOff.style.display = 'none';
+                    if (offVal) offVal.style.display = 'none';
+                    if (labelDa) labelDa.style.display = 'none';
+                    if (buzLbl) buzLbl.style.display = '';
+                    if (offName) offName.classList.add('offerente-buzzer');
+                } else {
+                    if (titleOff) titleOff.style.display = '';
+                    if (offVal) offVal.style.display = '';
+                    if (labelDa) labelDa.style.display = '';
+                    if (buzLbl) buzLbl.style.display = 'none';
+                    if (offName) offName.classList.remove('offerente-buzzer');
                 }
-              }
-              return `
-                <div class="pl-item">
-                  <div class="pl-left">
-                    <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
-                    <span class="pl-name">${p.nome}</span>
-                    ${ruoloMarkup}
-                  </div>
-                  <span class="pl-cred">(${p.crediti})</span>
-                </div>`;
-            }).join('') || `<div class="text-muted small">Nessuno</div>`;
-
-            return `<div class="role-col"><div class="role-title">${titolo}</div>${items}</div>`;
-          }
-
-          function renderAccordionSquadre(data){
-            const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
-            const mantraAttivo = !!data?.mantraAttivo;
-            const accId = 'acc-riepilogo';
-            const html = squads.map((s) => {
-              const collapseId = `collapse-${s.squadraId}`;
-              const headingId = `heading-${s.squadraId}`;
-              const show = s.isMe ? 'show' : '';
-              const myTeamClass = s.isMe ? 'my-team' : '';
-              const counts = { P: (s.portieri || []).length, D: (s.difensori || []).length, C: (s.centrocampisti || []).length, A: (s.attaccanti || []).length };
-              const credVal = (typeof s.creditiDisponibili === 'number') ? s.creditiDisponibili : '-';
-              const maxVal  = (typeof s.puntataMassima    === 'number') ? s.puntataMassima    : '-';
-              return `
-                <div class="accordion-item ${myTeamClass}">
-                  <h2 class="accordion-header" id="${headingId}">
-                    <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
-                            data-bs-toggle="collapse" data-bs-target="#${collapseId}"
-                            aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
-                      <div class="header-grid">
-                        <div class="hg-left">
-                          <span class="team-chip nick-clip" title="${s.nickname}">${s.nickname}</span>
-                          <div class="role-grid">
-                            <span class="rg"><span class="lbl"><span class="role-badge role-P">P</span></span><span class="num">${counts.P}</span></span>
-                            <span class="rg"><span class="lbl"><span class="role-badge role-D">D</span></span><span class="num">${counts.D}</span></span>
-                            <span class="rg"><span class="lbl"><span class="role-badge role-C">C</span></span><span class="num">${counts.C}</span></span>
-                            <span class="rg"><span class="lbl"><span class="role-badge role-A">A</span></span><span class="num">${counts.A}</span></span>
-                          </div>
-                        </div>
-                        <div class="hg-center">${s.isMe ? '<span class="badge bg-info">La tua</span>' : ''}</div>
-                        <div class="hg-right">
-                          <span class="badge bg-secondary">Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span></span>
-                          <span class="badge bg-secondary">Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span></span>
-                        </div>
-                      </div>
-                    </button>
-                  </h2>
-                  <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
-                    <div class="accordion-body">
-                      <div class="d-flex flex-wrap gap-3">
-                        ${renderListaGiocatori('Portieri', s.portieri, mantraAttivo)}
-                        ${renderListaGiocatori('Difensori', s.difensori, mantraAttivo)}
-                        ${renderListaGiocatori('Centrocampisti', s.centrocampisti, mantraAttivo)}
-                        ${renderListaGiocatori('Attaccanti', s.attaccanti, mantraAttivo)}
-                      </div>
-                    </div>
-                  </div>
-                </div>`;
-            }).join('');
-            return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
-          }
-
-          async function apriRiepilogo(){
-            try{
-              riepilogoLoading.style.display = 'block';
-              riepilogoContainer.innerHTML = '';
-              const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
-              if (!res.ok){ riepilogoContainer.innerHTML = '<div class="text-danger">Errore nel caricamento del riepilogo.</div>'; return; }
-              const data = await res.json();
-              riepilogoContainer.innerHTML = renderAccordionSquadre(data);
-            }catch(e){
-              console.error(e); riepilogoContainer.innerHTML = '<div class="text-danger">Errore inatteso.</div>';
-            }finally{ riepilogoLoading.style.display = 'none'; }
-          }
-          document.getElementById('btnRiepilogo').addEventListener('click', () => { bootstrap.Modal.getOrCreateInstance(modalEl).show(); apriRiepilogo(); });
-                  // Bottone mobile "Limiti offerta"
-        const btnPmaxMobile = document.getElementById('btnPmaxMobile');
-        if (btnPmaxMobile) {
-          btnPmaxMobile.addEventListener('click', async () => {
-            try {
-              const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
-              if (res.ok) {
-                const data = await res.json();
-                refreshPmaxBoardsFromRiepilogoData(data);
-              }
-            } catch {}
-            bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('pmaxDrawer')).show();
-          });
-        }
-
-          // ===== Ricerca/Suggerimento giocatore ==============================
-          const inputRicerca = document.getElementById('input-ricerca-giocatore');
-          const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
-
-          inputRicerca.addEventListener('input', () => {
-            const norm = (s) => (s || "").normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-            const testo = norm(inputRicerca.value);
-            risultatiRicercaDiv.innerHTML = '';
-            if (testo.length < 2) return;
-            const filtrati = listoneCompleto.filter(g => norm(g.nome).includes(testo));
-            filtrati.slice(0, 10).forEach(g => {
-              const itemDiv = document.createElement('div');
-              itemDiv.className = 'risultato-item';
-              const spanInfo = document.createElement('span');
-              spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra ?? g.squadraReale ?? ''})`;
-              const suggestButton = document.createElement('button');
-              suggestButton.className = 'btn btn-sm btn-info';
-              suggestButton.textContent = 'Suggerisci';
-              suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
-              itemDiv.appendChild(spanInfo);
-              itemDiv.appendChild(suggestButton);
-              risultatiRicercaDiv.appendChild(itemDiv);
-            });
-          });
-
-          function suggerisciGiocatore(giocatore){
-            connection.invoke("SuggerisciGiocatore", giocatore.id, nickname, legaAlias)
-              .then(() => {
-                mostraToastSuggerimento(giocatore);
-                inputRicerca.value = ''; risultatiRicercaDiv.innerHTML = '';
-              })
-              .catch(err => console.error("Errore nell'invio del suggerimento:", err));
-          }
-
-          function mostraToastSuggerimento(giocatore, durataMs = 2200) {
-            const el   = document.getElementById('toast-suggerimento');
-            const logo = document.getElementById('toast-logo');
-            const nome = document.getElementById('toast-nome');
-            const dett = document.getElementById('toast-dettagli');
-            const bar  = document.getElementById('toast-progress');
-            const closeBtn = el.querySelector('.toast-close');
-
-            const teamSlug = (giocatore.squadra || '').toLowerCase().replace(/\s+/g, '-');
-            const logoUrl  = `https://content.fantacalcio.it/web/img/team/${teamSlug}.png`;
-
-            if (logo){
-              logo.src = logoUrl;
-              logo.style.display = 'block';
-              logo.onerror = () => { logo.style.display = 'none'; };
-            }
-            if (nome) nome.textContent = (giocatore.nome || '').toUpperCase();
-            if (dett) dett.textContent = `${giocatore.ruolo || ''} - ${giocatore.squadra || ''}`;
-
-            el.classList.add('show');
-
-            if (bar){
-              bar.style.animation = 'none';
-              void bar.offsetWidth;
-              bar.style.animation = `ts-progress ${durataMs}ms linear forwards`;
             }
 
-            clearTimeout(el._tClose);
-            el._tClose = setTimeout(() => el.classList.remove('show'), durataMs);
-
-            if (closeBtn){
-              closeBtn.onclick = () => { clearTimeout(el._tClose); el.classList.remove('show'); };
-            }
-          }
-
-          // ===== SignalR Handlers (UI) =======================================
-          connection.on("MostraGiocatoreInAsta", (giocatore) => {
-                    if ((ignoreMostraUntil && Date.now() < ignoreMostraUntil) || giocatore?.fromRelease === true) {
-          return;
-        }
-            const logoImg = document.getElementById("logo-giocatore-in-asta");
-
-            idListoneAttuale = giocatore.id;
-            ruoloGiocatoreAttuale = giocatore.ruolo;
-
-            document.getElementById("giocatore").textContent =
-              `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
-
-            if (giocatore.logoUrl) {
-              logoImg.src = giocatore.logoUrl;
-              logoImg.style.display = "block";
-            } else {
-              logoImg.style.display = "none";
-            }
-
-            document.getElementById("offerente").textContent = "NESSUNO";
-            document.getElementById("offerta").textContent = "0";
-                    const extraEl = document.getElementById('offerente-max');
-        if (extraEl) extraEl.textContent = '';
-
-                    try {
-          const me = (nickname || '').trim().toLowerCase();
-          const off = (offerente || '').trim().toLowerCase();
-          if (me && off && me === off) playCoin();
-        } catch {}
-            offertaAttuale = 0;
-            fineUtcCorrente = null;
-            lastFineUtcStr = null;
-            finalizeGuard = false;
-
-            lastPlayerLogoUrl = giocatore.logoUrl || getTeamLogo(giocatore.squadraReale) || appLogoUrl;
-
-            setOffertaBg(lastPlayerLogoUrl);
-            setPausaBg(appLogoUrl);
-            setBuzzerUI(buzzerModeOn);
-            aggiornaStatoPulsantiBazzer();
-            aggiornaCountdownDaFineUtc();
-          });
-
-          function extractBuzzerOn(p){ return !!(p?.buzzerAttivo ?? p?.attivo ?? p?.enabled ?? p?.abilitato ?? p); }
-
-          connection.off('BuzzerModeChanged');
-          connection.off('BuzzerModeAggiornato');
-
-          connection.on('BuzzerModeChanged', (p) => {
-            const on = extractBuzzerOn(p);
-            setBuzzerUI(on);
-            showBuzzerUI(on);
-            aggiornaStatoPulsantiBazzer();
-          });
-
-          connection.on('BuzzerModeAggiornato', (p) => {
-            const on = extractBuzzerOn(p);
-            setBuzzerUI(on);
-            showBuzzerUI(on);
-            aggiornaStatoPulsantiBazzer();
-          });
-
-          // UI: Buzz → aggiorna offerente e timer
-          if (!window.__uiBuzzBound) {
-            window.__uiBuzzBound = true;
-            connection.on('Buzz', (offerente, fineUtc) => {
-              const offerenteEl = document.getElementById("offerente");
-              if (offerenteEl) offerenteEl.textContent = offerente || "-";
-              renderOfferenteExtras(offerente);
-
-              const offEl = document.getElementById("offerta");
-              if (offEl) offEl.textContent = buzzerModeOn ? '—' : '0';
-
-              if (fineUtc && fineUtc !== lastFineUtcStr) {
-                lastFineUtcStr  = fineUtc;
-                fineUtcCorrente = fineUtc;
-                if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
-              }
-            });
-          }
-
-          // UI: AggiornaOfferta
-          if (!window.__uiAggiornaOffertaBound) {
-            window.__uiAggiornaOffertaBound = true;
-            connection.on("AggiornaOfferta", (offerente, offerta, fineIso) => {
-              const offerenteEl = document.getElementById("offerente");
-              if (offerenteEl) offerenteEl.textContent = offerente || "-";
-              renderOfferenteExtras(offerente);
-
-              if (!buzzerModeOn) {
-                const offEl = document.getElementById("offerta");
-                if (offEl) offEl.textContent = offerta || 0;
-                offertaAttuale = offerta || 0;
-              } else {
-                const offEl = document.getElementById("offerta");
-                if (offEl) offEl.textContent = '—';
-              }
-
-              if (fineIso && fineIso !== lastFineUtcStr) {
-                lastFineUtcStr  = fineIso;
-                fineUtcCorrente = fineIso;
-                if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
-              }
-            });
-          }
-
-          if (!window.__uiAstaTerminataBound) {
-            window.__uiAstaTerminataBound = true;
-            connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
-              const titolo = "Asta Conclusa!";
-              const corpo  = (typeof buzzerModeOn !== 'undefined' && buzzerModeOn)
-                ? `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente}`
-                : `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`;
-
-              if (typeof mostraMessaggio === "function") {
-                mostraMessaggio(titolo, corpo);
-              } else {
-                alert(`${titolo}\n${corpo}`);
-              }
-
-              idListoneAttuale = 0;
-              ruoloGiocatoreAttuale = "";
-              document.getElementById("giocatore").textContent = "Nessun giocatore";
-              document.getElementById("logo-giocatore-in-asta").style.display = "none";
-
-              lastPlayerLogoUrl = null;
-              setOffertaBg(appLogoUrl);
-              setPausaBg(appLogoUrl);
-
-              document.getElementById("offerente").textContent = "-";
-              document.getElementById("offerta").textContent = "0";
-              fineUtcCorrente = null;
-              lastFineUtcStr = null;
-              finalizeGuard = false;
-
-              stopCountdown();
-              document.getElementById("timer").textContent = "-";
-              pausaAttivaClient = false;
-              document.getElementById("pausa-overlay").classList.remove("visible");
-
-              aggiornaStatoPulsantiBazzer();
-              aggiornaCrediti();
-              caricaListone();
-            });
-          }
-
-        if (!window.__uiAstaAnnullataBound) {
-          window.__uiAstaAnnullataBound = true;
-          connection.on("AstaAnnullata", (payload) => {
-            const silent = payload && payload.silent;
-
-            // azzera stato asta utente
-            idListoneAttuale = 0;
-            ruoloGiocatoreAttuale = "";
-
-            const nomeEl   = document.getElementById("giocatore");
-            const logoEl   = document.getElementById("logo-giocatore-in-asta");
-            const offerEl  = document.getElementById("offerente");
-            const valEl    = document.getElementById("offerta");
-            const timerEl  = document.getElementById("timer");
-            const pausaEl  = document.getElementById("pausa-overlay");
-
-            if (nomeEl)  nomeEl.textContent = "Nessun giocatore";
-            if (logoEl)  logoEl.style.display = "none";
-            if (offerEl) offerEl.textContent = "-";
-            if (valEl)   valEl.textContent   = "0";
-            const extraEl = document.getElementById('offerente-max');
-            if (extraEl) extraEl.textContent = '';
-
-            fineUtcCorrente = null;
-            lastFineUtcStr  = null;
-            finalizeGuard   = false;
-            stopCountdown();
-            if (timerEl) timerEl.textContent = "-";
-
-            pausaAttivaClient = false;
-            if (pausaEl) pausaEl.classList.remove("visible");
-
-            lastPlayerLogoUrl = null;
-            setOffertaBg(appLogoUrl);
-            setPausaBg(appLogoUrl);
-
-            aggiornaStatoPulsantiBazzer();
-
-            // aggiorna crediti + listone per riflettere subito l'annullamento
-            try { aggiornaCrediti(); } catch {}
-            try { caricaListone();  } catch {}
-
-            // messaggio SOLO se non silenzioso
-            if (!silent) {
-              if (typeof mostraMessaggio === "function") {
-                mostraMessaggio("Asta annullata", "L'amministratore ha annullato l'asta corrente.");
-              } else {
-                               alert("Asta annullata");
-              }
-            }
-          });
-        }
-
-
- 
-
-          // ► Pausa
-          connection.on("AstaPausa", (payload) => {
-            pausaAttivaClient = true;
-            pauseLockUntil = 0;
-
-            const rem =
-              typeof payload?.remainingSec === "number"
-                ? payload.remainingSec
-                : document.getElementById("timer").textContent || "--";
-
-            const remEl = document.getElementById("pausa-remaining");
-            if (remEl) remEl.textContent = rem;
-
-            const tEl = document.getElementById("timer");
-            if (tEl) tEl.textContent = rem;
-
-            setPausaBg(appLogoUrl);
-            if (!idListoneAttuale) setOffertaBg(appLogoUrl);
-
-            setPauseUI(true);
-            startResumePolling();
-          });
-
-          // ► Ripresa
-          connection.on("AstaRipresa", (arg) => {
-            pausaAttivaClient = false;
-            pauseLockUntil = Date.now() + 5000;
-            stopResumePolling();
-            setPauseUI(false);
-
-            setOffertaBg(lastPlayerLogoUrl || appLogoUrl);
-
-            const fineUtc = typeof arg === "string" ? arg : arg && arg.fineUtc;
-            if (fineUtc) {
-              lastFineUtcStr = fineUtc;
-              fineUtcCorrente = fineUtc;
-              aggiornaCountdownDaFineUtc();
-            } else {
-              try { connection.invoke("RichiediStatoAttuale"); } catch {}
-            }
-            aggiornaStatoPulsantiBazzer();
-          });
-
-          // ► Sync stato
-          connection.on("StatoAsta", (stato) => {
-            const buzzerOn = extractBuzzerOn(stato?.buzzer ?? stato);
-
-            setBuzzerUI(buzzerOn);
-            showBuzzerUI(buzzerOn);
-
-            if (Date.now() < pauseLockUntil && stato?.pausaAttiva === true) return;
-
-            if (stato?.pausaAttiva) {
-              pausaAttivaClient = true;
-              setPauseUI(true);
-              startResumePolling();
-            } else {
-              pausaAttivaClient = false;
-              stopResumePolling();
-              setPauseUI(false);
-              if (stato?.fineUtc) {
-                lastFineUtcStr  = stato.fineUtc;
-                fineUtcCorrente = stato.fineUtc;
-                aggiornaCountdownDaFineUtc();
-              }
-            }
-          });
-
-          // === Riepilogo & crediti live ===
-        connection.on("RiepilogoAggiornato", (data) => {
-          // Fallback anti-riapertura asta dopo SVINCOLO (alza il guard per ~2.5s)
-          if (data && (data.lastAction === 'svincolo' || data.azione === 'svincolo' || data.eventType === 'svincolo')) {
-            ignoreMostraUntil = Date.now() + 2500;
-          }
-
-          aggiornaCrediti();
-
-          const squads = (data && (data.squadre || data.squads))
-            ? (data.squadre || data.squads)
-            : [];
-
-          squads.forEach(s => {
-            // chip in accordion
-            const credChip = document.getElementById(`cred-${s.squadraId}`);
-            if (credChip && typeof s.creditiDisponibili === 'number') {
-              credChip.textContent = s.creditiDisponibili;
-            }
-            const maxChip = document.getElementById(`max-${s.squadraId}`);
-            if (maxChip && typeof s.puntataMassima === 'number') {
-              maxChip.textContent = s.puntataMassima;
-            }
-
-            // aggiorna cache puntata massima per nickname
-            if (s?.nickname != null && typeof s.puntataMassima === 'number') {
-              setPmax(s.nickname, s.puntataMassima);
-            }
-          });
-
-          // refresh micro-label accanto al nome offerente
-          const shownNick = (document.getElementById('offerente')?.textContent || '').trim();
-          renderOfferenteExtras(shownNick);
-
-          // refresh board desktop + mobile
-          refreshPmaxBoardsFromRiepilogoData(data);
-
-          // merge anche se l'update è parziale (desktop board)
-          mergeSquadsIntoStore(squads);
-          renderPmaxGrid('pmaxBoard'); // re-render completo dalla cache
-
-          if (modalRoseAperto()) apriRiepilogo();
-        });
-
-
-          connection.on("AggiornaUtente", ()=>{ aggiornaCrediti(); caricaListone(); });
-          connection.on("AggiornaDurataTimer", (nuoviSecondi)=>{ timerSecondi = nuoviSecondi; });
-
-          connection.on("AggiornaRegoleLega", (regole) => {
-            maxPortieri = regole.maxPortieri;
-            maxDifensori = regole.maxDifensori;
-            maxCentrocampisti = regole.maxCentrocampisti;
-            maxAttaccanti = regole.maxAttaccanti;
-            aggiornaStatoPulsantiBazzer();
-          });
-
-          // ===== Offerte (incrementi e personalizzata) =======================
-          document.querySelectorAll(".bazzer").forEach(btn => {
-            btn.addEventListener("click", async () => {
-              if (pausaAttivaClient){
-                if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
-                return;
-              }
-              const incremento = parseInt(btn.dataset.incremento);
-              const snapshot = offertaAttuale;
-              const nuovaOfferta = snapshot + incremento;
-              const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
-              if (nuovaOfferta > puntataMassima){
-                if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti! Puntata max: " + puntataMassima);
-                else alert("Offerta non valida");
-                return;
-              }
-
-
-        await connection.invoke("InviaOfferta", nickname, nuovaOfferta, snapshot);
-
-
-            });
-          });
-
-          document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
-            if (pausaAttivaClient){
-              if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
-              return;
-            }
-            const inputOfferta = document.getElementById('offertaPersonalizzataInput');
-            const offertaInserita = parseInt(inputOfferta.value);
-            if (isNaN(offertaInserita) || offertaInserita <= 0){
-              if (typeof mostraMessaggio === 'function') mostraMessaggio("Errore", "Inserisci un valore numerico valido.");
-              else alert("Errore");
-              return;
-            }
-            if (offertaInserita <= offertaAttuale){
-              if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Deve essere superiore all'attuale!");
-              else alert("Offerta non valida");
-              return;
-            }
-            const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
-            if (offertaInserita > puntataMassima){
-              if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Supera la tua puntata massima (" + puntataMassima + ")");
-              else alert("Offerta non valida");
-              return;
-            }
-            const snapshot = offertaAttuale;
-            
-            await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
-
-            inputOfferta.value = "";
-          });
-
-          // ===== Reconnect loop ==============================================
-          function clearPing(){ if (pingIntervalId){ clearInterval(pingIntervalId); pingIntervalId = null; } }
-          function startPing(){
-            clearPing();
-            pingIntervalId = setInterval(() => {
-              if (connection.state === signalR.HubConnectionState.Connected){
-                connection.invoke("Ping", legaAlias, nickname).catch(()=>{});
-              }
-            }, 15000);
-          }
-
-          async function postConnectedSetup(){
-            if (!legaAlias) { console.warn('Lega alias mancante: impossibile registrarsi al gruppo.'); return; }
-            try { await connection.invoke("RegistratiAllaLega", legaAlias, nickname, false); } catch(_){}
-            try { await connection.invoke("RichiediStatoAttuale"); } catch(_){}
-            aggiornaStatoPulsantiBazzer();
-            caricaListone();
-            aggiornaCrediti();
-            preloadPmax();
-        // Primo render della board Limiti Offerta
-        try {
-          const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
-          if (res.ok) {
-            const data = await res.json();
-            refreshPmaxBoardsFromRiepilogoData(data);
-          }
-        } catch {}
-
-            startPing();
-          }
-
-          async function startConnectionInitial(){
-            try{
-              await connection.start();
-              hideReconnectOverlay();
-              manualAttempts = 0;
-              await postConnectedSetup();
-              aggiornaStatoPulsantiBazzer();
-            }catch(err){
-              console.warn("Connessione iniziale fallita, parte retry 1s:", err);
-              startManualReconnectLoop();
-            }
-          }
-
-          function startManualReconnectLoop(){
-            if (manualReconnectTimer) return;
-            manualAttempts = 0;
-            showReconnectOverlay(0);
-            manualReconnectTimer = setInterval(async () => {
-              if (connection.state === signalR.HubConnectionState.Connected){
-                stopManualLoop(); hideReconnectOverlay(); return;
-              }
-              manualAttempts++; showReconnectOverlay(manualAttempts);
-              try{
-                await connection.start();
-                stopManualLoop(); hideReconnectOverlay();
-                await postConnectedSetup();
+            function showBuzzerUI(on) {
+                buzzerAttivoClient = !!on;
+                const bidUi = document.getElementById('bidUi');
+                const buzzer = document.getElementById('buzzerClientArea');
+                if (buzzer) buzzer.classList.toggle('d-none', !on);
+                if (bidUi) bidUi.classList.toggle('d-none', on);
+                setBidControlsEnabled(!on);
                 aggiornaStatoPulsantiBazzer();
-              }catch(e){ /* retry 1s */ }
-            }, 1000);
-          }
-          function stopManualLoop(){ if (manualReconnectTimer){ clearInterval(manualReconnectTimer); manualReconnectTimer = null; } }
-
-          connection.onreconnecting(() => { showReconnectOverlay((connection._reconnectDisplayCount || 0) + 1); setBidControlsEnabled(false); stopCountdown(); });
-          connection.onreconnected(() => {
-            hideReconnectOverlay();
-            stopManualLoop();
-            manualAttempts = 0;
-            postConnectedSetup();
-            try { connection.invoke("RichiediStatoAttuale"); } catch {}
-            aggiornaStatoPulsantiBazzer();
-          });
-          connection.onclose(() => { showReconnectOverlay(manualAttempts); clearPing(); startManualReconnectLoop(); });
-
-          // ===== Avvio connessione ==========================================
-          startConnectionInitial();
-
-          // ===== Shortcut tastiera (solo PC) =================================
-          document.addEventListener('keydown', function (e) {
-            // ignora se si sta scrivendo in input/textarea/contenteditable
-            const t = e.target;
-            const isEditable = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
-            if (isEditable) return;
-
-            if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
-              e.preventDefault();
-              const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-              if (isMobile) return;
-              if (buzzerModeOn && buzzerAttivoClient) {
-                const btn = document.getElementById('btnClientBuzzer');
-                if (btn && !btn.disabled) btn.click();
-              }
             }
-          });
 
-          // ===== Cleanup alla chiusura pagina ================================
-          window.addEventListener('beforeunload', () => {
-            try { clearPing(); stopManualLoop(); connection.stop(); } catch(_){}
-          });
+            function aggiornaStatoPulsantiBazzer() {
+                const hubState = connection.state;
+                let abilitato = idListoneAttuale > 0 && !pausaAttivaClient && hubState === signalR.HubConnectionState.Connected;
+                let messaggio = "";
+                if (abilitato) {
+                    if (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di portieri (${maxPortieri}).`; }
+                    else if (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di difensori (${maxDifensori}).`; }
+                    else if (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di centrocampisti (${maxCentrocampisti}).`; }
+                    else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`; }
+                }
+                setBidControlsEnabled(abilitato);
+
+                const buzBtn = document.getElementById('btnClientBuzzer');
+                if (buzBtn) {
+                    const hubState = connection.state;
+                    const slotLibero = !(
+                        (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) ||
+                        (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) ||
+                        (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) ||
+                        (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti)
+                    );
+
+                    const buzzerEnabled =
+                        buzzerAttivoClient &&
+                        idListoneAttuale > 0 &&
+                        !pausaAttivaClient &&
+                        hubState === signalR.HubConnectionState.Connected &&
+                        slotLibero;
+
+                    buzBtn.disabled = !buzzerEnabled;
+                    buzBtn.setAttribute('aria-disabled', String(!buzzerEnabled));
+                }
+
+                const avvisoDiv = document.getElementById('avviso-ruolo-completo');
+                const avvisoBuzzer = document.getElementById('avviso-ruolo-completo-buzzer');
+                const show = (!abilitato && !!messaggio);
+
+                if (avvisoDiv) {
+                    avvisoDiv.innerText = show ? messaggio : '';
+                    avvisoDiv.style.display = show ? 'block' : 'none';
+                }
+
+                if (avvisoBuzzer) {
+                    const showBuzzer = buzzerAttivoClient && show;
+                    avvisoBuzzer.textContent = showBuzzer ? messaggio : '';
+                    avvisoBuzzer.classList.toggle('d-none', !showBuzzer);
+
+                    const buzBtn2 = document.getElementById('btnClientBuzzer');
+                    if (buzBtn2) {
+                        if (showBuzzer) buzBtn2.setAttribute('aria-describedby', 'avviso-ruolo-completo-buzzer');
+                        else buzBtn2.removeAttribute('aria-describedby');
+                    }
+                }
+            }
+
+            // ===== Timer =======================================================
+            function stopCountdown() { clearTimeout(countdownTimerUtente); countdownTimerUtente = null; }
+            function aggiornaCountdownDaFineUtc() {
+                const timerEl = document.getElementById("timer");
+                stopCountdown();
+                if (!idListoneAttuale || !fineUtcCorrente) {
+                    if (timerEl) {
+                        timerEl.textContent = "-";
+                        // Aggiungo la classe di colore iniziale per il trattino
+                        timerEl.className = 'display-3 fw-bold my-1 text-warning';
+                    }
+                    return;
+                }
+                const end = new Date(fineUtcCorrente);
+                let prevSec = -1;
+                const tick = () => {
+                    const msLeft = end.getTime() - Date.now();
+                    const sec = Math.max(0, Math.ceil(msLeft / 1000));
+                    if (sec !== prevSec) {
+                        if (timerEl) {
+                            timerEl.textContent = sec;
+                            // Rimuovo tutte le classi di colore prima di aggiungerne una nuova
+                            timerEl.classList.remove('text-warning', 'timer-red', 'timer-yellow', 'timer-green');
+                            if (sec >= 6) {
+                                timerEl.classList.add('timer-green');
+                            } else if (sec >= 4 && sec <= 5) {
+                                timerEl.classList.add('timer-yellow');
+                            } else {
+                                timerEl.classList.add('timer-red');
+                            }
+                        }
+                        prevSec = sec;
+                        if (sec === 0) {
+                            stopCountdown();
+                            setBidControlsEnabled(false);
+                            if (typeof richiestaChiusuraAstaSafeguard === 'function') richiestaChiusuraAstaSafeguard();
+                            return;
+                        }
+                    }
+                    const nextDelay = Math.max(50, msLeft - (sec - 1) * 1000);
+                    countdownTimerUtente = setTimeout(tick, nextDelay);
+                };
+                tick();
+            }
+
+            // ===== Crediti / listone ===========================================
+            async function aggiornaCrediti() {
+                try {
+                    const res = await fetch(`/utente/crediti?nick=${encodeURIComponent(nickname)}&lega=${encodeURIComponent(legaAlias)}`);
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    document.getElementById("crediti-bottom").textContent = data.creditiDisponibili;
+                    document.getElementById("puntata-bottom").textContent = data.puntataMassima;
+                    portieriAttuali = data.portieri; difensoriAttuali = data.difensori; centrocampistiAttuali = data.centrocampisti; attaccantiAttuali = data.attaccanti;
+                    aggiornaStatoPulsantiBazzer();
+                } catch (e) { console.error("Errore aggiornamento crediti:", e); }
+            }
+
+            async function caricaListone() {
+                try {
+                    const res = await fetch(`/Utente/GetListoneDisponibile?lega=${encodeURIComponent(legaAlias)}`);
+                    if (!res.ok) return;
+                    const raw = await res.json();
+                    const norm = (s) => (s || "").normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim();
+                    const seen = new Set();
+                    listoneCompleto = raw.filter(g => {
+                        const key = `${norm(g.nome)}|${norm(g.ruolo)}|${norm(g.squadra ?? g.squadraReale)}`;
+                        if (seen.has(key)) return false; seen.add(key); return true;
+                    });
+                } catch (e) { console.error("Errore nel caricamento del listone:", e); }
+            }
+
+            function modalRoseAperto() {
+                const el = document.getElementById('modalRiepilogo');
+                return !!el && el.classList.contains('show');
+            }
+
+            const modalEl = document.getElementById('modalRiepilogo');
+            const riepilogoContainer = document.getElementById('riepilogoContainer');
+            const riepilogoLoading = document.getElementById('riepilogo-loading');
+
+            function renderListaGiocatori(titolo, arr, mantraAttivo) {
+                const colorClassFromOriginal = (roleOriginal) => {
+                    const L = (roleOriginal || '').toString().trim().toUpperCase().charAt(0);
+                    return ['P', 'D', 'C', 'A'].includes(L) ? `role-${L}` : null;
+                };
+                const makeBadge = (textToShow, roleOriginal) => {
+                    const colorCls = colorClassFromOriginal(roleOriginal);
+                    return colorCls ? `<span class="role-badge ${colorCls}">${textToShow}</span>` : null;
+                };
+                const items = (arr || []).map(p => {
+                    const ruoloOriginale = p.ruolo;
+                    const ruoloMantra = p.ruoloMantra;
+                    const ruoloVisibile = mantraAttivo ? (ruoloMantra || ruoloOriginale) : ruoloOriginale;
+                    let ruoloMarkup;
+                    if (mantraAttivo) {
+                        const badge = makeBadge(ruoloVisibile, ruoloOriginale);
+                        ruoloMarkup = badge ? `<span class="pl-role">${badge}</span>` : `<span class="pl-role">${ruoloVisibile || ''}</span>`;
+                    } else {
+                        const L = (ruoloVisibile || '').toString().trim().toUpperCase();
+                        if (L.length === 1 && ['P', 'D', 'C', 'A'].includes(L)) {
+                            const badge = makeBadge(L, L);
+                            ruoloMarkup = `<span class="pl-role">${badge}</span>`;
+                        } else {
+                            ruoloMarkup = `<span class="pl-role">${ruoloVisibile || ''}</span>`;
+                        }
+                    }
+                    return `
+                        <div class="pl-item">
+                          <div class="pl-left">
+                            <img class="pl-logo" src="${p.logoUrl || ''}" alt="">
+                            <span class="pl-name">${p.nome}</span>
+                            ${ruoloMarkup}
+                          </div>
+                          <span class="pl-cred">(${p.crediti})</span>
+                        </div>`;
+                }).join('') || `<div class="text-muted small">Nessuno</div>`;
+
+                return `<div class="role-col"><div class="role-title">${titolo}</div>${items}</div>`;
+            }
+
+            function renderAccordionSquadre(data) {
+                const squads = (data && (data.squads || data.squadre)) ? (data.squads || data.squadre) : [];
+                const mantraAttivo = !!data?.mantraAttivo;
+                const accId = 'acc-riepilogo';
+                const html = squads.map((s) => {
+                    const collapseId = `collapse-${s.squadraId}`;
+                    const headingId = `heading-${s.squadraId}`;
+                    const show = s.isMe ? 'show' : '';
+                    const myTeamClass = s.isMe ? 'my-team' : '';
+                    const counts = { P: (s.portieri || []).length, D: (s.difensori || []).length, C: (s.centrocampisti || []).length, A: (s.attaccanti || []).length };
+                    const credVal = (typeof s.creditiDisponibili === 'number') ? s.creditiDisponibili : '-';
+                    const maxVal = (typeof s.puntataMassima === 'number') ? s.puntataMassima : '-';
+                    return `
+                        <div class="accordion-item ${myTeamClass}">
+                          <h2 class="accordion-header" id="${headingId}">
+                            <button class="accordion-button ${show ? '' : 'collapsed'}" type="button"
+                                    data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                                    aria-expanded="${show ? 'true' : 'false'}" aria-controls="${collapseId}">
+                              <div class="header-grid">
+                                <div class="hg-left">
+                                  <span class="team-chip nick-clip" title="${s.nickname}">${s.nickname}</span>
+                                  <div class="role-grid">
+                                    <span class="rg"><span class="lbl"><span class="role-badge role-P">P</span></span><span class="num">${counts.P}</span></span>
+                                    <span class="rg"><span class="lbl"><span class="role-badge role-D">D</span></span><span class="num">${counts.D}</span></span>
+                                    <span class="rg"><span class="lbl"><span class="role-badge role-C">C</span></span><span class="num">${counts.C}</span></span>
+                                    <span class="rg"><span class="lbl"><span class="role-badge role-A">A</span></span><span class="num">${counts.A}</span></span>
+                                  </div>
+                                </div>
+                                <div class="hg-center">${s.isMe ? '<span class="badge bg-info">La tua</span>' : ''}</div>
+                                <div class="hg-right">
+                                  <span class="badge bg-secondary">Crediti: <span id="cred-${s.squadraId}" class="badge-credits">${credVal}</span></span>
+                                  <span class="badge bg-secondary">Max: <span id="max-${s.squadraId}" class="badge-max">${maxVal}</span></span>
+                                </div>
+                              </div>
+                            </button>
+                          </h2>
+                          <div id="${collapseId}" class="accordion-collapse collapse ${show}" data-bs-parent="#${accId}">
+                            <div class="accordion-body">
+                              <div class="d-flex flex-wrap gap-3">
+                                ${renderListaGiocatori('Portieri', s.portieri, mantraAttivo)}
+                                ${renderListaGiocatori('Difensori', s.difensori, mantraAttivo)}
+                                ${renderListaGiocatori('Centrocampisti', s.centrocampisti, mantraAttivo)}
+                                ${renderListaGiocatori('Attaccanti', s.attaccanti, mantraAttivo)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>`;
+                }).join('');
+                return `<div class="accordion accordion-dark" id="${accId}">${html || '<div class="text-muted">Nessuna squadra trovata.</div>'}</div>`;
+            }
+
+            async function apriRiepilogo() {
+                try {
+                    riepilogoLoading.style.display = 'block';
+                    riepilogoContainer.innerHTML = '';
+                    const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+                    if (!res.ok) { riepilogoContainer.innerHTML = '<div class="text-danger">Errore nel caricamento del riepilogo.</div>'; return; }
+                    const data = await res.json();
+                    riepilogoContainer.innerHTML = renderAccordionSquadre(data);
+                } catch (e) {
+                    console.error(e); riepilogoContainer.innerHTML = '<div class="text-danger">Errore inatteso.</div>';
+                } finally { riepilogoLoading.style.display = 'none'; }
+            }
+            document.getElementById('btnRiepilogo').addEventListener('click', () => { bootstrap.Modal.getOrCreateInstance(modalEl).show(); apriRiepilogo(); });
+            // Bottone mobile "Limiti offerta"
+            const btnPmaxMobile = document.getElementById('btnPmaxMobile');
+            if (btnPmaxMobile) {
+                btnPmaxMobile.addEventListener('click', async () => {
+                    try {
+                        const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            refreshPmaxBoardsFromRiepilogoData(data);
+                        }
+                    } catch { }
+                    bootstrap.Offcanvas.getOrCreateInstance(document.getElementById('pmaxDrawer')).show();
+                });
+            }
+
+            // ===== Ricerca/Suggerimento giocatore ==============================
+            const inputRicerca = document.getElementById('input-ricerca-giocatore');
+            const risultatiRicercaDiv = document.getElementById('risultati-ricerca');
+
+            inputRicerca.addEventListener('input', () => {
+                const norm = (s) => (s || "").normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+                const testo = norm(inputRicerca.value);
+                risultatiRicercaDiv.innerHTML = '';
+                if (testo.length < 2) return;
+                const filtrati = listoneCompleto.filter(g => norm(g.nome).includes(testo));
+                filtrati.slice(0, 10).forEach(g => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'risultato-item';
+                    const spanInfo = document.createElement('span');
+                    spanInfo.textContent = `${g.nome} (${g.ruolo} - ${g.squadra ?? g.squadraReale ?? ''})`;
+                    const suggestButton = document.createElement('button');
+                    suggestButton.className = 'btn btn-sm btn-info';
+                    suggestButton.textContent = 'Suggerisci';
+                    suggestButton.addEventListener('click', () => suggerisciGiocatore(g));
+                    itemDiv.appendChild(spanInfo);
+                    itemDiv.appendChild(suggestButton);
+                    risultatiRicercaDiv.appendChild(itemDiv);
+                });
+            });
+
+            function suggerisciGiocatore(giocatore) {
+                connection.invoke("SuggerisciGiocatore", giocatore.id, nickname, legaAlias)
+                    .then(() => {
+                        mostraToastSuggerimento(giocatore);
+                        inputRicerca.value = ''; risultatiRicercaDiv.innerHTML = '';
+                    })
+                    .catch(err => console.error("Errore nell'invio del suggerimento:", err));
+            }
+
+            function mostraToastSuggerimento(giocatore, durataMs = 2200) {
+                const el = document.getElementById('toast-suggerimento');
+                const logo = document.getElementById('toast-logo');
+                const nome = document.getElementById('toast-nome');
+                const dett = document.getElementById('toast-dettagli');
+                const bar = document.getElementById('toast-progress');
+                const closeBtn = el.querySelector('.toast-close');
+
+                const teamSlug = (giocatore.squadra || '').toLowerCase().replace(/\s+/g, '-');
+                const logoUrl = `https://content.fantacalcio.it/web/img/team/${teamSlug}.png`;
+
+                if (logo) {
+                    logo.src = logoUrl;
+                    logo.style.display = 'block';
+                    logo.onerror = () => { logo.style.display = 'none'; };
+                }
+                if (nome) nome.textContent = (giocatore.nome || '').toUpperCase();
+                if (dett) dett.textContent = `${giocatore.ruolo || ''} - ${giocatore.squadra || ''}`;
+
+                el.classList.add('show');
+
+                if (bar) {
+                    bar.style.animation = 'none';
+                    void bar.offsetWidth;
+                    bar.style.animation = `ts-progress ${durataMs}ms linear forwards`;
+                }
+
+                clearTimeout(el._tClose);
+                el._tClose = setTimeout(() => el.classList.remove('show'), durataMs);
+
+                if (closeBtn) {
+                    closeBtn.onclick = () => { clearTimeout(el._tClose); el.classList.remove('show'); };
+                }
+            }
+
+            // ===== SignalR Handlers (UI) =======================================
+            connection.on("MostraGiocatoreInAsta", (giocatore) => {
+                if ((ignoreMostraUntil && Date.now() < ignoreMostraUntil) || giocatore?.fromRelease === true) {
+                    return;
+                }
+                const logoImg = document.getElementById("logo-giocatore-in-asta");
+
+                idListoneAttuale = giocatore.id;
+                ruoloGiocatoreAttuale = giocatore.ruolo;
+
+                document.getElementById("giocatore").textContent =
+                    `${giocatore.nome} (${giocatore.ruolo} - ${giocatore.squadraReale})`;
+
+                if (giocatore.logoUrl) {
+                    logoImg.src = giocatore.logoUrl;
+                    logoImg.style.display = "block";
+                } else {
+                    logoImg.style.display = "none";
+                }
+
+                document.getElementById("offerente").textContent = "NESSUNO";
+                document.getElementById("offerta").textContent = "0";
+                const extraEl = document.getElementById('offerente-max');
+                if (extraEl) extraEl.textContent = '';
+
+                try {
+                    const me = (nickname || '').trim().toLowerCase();
+                    const off = (offerente || '').trim().toLowerCase();
+                    if (me && off && me === off) playCoin();
+                } catch { }
+                offertaAttuale = 0;
+                fineUtcCorrente = null;
+                lastFineUtcStr = null;
+                finalizeGuard = false;
+
+                lastPlayerLogoUrl = giocatore.logoUrl || getTeamLogo(giocatore.squadraReale) || appLogoUrl;
+
+                setOffertaBg(lastPlayerLogoUrl);
+                setPausaBg(appLogoUrl);
+                setBuzzerUI(buzzerModeOn);
+                aggiornaStatoPulsantiBazzer();
+                aggiornaCountdownDaFineUtc();
+            });
+
+            function extractBuzzerOn(p) { return !!(p?.buzzerAttivo ?? p?.attivo ?? p?.enabled ?? p?.abilitato ?? p); }
+
+            connection.off('BuzzerModeChanged');
+            connection.off('BuzzerModeAggiornato');
+
+            connection.on('BuzzerModeChanged', (p) => {
+                const on = extractBuzzerOn(p);
+                setBuzzerUI(on);
+                showBuzzerUI(on);
+                aggiornaStatoPulsantiBazzer();
+            });
+
+            connection.on('BuzzerModeAggiornato', (p) => {
+                const on = extractBuzzerOn(p);
+                setBuzzerUI(on);
+                showBuzzerUI(on);
+                aggiornaStatoPulsantiBazzer();
+            });
+
+            // UI: Buzz → aggiorna offerente e timer
+            if (!window.__uiBuzzBound) {
+                window.__uiBuzzBound = true;
+                connection.on('Buzz', (offerente, fineUtc) => {
+                    const offerenteEl = document.getElementById("offerente");
+                    if (offerenteEl) offerenteEl.textContent = offerente || "-";
+                    renderOfferenteExtras(offerente);
+
+                    const offEl = document.getElementById("offerta");
+                    if (offEl) offEl.textContent = buzzerModeOn ? '—' : '0';
+
+                    if (fineUtc && fineUtc !== lastFineUtcStr) {
+                        lastFineUtcStr = fineUtc;
+                        fineUtcCorrente = fineUtc;
+                        if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+                    }
+                });
+            }
+
+            // UI: AggiornaOfferta
+            if (!window.__uiAggiornaOffertaBound) {
+                window.__uiAggiornaOffertaBound = true;
+                connection.on("AggiornaOfferta", (offerente, offerta, fineIso) => {
+                    const offerenteEl = document.getElementById("offerente");
+                    if (offerenteEl) offerenteEl.textContent = offerente || "-";
+                    renderOfferenteExtras(offerente);
+
+                    if (!buzzerModeOn) {
+                        const offEl = document.getElementById("offerta");
+                        if (offEl) offEl.textContent = offerta || 0;
+                        offertaAttuale = offerta || 0;
+                    } else {
+                        const offEl = document.getElementById("offerta");
+                        if (offEl) offEl.textContent = '—';
+                    }
+
+                    if (fineIso && fineIso !== lastFineUtcStr) {
+                        lastFineUtcStr = fineIso;
+                        fineUtcCorrente = fineIso;
+                        if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+                    }
+                });
+            }
+
+            if (!window.__uiAstaTerminataBound) {
+                window.__uiAstaTerminataBound = true;
+                connection.on("AstaTerminata", (giocatoreId, nomeGiocatore, nomeOfferente, offerta) => {
+                    const titolo = "Asta Conclusa!";
+                    const corpo = (typeof buzzerModeOn !== 'undefined' && buzzerModeOn)
+                        ? `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente}`
+                        : `Giocatore ${nomeGiocatore} aggiudicato da ${nomeOfferente} per ${offerta} crediti!`;
+
+                    if (typeof mostraMessaggio === "function") {
+                        mostraMessaggio(titolo, corpo);
+                    } else {
+                        alert(`${titolo}\n${corpo}`);
+                    }
+
+                    idListoneAttuale = 0;
+                    ruoloGiocatoreAttuale = "";
+                    document.getElementById("giocatore").textContent = "Nessun giocatore";
+                    document.getElementById("logo-giocatore-in-asta").style.display = "none";
+
+                    lastPlayerLogoUrl = null;
+                    setOffertaBg(appLogoUrl);
+                    setPausaBg(appLogoUrl);
+
+                    document.getElementById("offerente").textContent = "-";
+                    document.getElementById("offerta").textContent = "0";
+                    fineUtcCorrente = null;
+                    lastFineUtcStr = null;
+                    finalizeGuard = false;
+
+                    stopCountdown();
+                    document.getElementById("timer").textContent = "-";
+                    pausaAttivaClient = false;
+                    document.getElementById("pausa-overlay").classList.remove("visible");
+
+                    aggiornaStatoPulsantiBazzer();
+                    aggiornaCrediti();
+                    caricaListone();
+                });
+            }
+
+            if (!window.__uiAstaAnnullataBound) {
+                window.__uiAstaAnnullataBound = true;
+                connection.on("AstaAnnullata", (payload) => {
+                    const silent = payload && payload.silent;
+
+                    // azzera stato asta utente
+                    idListoneAttuale = 0;
+                    ruoloGiocatoreAttuale = "";
+
+                    const nomeEl = document.getElementById("giocatore");
+                    const logoEl = document.getElementById("logo-giocatore-in-asta");
+                    const offerEl = document.getElementById("offerente");
+                    const valEl = document.getElementById("offerta");
+                    const timerEl = document.getElementById("timer");
+                    const pausaEl = document.getElementById("pausa-overlay");
+
+                    if (nomeEl) nomeEl.textContent = "Nessun giocatore";
+                    if (logoEl) logoEl.style.display = "none";
+                    if (offerEl) offerEl.textContent = "-";
+                    if (valEl) valEl.textContent = "0";
+                    const extraEl = document.getElementById('offerente-max');
+                    if (extraEl) extraEl.textContent = '';
+
+                    fineUtcCorrente = null;
+                    lastFineUtcStr = null;
+                    finalizeGuard = false;
+                    stopCountdown();
+                    if (timerEl) timerEl.textContent = "-";
+
+                    pausaAttivaClient = false;
+                    if (pausaEl) pausaEl.classList.remove("visible");
+
+                    lastPlayerLogoUrl = null;
+                    setOffertaBg(appLogoUrl);
+                    setPausaBg(appLogoUrl);
+
+                    aggiornaStatoPulsantiBazzer();
+
+                    // aggiorna crediti + listone per riflettere subito l'annullamento
+                    try { aggiornaCrediti(); } catch { }
+                    try { caricaListone(); } catch { }
+
+                    // messaggio SOLO se non silenzioso
+                    if (!silent) {
+                        if (typeof mostraMessaggio === "function") {
+                            mostraMessaggio("Asta annullata", "L'amministratore ha annullato l'asta corrente.");
+                        } else {
+                            alert("Asta annullata");
+                        }
+                    }
+                });
+            }
+
+            // ► Pausa
+            connection.on("AstaPausa", (payload) => {
+                pausaAttivaClient = true;
+                pauseLockUntil = 0;
+
+                const rem =
+                    typeof payload?.remainingSec === "number"
+                        ? payload.remainingSec
+                        : document.getElementById("timer").textContent || "--";
+
+                const remEl = document.getElementById("pausa-remaining");
+                if (remEl) remEl.textContent = rem;
+
+                const tEl = document.getElementById("timer");
+                if (tEl) tEl.textContent = rem;
+
+                setPausaBg(appLogoUrl);
+                if (!idListoneAttuale) setOffertaBg(appLogoUrl);
+
+                setPauseUI(true);
+                startResumePolling();
+            });
+
+            // ► Ripresa
+            connection.on("AstaRipresa", (arg) => {
+                pausaAttivaClient = false;
+                pauseLockUntil = Date.now() + 5000;
+                stopResumePolling();
+                setPauseUI(false);
+
+                setOffertaBg(lastPlayerLogoUrl || appLogoUrl);
+
+                const fineUtc = typeof arg === "string" ? arg : arg && arg.fineUtc;
+                if (fineUtc) {
+                    lastFineUtcStr = fineUtc;
+                    fineUtcCorrente = fineUtc;
+                    aggiornaCountdownDaFineUtc();
+                } else {
+                    try { connection.invoke("RichiediStatoAttuale"); } catch { }
+                }
+                aggiornaStatoPulsantiBazzer();
+            });
+
+            // ► Sync stato
+            connection.on("StatoAsta", (stato) => {
+                const buzzerOn = extractBuzzerOn(stato?.buzzer ?? stato);
+
+                setBuzzerUI(buzzerOn);
+                showBuzzerUI(buzzerOn);
+
+                if (Date.now() < pauseLockUntil && stato?.pausaAttiva === true) return;
+
+                if (stato?.pausaAttiva) {
+                    pausaAttivaClient = true;
+                    setPauseUI(true);
+                    startResumePolling();
+                } else {
+                    pausaAttivaClient = false;
+                    stopResumePolling();
+                    setPauseUI(false);
+                    if (stato?.fineUtc) {
+                        lastFineUtcStr = stato.fineUtc;
+                        fineUtcCorrente = stato.fineUtc;
+                        aggiornaCountdownDaFineUtc();
+                    }
+                }
+            });
+
+            // === Riepilogo & crediti live ===
+            connection.on("RiepilogoAggiornato", (data) => {
+                // Fallback anti-riapertura asta dopo SVINCOLO (alza il guard per ~2.5s)
+                if (data && (data.lastAction === 'svincolo' || data.azione === 'svincolo' || data.eventType === 'svincolo')) {
+                    ignoreMostraUntil = Date.now() + 2500;
+                }
+
+                aggiornaCrediti();
+
+                const squads = (data && (data.squadre || data.squads))
+                    ? (data.squadre || data.squads)
+                    : [];
+
+                squads.forEach(s => {
+                    // chip in accordion
+                    const credChip = document.getElementById(`cred-${s.squadraId}`);
+                    if (credChip && typeof s.creditiDisponibili === 'number') {
+                        credChip.textContent = s.creditiDisponibili;
+                    }
+                    const maxChip = document.getElementById(`max-${s.squadraId}`);
+                    if (maxChip && typeof s.puntataMassima === 'number') {
+                        maxChip.textContent = s.puntataMassima;
+                    }
+
+                    // aggiorna cache puntata massima per nickname
+                    if (s?.nickname != null && typeof s.puntataMassima === 'number') {
+                        setPmax(s.nickname, s.puntataMassima);
+                    }
+                });
+
+                // refresh micro-label accanto al nome offerente
+                const shownNick = (document.getElementById('offerente')?.textContent || '').trim();
+                renderOfferenteExtras(shownNick);
+
+                // refresh board desktop + mobile
+                refreshPmaxBoardsFromRiepilogoData(data);
+
+                // merge anche se l'update è parziale (desktop board)
+                mergeSquadsIntoStore(squads);
+                renderPmaxGrid('pmaxBoard'); // re-render completo dalla cache
+
+                if (modalRoseAperto()) apriRiepilogo();
+            });
+
+
+            connection.on("AggiornaUtente", () => { aggiornaCrediti(); caricaListone(); });
+            connection.on("AggiornaDurataTimer", (nuoviSecondi) => { timerSecondi = nuoviSecondi; });
+
+            connection.on("AggiornaRegoleLega", (regole) => {
+                maxPortieri = regole.maxPortieri;
+                maxDifensori = regole.maxDifensori;
+                maxCentrocampisti = regole.maxCentrocampisti;
+                maxAttaccanti = regole.maxAttaccanti;
+                aggiornaStatoPulsantiBazzer();
+            });
+
+            // ===== Offerte (incrementi e personalizzata) =======================
+            document.querySelectorAll(".bazzer").forEach(btn => {
+                btn.addEventListener("click", async () => {
+                    if (pausaAttivaClient) {
+                        if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
+                        return;
+                    }
+                    const incremento = parseInt(btn.dataset.incremento);
+                    const snapshot = offertaAttuale;
+                    const nuovaOfferta = snapshot + incremento;
+                    const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
+                    if (nuovaOfferta > puntataMassima) {
+                        if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti! Puntata max: " + puntataMassima);
+                        else alert("Offerta non valida");
+                        return;
+                    }
+
+
+                    await connection.invoke("InviaOfferta", nickname, nuovaOfferta, snapshot);
+
+
+                });
+            });
+
+            document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
+                if (pausaAttivaClient) {
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
+                    return;
+                }
+                const inputOfferta = document.getElementById('offertaPersonalizzataInput');
+                const offertaInserita = parseInt(inputOfferta.value);
+                if (isNaN(offertaInserita) || offertaInserita <= 0) {
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Errore", "Inserisci un valore numerico valido.");
+                    else alert("Errore");
+                    return;
+                }
+                if (offertaInserita <= offertaAttuale) {
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Deve essere superiore all'attuale!");
+                    else alert("Offerta non valida");
+                    return;
+                }
+                const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
+                if (offertaInserita > puntataMassima) {
+                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Supera la tua puntata massima (" + puntataMassima + ")");
+                    else alert("Offerta non valida");
+                    return;
+                }
+                const snapshot = offertaAttuale;
+
+                await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
+
+                inputOfferta.value = "";
+            });
+
+            // ===== Reconnect loop ==============================================
+            function clearPing() { if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; } }
+            function startPing() {
+                clearPing();
+                pingIntervalId = setInterval(() => {
+                    if (connection.state === signalR.HubConnectionState.Connected) {
+                        connection.invoke("Ping", legaAlias, nickname).catch(() => { });
+                    }
+                }, 15000);
+            }
+
+            async function postConnectedSetup() {
+                if (!legaAlias) { console.warn('Lega alias mancante: impossibile registrarsi al gruppo.'); return; }
+                try { await connection.invoke("RegistratiAllaLega", legaAlias, nickname, false); } catch (_) { }
+                try { await connection.invoke("RichiediStatoAttuale"); } catch (_) { }
+                aggiornaStatoPulsantiBazzer();
+                caricaListone();
+                aggiornaCrediti();
+                preloadPmax();
+                // Primo render della board Limiti Offerta
+                try {
+                    const res = await fetch(`/utente/riepilogo?lega=${encodeURIComponent(legaAlias)}&nick=${encodeURIComponent(nickname)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        refreshPmaxBoardsFromRiepilogoData(data);
+                    }
+                } catch { }
+
+                startPing();
+            }
+
+            async function startConnectionInitial() {
+                try {
+                    await connection.start();
+                    hideReconnectOverlay();
+                    manualAttempts = 0;
+                    await postConnectedSetup();
+                    aggiornaStatoPulsantiBazzer();
+                } catch (err) {
+                    console.warn("Connessione iniziale fallita, parte retry 1s:", err);
+                    startManualReconnectLoop();
+                }
+            }
+
+            function startManualReconnectLoop() {
+                if (manualReconnectTimer) return;
+                manualAttempts = 0;
+                showReconnectOverlay(0);
+                manualReconnectTimer = setInterval(async () => {
+                    if (connection.state === signalR.HubConnectionState.Connected) {
+                        stopManualLoop(); hideReconnectOverlay(); return;
+                    }
+                    manualAttempts++; showReconnectOverlay(manualAttempts);
+                    try {
+                        await connection.start();
+                        stopManualLoop(); hideReconnectOverlay();
+                        await postConnectedSetup();
+                        aggiornaStatoPulsantiBazzer();
+                    } catch (e) { /* retry 1s */ }
+                }, 1000);
+            }
+            function stopManualLoop() { if (manualReconnectTimer) { clearInterval(manualReconnectTimer); manualReconnectTimer = null; } }
+
+            connection.onreconnecting(() => { showReconnectOverlay((connection._reconnectDisplayCount || 0) + 1); setBidControlsEnabled(false); stopCountdown(); });
+            connection.onreconnected(() => {
+                hideReconnectOverlay();
+                stopManualLoop();
+                manualAttempts = 0;
+                postConnectedSetup();
+                try { connection.invoke("RichiediStatoAttuale"); } catch { }
+                aggiornaStatoPulsantiBazzer();
+            });
+            connection.onclose(() => { showReconnectOverlay(manualAttempts); clearPing(); startManualReconnectLoop(); });
+
+            // ===== Avvio connessione ==========================================
+            startConnectionInitial();
+
+            // ===== Shortcut tastiera (solo PC) =================================
+            document.addEventListener('keydown', function (e) {
+                // ignora se si sta scrivendo in input/textarea/contenteditable
+                const t = e.target;
+                const isEditable = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+                if (isEditable) return;
+
+                if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
+                    e.preventDefault();
+                    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+                    if (isMobile) return;
+                    if (buzzerModeOn && buzzerAttivoClient) {
+                        const btn = document.getElementById('btnClientBuzzer');
+                        if (btn && !btn.disabled) btn.click();
+                    }
+                }
+            });
+
+            // ===== Cleanup alla chiusura pagina ================================
+            window.addEventListener('beforeunload', () => {
+                try { clearPing(); stopManualLoop(); connection.stop(); } catch (_) { }
+            });
 
         }); // DOMContentLoaded
 
         // ===== Persistenza ultima URL utente =================================
-        (function(){
-          try {
-            var isUtente = /^\/utente(?:\/)?(?:\?|$)/i.test(location.pathname);
-            var qs = new URLSearchParams(location.search);
-            var lega = qs.get('lega');
-            var nick = qs.get('nick');
-            if (isUtente && lega && nick) {
-              var url = '/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick);
-              localStorage.setItem('fb:lastUtenteUrl', url);
-              localStorage.setItem('fb:lega', lega);
-              localStorage.setItem('fb:nick', nick);
-            }
-          } catch(e){}
+        (function () {
+            try {
+                var isUtente = /^\/utente(?:\/)?(?:\?|$)/i.test(location.pathname);
+                var qs = new URLSearchParams(location.search);
+                var lega = qs.get('lega');
+                var nick = qs.get('nick');
+                if (isUtente && lega && nick) {
+                    var url = '/utente?lega=' + encodeURIComponent(lega) + '&nick=' + encodeURIComponent(nick);
+                    localStorage.setItem('fb:lastUtenteUrl', url);
+                    localStorage.setItem('fb:lega', lega);
+                    localStorage.setItem('fb:nick', nick);
+                }
+            } catch (e) { }
         })();
     </script>
 }
