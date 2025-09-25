@@ -1523,6 +1523,23 @@
             let finalizeGuard = false;
             // ——— Guard per ignorare MostraGiocatoreInAsta subito dopo uno svincolo
             let ignoreMostraUntil = 0; // millisec epoch; se > Date.now() ignoriamo il “Mostra…”
+                    // === COOLDOWN UTENTE: 1s dopo ogni offerta/BUZZ accettata ==================
+        const CLIENT_COOLDOWN_MS = 1000;
+        let uiDisabledUntil = 0;
+
+        let uiReEnableTO = null;
+
+        function disableAllBidUIFor(ms = CLIENT_COOLDOWN_MS) {
+          const until = Date.now() + Math.max(0, ms);
+          uiDisabledUntil = Math.max(uiDisabledUntil, until);
+          aggiornaStatoPulsantiBazzer();
+
+          clearTimeout(uiReEnableTO);
+          uiReEnableTO = setTimeout(() => {
+            if (Date.now() >= uiDisabledUntil) aggiornaStatoPulsantiBazzer();
+          }, Math.max(0, ms) + 25);
+        }
+
 
 
             let maxPortieri = @Model.MaxPortieri;
@@ -1672,19 +1689,22 @@
             window.connection = connection;
 
             // ===== Click BUZZER ===============================================
-            document.getElementById('btnClientBuzzer')?.addEventListener('click', async () => {
-                if (pausaAttivaClient) {
-                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi buzzare durante la pausa.");
-                    return;
-                }
-                try {
-                    await connection.invoke('Buzz', legaAlias, nickname);
-                    // Nessun suono qui: lo suoneremo solo se arriva l'evento Buzz dal server.
-                    window.__muteOwnBuzz = true; // manteniamo la logica esistente
-                } catch (e) {
-                    console.error(e);
-                }
-            });
+        document.getElementById('btnClientBuzzer')?.addEventListener('click', async () => {
+          // ⛔ blocco locale: rispetta il cooldown
+          if (Date.now() < uiDisabledUntil) return;
+
+          if (pausaAttivaClient) {
+            if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi buzzare durante la pausa.");
+            return;
+          }
+          try {
+            await connection.invoke('Buzz', legaAlias, nickname);
+            window.__muteOwnBuzz = true; // come prima
+          } catch (e) {
+            console.error(e);
+          }
+        });
+
 
 
             // ===== Logica bottone BUZZER (gating + riabilitazione) =============
@@ -1735,24 +1755,33 @@
                     btn.style.pointerEvents = enabled ? "" : "none";
                 }
 
-                function scheduleReenableOnExpiry() {
-                    if (reenableTimer) { clearTimeout(reenableTimer); reenableTimer = null; }
-                    const left = msLeft();
-                    if (left > 0) {
-                        reenableTimer = setTimeout(() => { setBuzzerEnabled(canBuzzNow()); }, left + 60);
-                    } else {
-                        setBuzzerEnabled(canBuzzNow());
-                    }
-                }
+        function scheduleReenableOnExpiry() {
+          if (reenableTimer) { clearTimeout(reenableTimer); reenableTimer = null; }
+          const left = msLeft();
+          if (left > 0) {
+            reenableTimer = setTimeout(() => { recomputeButton(); }, left + 60);
+          } else {
+            recomputeButton();
+          }
+        }
 
-                function recomputeButton() {
-                    if (!canBuzzNow()) { setBuzzerEnabled(false); return; }
-                    const iAmLast = lastOfferente && myNick &&
-                        lastOfferente.trim().toLowerCase() === myNick.trim().toLowerCase();
-                    const active = msLeft() > 0;
-                    setBuzzerEnabled(!(iAmLast && active));
-                    scheduleReenableOnExpiry();
-                }
+
+        function recomputeButton() {
+          const inCooldown = Date.now() < uiDisabledUntil; // <-- considera cooldown
+
+          if (!canBuzzNow()) { setBuzzerEnabled(false); return; }
+
+          const iAmLast = lastOfferente && myNick &&
+            lastOfferente.trim().toLowerCase() === myNick.trim().toLowerCase();
+
+          const active = msLeft() > 0;
+
+          // disabilita se: sono l’ultimo offerente entro la finestra OR sono in cooldown
+          setBuzzerEnabled(!(iAmLast && active) && !inCooldown);
+
+          scheduleReenableOnExpiry();
+        }
+
 
                 if (window.connection && typeof window.connection.on === "function") {
                     window.__muteOwnBuzz = false;
@@ -1877,28 +1906,35 @@
                     else if (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di centrocampisti (${maxCentrocampisti}).`; }
                     else if (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti) { abilitato = false; messaggio = `Non puoi fare offerte, hai già raggiunto il numero massimo di attaccanti (${maxAttaccanti}).`; }
                 }
-                setBidControlsEnabled(abilitato);
+        const inCooldown = Date.now() < uiDisabledUntil;
 
-                const buzBtn = document.getElementById('btnClientBuzzer');
-                if (buzBtn) {
-                    const hubState = connection.state;
-                    const slotLibero = !(
-                        (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) ||
-                        (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) ||
-                        (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) ||
-                        (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti)
-                    );
+        // Offerte numeriche: applica anche il blocco da cooldown
+        setBidControlsEnabled(abilitato && !inCooldown);
 
-                    const buzzerEnabled =
-                        buzzerAttivoClient &&
-                        idListoneAttuale > 0 &&
-                        !pausaAttivaClient &&
-                        hubState === signalR.HubConnectionState.Connected &&
-                        slotLibero;
+        const buzBtn = document.getElementById('btnClientBuzzer');
+        if (buzBtn) {
+            const hubState = connection.state;
+            const slotLibero = !(
+                (ruoloGiocatoreAttuale === 'P' && portieriAttuali >= maxPortieri) ||
+                (ruoloGiocatoreAttuale === 'D' && difensoriAttuali >= maxDifensori) ||
+                (ruoloGiocatoreAttuale === 'C' && centrocampistiAttuali >= maxCentrocampisti) ||
+                (ruoloGiocatoreAttuale === 'A' && attaccantiAttuali >= maxAttaccanti)
+            );
 
-                    buzBtn.disabled = !buzzerEnabled;
-                    buzBtn.setAttribute('aria-disabled', String(!buzzerEnabled));
-                }
+            let buzzerEnabled =
+                buzzerAttivoClient &&
+                idListoneAttuale > 0 &&
+                !pausaAttivaClient &&
+                hubState === signalR.HubConnectionState.Connected &&
+                slotLibero;
+
+            // anche il BUZZER rispetta il cooldown 1s
+            if (inCooldown) buzzerEnabled = false;
+
+            buzBtn.disabled = !buzzerEnabled;
+            buzBtn.setAttribute('aria-disabled', String(!buzzerEnabled));
+        }
+
 
                 const avvisoDiv = document.getElementById('avviso-ruolo-completo');
                 const avvisoBuzzer = document.getElementById('avviso-ruolo-completo-buzzer');
@@ -2196,6 +2232,7 @@
                 if ((ignoreMostraUntil && Date.now() < ignoreMostraUntil) || giocatore?.fromRelease === true) {
                     return;
                 }
+                uiDisabledUntil = 0;
                 const logoImg = document.getElementById("logo-giocatore-in-asta");
 
                 idListoneAttuale = giocatore.id;
@@ -2216,11 +2253,7 @@
                 const extraEl = document.getElementById('offerente-max');
                 if (extraEl) extraEl.textContent = '';
 
-                try {
-                    const me = (nickname || '').trim().toLowerCase();
-                    const off = (offerente || '').trim().toLowerCase();
-                    if (me && off && me === off) playCoin();
-                } catch { }
+
                 offertaAttuale = 0;
                 fineUtcCorrente = null;
                 lastFineUtcStr = null;
@@ -2270,32 +2303,42 @@
                         fineUtcCorrente = fineUtc;
                         if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
                     }
+                    disableAllBidUIFor();
                 });
             }
 
             // UI: AggiornaOfferta
             if (!window.__uiAggiornaOffertaBound) {
                 window.__uiAggiornaOffertaBound = true;
-                connection.on("AggiornaOfferta", (offerente, offerta, fineIso) => {
-                    const offerenteEl = document.getElementById("offerente");
-                    if (offerenteEl) offerenteEl.textContent = offerente || "-";
-                    renderOfferenteExtras(offerente);
+        connection.on("AggiornaOfferta", (offerente, offerta, fineIso) => {
+            // snapshot dell'offerta prima dell'update UI
+            const prevOff = offertaAttuale || 0;
 
-                    if (!buzzerModeOn) {
-                        const offEl = document.getElementById("offerta");
-                        if (offEl) offEl.textContent = offerta || 0;
-                        offertaAttuale = offerta || 0;
-                    } else {
-                        const offEl = document.getElementById("offerta");
-                        if (offEl) offEl.textContent = '—';
-                    }
+            const offerenteEl = document.getElementById("offerente");
+            if (offerenteEl) offerenteEl.textContent = offerente || "-";
+            renderOfferenteExtras(offerente);
 
-                    if (fineIso && fineIso !== lastFineUtcStr) {
-                        lastFineUtcStr = fineIso;
-                        fineUtcCorrente = fineIso;
-                        if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
-                    }
-                });
+            if (!buzzerModeOn) {
+                const offEl = document.getElementById("offerta");
+                if (offEl) offEl.textContent = offerta || 0;
+                offertaAttuale = offerta || 0;
+            } else {
+                const offEl = document.getElementById("offerta");
+                if (offEl) offEl.textContent = '—';
+            }
+
+            if (fineIso && fineIso !== lastFineUtcStr) {
+                lastFineUtcStr = fineIso;
+                fineUtcCorrente = fineIso;
+                if (!pausaAttivaClient) aggiornaCountdownDaFineUtc();
+            }
+
+            // se l'offerta è realmente salita, applica il cooldown 1s
+            if (!buzzerModeOn && Number.isFinite(offerta) && offerta > prevOff) {
+                disableAllBidUIFor();
+            }
+        });
+
             }
 
             if (!window.__uiAstaTerminataBound) {
@@ -2433,6 +2476,14 @@
                 }
                 aggiornaStatoPulsantiBazzer();
             });
+        connection.on("BidRateLimited", (msLeft) => {
+            const ms = Math.max(0, parseInt(msLeft || 0, 10));
+            if (ms > 0) disableAllBidUIFor(ms);
+        });
+        connection.on("BuzzRateLimited", (msLeft) => {
+            const ms = Math.max(0, parseInt(msLeft || 0, 10));
+            if (ms > 0) disableAllBidUIFor(ms);
+        });
 
             // ► Sync stato
             connection.on("StatoAsta", (stato) => {
@@ -2516,58 +2567,65 @@
             });
 
             // ===== Offerte (incrementi e personalizzata) =======================
-            document.querySelectorAll(".bazzer").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    if (pausaAttivaClient) {
-                        if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
-                        return;
-                    }
-                    const incremento = parseInt(btn.dataset.incremento);
-                    const snapshot = offertaAttuale;
-                    const nuovaOfferta = snapshot + incremento;
-                    const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
-                    if (nuovaOfferta > puntataMassima) {
-                        if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti! Puntata max: " + puntataMassima);
-                        else alert("Offerta non valida");
-                        return;
-                    }
+         document.querySelectorAll(".bazzer").forEach(btn => {
+          btn.addEventListener("click", async () => {
+            // ⛔ blocco locale: rispetta il cooldown
+            if (Date.now() < uiDisabledUntil) return;
+
+            if (pausaAttivaClient) {
+              if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
+              return;
+            }
+
+            const incremento = parseInt(btn.dataset.incremento);
+            const snapshot = offertaAttuale;
+            const nuovaOfferta = snapshot + incremento;
+            const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
+
+            if (nuovaOfferta > puntataMassima) {
+              if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Non hai abbastanza crediti! Puntata max: " + puntataMassima);
+              else alert("Offerta non valida");
+              return;
+            }
+
+            await connection.invoke("InviaOfferta", nickname, nuovaOfferta, snapshot);
+          });
+        });
 
 
-                    await connection.invoke("InviaOfferta", nickname, nuovaOfferta, snapshot);
+         document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
+          // ⛔ blocco locale: rispetta il cooldown
+          if (Date.now() < uiDisabledUntil) return;
 
+          if (pausaAttivaClient) {
+            if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
+            return;
+          }
 
-                });
-            });
+          const inputOfferta = document.getElementById('offertaPersonalizzataInput');
+          const offertaInserita = parseInt(inputOfferta.value);
+          if (isNaN(offertaInserita) || offertaInserita <= 0) {
+            if (typeof mostraMessaggio === 'function') mostraMessaggio("Errore", "Inserisci un valore numerico valido.");
+            else alert("Errore");
+            return;
+          }
+          if (offertaInserita <= offertaAttuale) {
+            if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Deve essere superiore all'attuale!");
+            else alert("Offerta non valida");
+            return;
+          }
+          const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
+          if (offertaInserita > puntataMassima) {
+            if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Supera la tua puntata massima (" + puntataMassima + ")");
+            else alert("Offerta non valida");
+            return;
+          }
+          const snapshot = offertaAttuale;
 
-            document.getElementById("btnOffertaPersonalizzata").addEventListener("click", async () => {
-                if (pausaAttivaClient) {
-                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Asta in pausa", "Non puoi fare offerte durante la pausa.");
-                    return;
-                }
-                const inputOfferta = document.getElementById('offertaPersonalizzataInput');
-                const offertaInserita = parseInt(inputOfferta.value);
-                if (isNaN(offertaInserita) || offertaInserita <= 0) {
-                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Errore", "Inserisci un valore numerico valido.");
-                    else alert("Errore");
-                    return;
-                }
-                if (offertaInserita <= offertaAttuale) {
-                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Deve essere superiore all'attuale!");
-                    else alert("Offerta non valida");
-                    return;
-                }
-                const puntataMassima = parseInt(document.getElementById('puntata-bottom').textContent);
-                if (offertaInserita > puntataMassima) {
-                    if (typeof mostraMessaggio === 'function') mostraMessaggio("Offerta non valida", "Supera la tua puntata massima (" + puntataMassima + ")");
-                    else alert("Offerta non valida");
-                    return;
-                }
-                const snapshot = offertaAttuale;
+          await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
+          inputOfferta.value = "";
+        });
 
-                await connection.invoke("InviaOfferta", nickname, offertaInserita, snapshot);
-
-                inputOfferta.value = "";
-            });
 
             // ===== Reconnect loop ==============================================
             function clearPing() { if (pingIntervalId) { clearInterval(pingIntervalId); pingIntervalId = null; } }
@@ -2654,13 +2712,15 @@
                 if (isEditable) return;
 
                 if (e.code === 'Space' || e.key === ' ' || e.keyCode === 32) {
-                    e.preventDefault();
-                    const isMobile = /Mobi|Android/i.test(navigator.userAgent);
-                    if (isMobile) return;
-                    if (buzzerModeOn && buzzerAttivoClient) {
-                        const btn = document.getElementById('btnClientBuzzer');
-                        if (btn && !btn.disabled) btn.click();
-                    }
+        e.preventDefault();
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        if (isMobile) return;
+        if (buzzerModeOn && buzzerAttivoClient) {
+          // ⛔ rispetta il cooldown locale anche da tastiera
+          if (Date.now() < uiDisabledUntil) return;
+          const btn = document.getElementById('btnClientBuzzer');
+          if (btn && !btn.disabled) btn.click();
+        }
                 }
             });
 

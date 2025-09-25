@@ -55,6 +55,8 @@ namespace AstaLegheFC.Hubs
         private static string AdminGroup(string legaLower) => $"admin_{legaLower}";
         private static bool IsOnline(Partecipante p, DateTime nowUtc) => (nowUtc - p.LastSeenUtc) <= TimeSpan.FromSeconds(45);
         // === Throttle (mezzo secondo) ===============================================
+        // === Finestra minima tra due offerte sullo stesso giocatore (1 secondo) =====
+        // Chiave = $"{legaLower}:{giocatoreId}"
         private static readonly ConcurrentDictionary<string, DateTime> _buzzCooldownUntil
             = new(StringComparer.OrdinalIgnoreCase);
         private static readonly ConcurrentDictionary<string, DateTime> _bidCooldownUntil
@@ -63,17 +65,23 @@ namespace AstaLegheFC.Hubs
         private static readonly ConcurrentDictionary<string, object> _legaLocks
             = new(StringComparer.OrdinalIgnoreCase);
 
-        private static readonly TimeSpan BuzzCooldown = TimeSpan.FromMilliseconds(500);
-        private static readonly TimeSpan BidCooldown = TimeSpan.FromMilliseconds(500);
+        private static readonly TimeSpan MinGapBetweenBids = TimeSpan.FromSeconds(1);
+
+        private static string PlayerKey(string legaLower, int giocatoreId) => $"{legaLower}:{giocatoreId}";
+
 
         private static object GetLegaLock(string legaLower)
             => _legaLocks.GetOrAdd(legaLower, _ => new object());
 
         private static void ResetCooldowns(string legaLower)
         {
-            _buzzCooldownUntil.TryRemove(legaLower, out _);
-            _bidCooldownUntil.TryRemove(legaLower, out _);
+            var prefix = $"{legaLower}:"; // rimuovi tutte le entry legate alla lega
+            foreach (var k in _buzzCooldownUntil.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList())
+                _buzzCooldownUntil.TryRemove(k, out _);
+            foreach (var k in _bidCooldownUntil.Keys.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList())
+                _bidCooldownUntil.TryRemove(k, out _);
         }
+
 
         private bool TryGetCallerLega(out string legaLower)
         {
@@ -166,7 +174,10 @@ namespace AstaLegheFC.Hubs
 
             if (_bazzerService.PausaAttiva(alias)) return;
             // niente buzz se non c'è un giocatore in asta
-            if (_bazzerService.GetGiocatoreInAsta(alias) == null) return;
+            var giocatore = _bazzerService.GetGiocatoreInAsta(alias);
+            if (giocatore == null) return;
+            var gid = giocatore.Id;
+
 
             var now = DateTime.UtcNow;
 
@@ -176,14 +187,17 @@ namespace AstaLegheFC.Hubs
             lock (GetLegaLock(alias))
             {
                 // throttle BUZZ: accetta solo il primo nei 500ms
-                if (_buzzCooldownUntil.TryGetValue(alias, out var until) && now < until)
+                var key = PlayerKey(alias, gid);
+
+                // Rate-limit BUZZ: 1 secondo sull’accoppiata lega+giocatore
+                if (_buzzCooldownUntil.TryGetValue(key, out var until) && now < until)
                 {
                     var rem = (int)Math.Max(0, (until - now).TotalMilliseconds);
                     _ = Clients.Caller.SendAsync("BuzzRateLimited", rem);
                     return;
                 }
 
-                // ricontrollo stato in lock
+                // ricontrollo stato in lock come fai già
                 var (attualeOfferente, _) = _bazzerService.GetOffertaAttuale(alias);
                 var fine = _bazzerService.GetFineOffertaUtc(alias);
                 bool timerAttivo = fine.HasValue && now < fine.Value;
@@ -195,7 +209,8 @@ namespace AstaLegheFC.Hubs
                 if (timerAttivo && sameOfferente) return;
 
                 _bazzerService.RegistraBuzz(alias, offerente, now);
-                _buzzCooldownUntil[alias] = now + BuzzCooldown;
+                _buzzCooldownUntil[key] = now + MinGapBetweenBids; // 1s tra due BUZZ accettati
+
 
                 var f = _bazzerService.GetFineOffertaUtc(alias);
                 winnerOfferente = offerente;
@@ -284,7 +299,9 @@ namespace AstaLegheFC.Hubs
             if (_bazzerService.IsBuzzerModeAttivo(legaLower)) return;
 
             // niente offerte se non c'è un giocatore in asta
-            if (_bazzerService.GetGiocatoreInAsta(legaLower) == null) return;
+            var giocatore = _bazzerService.GetGiocatoreInAsta(legaLower);
+            if (giocatore == null) return;
+            var gid = giocatore.Id;
 
             string offerenteOk = null;
             int offertaOk = 0;
@@ -295,7 +312,10 @@ namespace AstaLegheFC.Hubs
             lock (GetLegaLock(legaLower))
             {
                 // throttle OFFERTA: accetta solo la prima nei 500ms
-                if (_bidCooldownUntil.TryGetValue(legaLower, out var until) && now < until)
+                var key = PlayerKey(legaLower, gid);
+
+                // Rate-limit OFFERTA: 1 secondo sull’accoppiata lega+giocatore
+                if (_bidCooldownUntil.TryGetValue(key, out var until) && now < until)
                 {
                     var rem = (int)Math.Max(0, (until - now).TotalMilliseconds);
                     _ = Clients.Caller.SendAsync("BidRateLimited", rem);
@@ -308,12 +328,17 @@ namespace AstaLegheFC.Hubs
 
                 _bazzerService.AggiornaOfferta(legaLower, offerente, offerta);
 
-                _bidCooldownUntil[legaLower] = now + BidCooldown;
+                // imposta la nuova finestra di 1s dalla *offerta accettata*
+                _bidCooldownUntil[key] = now + MinGapBetweenBids;
+
+                // valori da mandare in broadcast
                 offerenteOk = offerente;
                 offertaOk = offerta;
 
                 var f = _bazzerService.GetFineOffertaUtc(legaLower);
                 fineIso = f?.ToUniversalTime().ToString("o");
+
+
             }
 
             await Clients.Group(legaLower).SendAsync("AggiornaOfferta", offerenteOk, offertaOk, fineIso, DateTime.UtcNow.ToString("o"));
